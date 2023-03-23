@@ -354,3 +354,5 @@ MigrationBackup/
 .idea
 /.idea/.gitignore
 **/appsettings.*
+**/web.*.config
+**/web.config
