@@ -41,6 +41,7 @@ using System.Data.Entity;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Xabe.FFmpeg;
 
@@ -78,12 +79,12 @@ namespace SpeechAccessibility.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SaveRecording(IFormCollection form)
+        public void SaveRecording(IFormCollection form)
         {
             try 
             {
-                await SaveToDBAsync(form);
-                await SaveToDisk(form);
+                  SaveToDB(form);
+                  SaveToDisk(form);
 
             }
             catch(Exception e)
@@ -98,13 +99,11 @@ namespace SpeechAccessibility.Controllers
                     writer.WriteLine(error);
                     writer.Close();
                 }
-                return RedirectToAction("Error");
+              
             }
-             
-            return View();
         }
 
-        private async Task SaveToDBAsync(IFormCollection form)
+        private void SaveToDB(IFormCollection form)
         {
             try
             {
@@ -160,14 +159,14 @@ namespace SpeechAccessibility.Controllers
                         _recordingContext.Block.Remove(recording.Block);
                     }
 
-                    await _recordingContext.SaveChangesAsync();
+                      _recordingContext.SaveChanges();                    
 
                 }
                 //Update retry count of existing recording
                 else
                 {
                     existingRecording.RetryCount = retryCount;
-                    await _recordingContext.SaveChangesAsync();
+                     _recordingContext.SaveChanges();
                 }
 
             }
@@ -188,7 +187,7 @@ namespace SpeechAccessibility.Controllers
        
         }
 
-        private async Task SaveToDisk(IFormCollection form)
+        private void SaveToDisk(IFormCollection form)
         {
             IFormFile file = form.Files[0];
             Guid contributorId = new Guid(form["contributorId"]);
@@ -209,12 +208,12 @@ namespace SpeechAccessibility.Controllers
 
                 using (Stream fileStream = new FileStream(rawFullPath, FileMode.OpenOrCreate, FileAccess.ReadWrite))
                 {
-                    await file.CopyToAsync(fileStream);
+                      file.CopyTo(fileStream);
 
                     fileStream.Close();
 
                 }
-                await ConvertAndCopyFile(file, blockDirectory, rawFullPath);
+                  CopyFile(file, blockDirectory, rawFullPath);
 
             }
             catch {
@@ -224,30 +223,20 @@ namespace SpeechAccessibility.Controllers
 
         }
 
-        public async Task ConvertAndCopyFile(IFormFile file, string blockDirectory, string rawFullPath)
+        public void CopyFile(IFormFile file, string blockDirectory, string rawFullPath)
         {
-            string convertedFileName = Path.ChangeExtension(rawFullPath, ".wav");
-            if (System.IO.File.Exists(convertedFileName))
-            {
-                System.IO.File.Delete(convertedFileName);
-            }
-
-            string ffmpegLocation = _config["FFmpegLocation"];
-            FFmpeg.SetExecutablesPath(ffmpegLocation, ffmpegExeutableName: "ffmpeg");
-            var conversion = await FFmpeg.Conversions.FromSnippet.Convert(rawFullPath, convertedFileName);
-            await conversion.Start();
+            string fileName = Path.ChangeExtension(rawFullPath, ".wav");
 
             string modifiedFileLocation = blockDirectory + "\\modified";
 
-            string modifiedFullPath = Path.Combine(modifiedFileLocation, file.FileName);
-            string modifiedFileName = Path.ChangeExtension(modifiedFullPath, ".wav");
+            string modifiedFileName= Path.Combine(modifiedFileLocation, file.FileName);
 
             if (System.IO.File.Exists(modifiedFileName))
             {
                 System.IO.File.Delete(modifiedFileName);
             }
 
-            System.IO.File.Copy(convertedFileName, modifiedFileName);
+             System.IO.File.Copy(fileName, modifiedFileName);
         }
 
         private static void CreateSubdirectories(Guid contributorId, int blockId, string fileLocation, string contributorDirectory, string blockDirectory)
@@ -296,18 +285,18 @@ namespace SpeechAccessibility.Controllers
 
             string developerMode = _config["DeveloperMode"];
 
-            if (dysarthriaAssessmentCount > 0 || contributor.ContactLSVT)
+            if (dysarthriaAssessmentCount > 0 || contributor.ParkinsonsInd =="Yes")
             {
-                if (dysarthriaAssessmentCount >= dysarthriaAssessmentMax || contributor.ContactLSVT)
+                if (dysarthriaAssessmentCount >= dysarthriaAssessmentMax || contributor.ParkinsonsInd == "Yes")
                 {
                     phonationPromptCount = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt).Where(p => p.SubCategory.Id == 4).Count();
 
                     //After they complete the dysarthria prompts, they will do the phonation prompt 3 times
-                    if (phonationPromptCount == 3 || contributor.ContactLSVT)
+                    if (phonationPromptCount == 3 || contributor.ParkinsonsInd == "Yes")
                     {
                         //After the phonation prompts are complete, they will do one spontaneous speech prompt
                         int spontaneousPromptCount = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt).Where(p => p.SubCategory.Id == 5).Count();
-                        if (spontaneousPromptCount > 0 || contributor.ContactLSVT)
+                        if (spontaneousPromptCount > 0 || contributor.ParkinsonsInd == "Yes")
                         {
                             Recording lastRecording = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).AsEnumerable().LastOrDefault();
 
@@ -321,12 +310,6 @@ namespace SpeechAccessibility.Controllers
                                 {
                                     int contributorDetailsCount = _identityContext.ContributorDetails.Where(c => c.Contributor.Id == contributorId).Count();
 
-                                    //Route to the OptionalQuestions page if the contributor details haven't been populated
-                                    if (contributorDetailsCount == 0)
-                                    {
-                                        return RedirectToPage("/Account/OptionalQuestions", new { area = "Identity" });
-                                    }
-
                                     //Display the last prompt they recorded if the max retry count hasn't been met
                                     if (lastRecording != null && lastRecording.RetryCount < retryMax)
                                     {
@@ -334,6 +317,12 @@ namespace SpeechAccessibility.Controllers
                                         prompt = _recordingContext.Recording.Where(r => r.Id == lastRecording.Id).Select(r => r.OriginalPrompt).First();
                                         category = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.Category).FirstOrDefault();
                                         retryCount = lastRecording.RetryCount;
+                                        SubCategory currentSubCategory = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.SubCategory).FirstOrDefault();
+
+                                        if (currentSubCategory != null)
+                                        {
+                                            subCategory = currentSubCategory;
+                                        }
                                     }
                                     else
                                     {
@@ -342,7 +331,7 @@ namespace SpeechAccessibility.Controllers
                                         //If there are no more blocks, route to complete page
                                         if (blockId == 0)
                                         {
-                                            return View("CompleteConfirmation");
+                                            return RedirectToAction("CompleteConfirmation");
                                         }
                                         //Select a prompt from the current block that has not already been recorded by the contributor
                                         prompt = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId).Select(p => p.Prompt).Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId && r.Block.Id == blockId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).FirstOrDefault();
@@ -370,6 +359,7 @@ namespace SpeechAccessibility.Controllers
                             //Route to the ApprovalRequired page if the status isn't Approved
                             else if ("New".Equals(contributorStatus))
                             {
+                                ViewBag.Parkinsons = contributor.ParkinsonsInd;
                                 return View("ApprovalRequired");
                             }
                             else if (("Denied".Equals(contributorStatus)))
@@ -665,20 +655,51 @@ namespace SpeechAccessibility.Controllers
 
         public IActionResult CompleteConfirmation()
         {
-            return View();
+            Contributor contributor = getCurrentContributor();
+            Guid contributorId = contributor.Id;
+
+            CompleteConfirmationModel model = new CompleteConfirmationModel();
+
+            model.completedOptionalQuestions = false;
+
+            int contributorDetailsCount = _identityContext.ContributorDetails.Where(c => c.Contributor.Id == contributorId).Count();
+
+            if (contributorDetailsCount>0)
+            {
+                model.completedOptionalQuestions = true;
+            }
+            return View(model);
         }
 
         [HttpPost]
         public IActionResult RecordPrompt(RecordPromptModel model)
         {
-            Guid contributorId = model.contributorId;
-            int promptId = model.prompt.Id;
-            Recording recording = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).AsEnumerable().LastOrDefault();
-            int retryMax = Int32.Parse(_config["RetryMax"]);
+            try 
+            {
+                Guid contributorId = model.contributorId;
+                int promptId = model.prompt.Id;
+                Recording recording = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).AsEnumerable().LastOrDefault();
+                int retryMax = Int32.Parse(_config["RetryMax"]);
 
-            //Once they go to the next prompt, set the retry count to the maximum value to prevent them from being able to rerecord the previous prompt
-            recording.RetryCount = retryMax;
-             _recordingContext.SaveChanges();
+                //Once they go to the next prompt, set the retry count to the maximum value to prevent them from being able to rerecord the previous prompt
+                recording.RetryCount = retryMax;
+                _recordingContext.SaveChanges();              
+
+            }
+            catch(Exception e)
+            {
+                string date = DateTime.Now.ToString("yyyy-MM-dd");
+                string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
+
+                Directory.CreateDirectory(Path.GetDirectoryName(fileLocation));
+                using (StreamWriter writer = new StreamWriter(fileLocation, true))
+                {
+                    string error = DateTime.Now.ToString() + e;
+                    writer.WriteLine(error);
+                    writer.Close();
+                }
+            }
+
             return RedirectToAction("RecordPrompt");
         }
 
@@ -707,7 +728,9 @@ namespace SpeechAccessibility.Controllers
                     if (_config["DeveloperMode"].Equals("Yes") || !"Production".Equals(environment))
                     {
                         to = _config["TestEmail"];
-                    }
+                        string testMessage = "<p><strong>This email was sent in testing mode.</strong></p>";
+                         message = testMessage + message;
+                        }
 
                     await _emailSender.SendEmailAsync(to, model.Subject, message);
                    

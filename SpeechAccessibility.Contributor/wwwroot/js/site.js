@@ -26,6 +26,15 @@
 
 $(function () {
 
+    if (typeof document.createElement('dialog').show !== 'function') {
+
+        var errorDiv = document.getElementById("errorDiv");
+        errorDiv.innerHTML = "This browser does not support recording. Please try opening this page in a different browser or update this browser to the most recent version to continue.";
+
+        var containerDiv = document.getElementById("container");
+        containerDiv.hidden = true;
+    }
+
     var categoryId = document.getElementById('categoryId').value;
     var subCategoryId = document.getElementById('subCategoryId').value;
     var phonationPromptCount = document.getElementById('phonationPromptCount').value;
@@ -62,6 +71,9 @@ $(function () {
  
 });
 
+function supports_dialog() {
+    return document.createElement('dialog').getContext;
+}
 
 function isChecked(id) {
     var checkBox = document.getElementById(id);

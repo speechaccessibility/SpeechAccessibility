@@ -437,9 +437,9 @@ namespace SpeechAccessibility.Annotator.Controllers
             }
 
            
-            List<int> includeStatus = new List<int>() { 1, 2 }; //new or edited
+            //List<int> includeStatus = new List<int>() { 1, 2 ,3}; //new, edited, or published
             var recordings = _recordingRepository
-                .Find(r => r.ContributorId == contributorId && r.BlockId==blockId && includeStatus.Contains(r.StatusId)).Include(r => r.OriginalPrompt)
+                .Find(r => r.ContributorId == contributorId && r.BlockId==blockId).Include(r => r.OriginalPrompt)
                 .ToList();
 
             var appName = _configuration["AppSettings:Environment"] switch

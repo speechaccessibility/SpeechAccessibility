@@ -35,24 +35,24 @@ namespace SpeechAccessibility.Infrastructure.Data
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedNever();
 
-            entity.Property(e => e.Comments).HasMaxLength(2000);
+            //entity.Property(e => e.Comments).HasMaxLength(2000);
 
-            entity.Property(e => e.CreateTS)
-                .HasDefaultValueSql("(getdate())");
+            //entity.Property(e => e.CreateTS)
+            //    .HasDefaultValueSql("(getdate())");
 
-            entity.Property(e => e.EighteenOrOlderInd)
-                .IsRequired()
-                .HasMaxLength(3);
+            //entity.Property(e => e.EighteenOrOlderInd)
+            //    .IsRequired()
+            //    .HasMaxLength(3);
 
             entity.Property(e => e.FirstName)
                 .IsRequired()
                 .HasMaxLength(50);
 
-            entity.Property(e => e.HelperEmail).HasMaxLength(175);
+            //entity.Property(e => e.HelperEmail).HasMaxLength(175);
 
-            entity.Property(e => e.HelperFirstName).HasMaxLength(50);
+            //entity.Property(e => e.HelperFirstName).HasMaxLength(50);
 
-            entity.Property(e => e.HelperLastName).HasMaxLength(50);
+            //entity.Property(e => e.HelperLastName).HasMaxLength(50);
 
             entity.Property(e => e.LastName)
                 .IsRequired()
@@ -60,21 +60,21 @@ namespace SpeechAccessibility.Infrastructure.Data
 
             entity.Property(e => e.MiddleName).HasMaxLength(30);
 
-            entity.Property(e => e.ParkinsonsInd)
-                .IsRequired()
-                .HasMaxLength(3);
+            //entity.Property(e => e.ParkinsonsInd)
+            //    .IsRequired()
+            //    .HasMaxLength(3);
 
           
-            entity.Property(e => e.StateResidence)
-                .IsRequired()
-                .HasMaxLength(4);
+            //entity.Property(e => e.StateResidence)
+            //    .IsRequired()
+            //    .HasMaxLength(4);
 
-            entity.Property(e => e.UnderstandSpeechInd)
-                .IsRequired()
-                .HasMaxLength(3);
+            //entity.Property(e => e.UnderstandSpeechInd)
+            //    .IsRequired()
+            //    .HasMaxLength(3);
 
-            entity.Property(e => e.UpdateTS)
-                .HasDefaultValueSql("(getdate())");
+            //entity.Property(e => e.UpdateTS)
+            //    .HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.ContributorStatus)
                 .WithMany(p => p.Contributor)

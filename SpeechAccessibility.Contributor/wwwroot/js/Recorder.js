@@ -63,18 +63,19 @@ function recording_interface() {
         recordButton.addEventListener(
             'AudioControls.RecordingStarted',
             (event) => {
-                let button = $('#recordButton')
-                let nextButton = $('#nextButton');
-                let recordingStatus = document.getElementById('recordingStatus')
-                nextButton.attr('hidden', true)
-                let text = button.text()
-                if (button.text() === 'Stop Recording') {
-                    return false
-                }
-                event.stopPropagation()
-                event.preventDefault()
-                recordingStatus.innerHTML = "Recording started";
-                button.text('Stop Recording')
+                    let button = $('#recordButton')
+                    let nextButton = $('#nextButton');
+                    let recordingStatus = document.getElementById('recordingStatus')
+                    nextButton.attr('hidden', true)
+                    let text = button.text()
+                    if (button.text() === 'Stop Recording') {
+                        return false
+                    }
+                    event.stopPropagation()
+                    event.preventDefault()
+                    recordingStatus.innerHTML = "Recording started";
+                    button.text('Stop Recording')
+
             }
         )
         recordButton.addEventListener(
@@ -86,7 +87,7 @@ function recording_interface() {
                 let text = button.text()
                 if (button.text() === 'Record' || button.text==='Rerecord') {
                     return false
-                }
+                }           
                 recordingStatus.innerHTML = "Recording Stopped"
                 event.stopPropagation()
                 event.preventDefault()         
@@ -107,21 +108,14 @@ function recording_interface() {
                 retryCount++;
             
                 let filename = contributorId + "_" + promptId + "_" + blockId;
-                let phonationPromptCount = Cookies.get('phonationPromptCount');
-
-                //They will record the phonation prompt three times
-                //Adding the count at the end of the file name to distinguish them from each other
-                if (subCategoryId =='4')
-                 {
-                     filename+="_"+phonationPromptCount;
-                 }
+               
                 ////
                 //// codec is the string returned from isBrowserSupported().
                 //// It probably should return "webm" for now but I don't 
                 //// really know what other browsers might need.
                 ////
-                let fileType = codec.split(';')[0].split('/')[1]
-                filename += `.${fileType}`
+                
+                filename += `.wav`
 
                 ////
                 //// create the file upload element
@@ -130,9 +124,11 @@ function recording_interface() {
 
                 myData.set(
                     'file',
-                    myAudioControls.getAudioBlob(),
+                    event.detail.wavData,
                     filename
                 )
+
+                myAudioControls
                 myData.set('filename', filename)
 
                 myData.set('contributorId', contributorId);
@@ -149,24 +145,12 @@ function recording_interface() {
                 //// note the 'cache', 'contentType', and 'processData' jQuery values.
                 //// these appear to be necessary when sending binary data.
                 ////
-                $.ajax({
-                    url: my_url,
-                    type: 'POST',
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    data: myData,
-                    success: updateButtons(retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton),
-                }
-                )
+                processRecording(my_url, myData, retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton);
 
                 myAudioControls = new AudioControls(codec,
                     'recordButton',
                     undefined,
-                    'playButton',
-                    undefined,
-                    'waveform'
-                );
+                    'waveform');
 
             }
         )     
@@ -177,15 +161,27 @@ function recording_interface() {
                 document.getElementById('maxTimeDialog').showModal();
             })
 
+        document.addEventListener('AudioControls.Error',
+            (event) => {
+                var errorDiv = document.getElementById('errorDiv');
+                if ('Permission denied' == event.detail) {                  
+                    errorDiv.innerHTML = 'Microphone is blocked. Please allow the microphone access in your browser settings and reload the page.'
+                }
+                else {
+                    errorDiv.innerHTML = 'Error: ' + event.detail + '<br/> You may contact speechaccessibility@beckman.illinois.edu for assistance.'
+                }
+                var containerDiv = document.getElementById("container");
+                containerDiv.hidden = true;
+            })
+
         let codec = isBrowserSupported();
 
         let myAudioControls = new AudioControls(codec,
             'recordButton',
             undefined,
-            'playButton',
-            undefined,
-            'waveform'
-        );
+            'waveform');
+
+
 
         const other_thing = 4;
     } catch (e) {
@@ -193,10 +189,42 @@ function recording_interface() {
     }
 }
 
-function updateButtons(retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton) {
+async function processRecording(my_url, myData, retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton) {
 
+    var saveDiv = document.getElementById('saveDiv');
+    saveDiv.style.display = "block";
+    button.attr('hidden', true)
+    nextButton.attr('hidden', true)
+    await postRecording(my_url, myData);
+
+    updateButtons(retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton,saveDiv);
+}
+
+   function postRecording(my_url,myData) {
+    let result;
+
+    try {
+        result = $.ajax({
+            url: my_url,
+            type: 'POST',
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: myData
+        })
+
+        return result;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+function updateButtons(retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton,saveDiv) {
+
+    button.removeAttr('hidden')
     nextButton.removeAttr('hidden');      
     nextButton.focus();
+    saveDiv.style.display = "none";
 
     if (retryCount < 3 && categoryId != 1 && subCategoryId != 4 && subCategoryId != 5) {
 

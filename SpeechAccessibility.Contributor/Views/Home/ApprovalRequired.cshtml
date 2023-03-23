@@ -8,13 +8,25 @@
 <div class="container">
     <div class="row">
         <div class="col-md-10">
-            <h1>Thank you so much for your interest in participating in the Speech Accessibility Project. </h1>
-            <p>We are working
-                                    closely with <a href="https://www.lsvtglobal.com/">LSVT Global</a> to help potential participants through the process of learning more about the
+            @if (@ViewBag.Parkinsons == "Yes")
+            {
+                <h1>Thank you so much for your interest in participating in the Speech Accessibility Project. </h1>
+                <p>We are working
+                    closely with <a href="https://www.lsvtglobal.com/">LSVT Global</a> to help potential participants through the process of learning more about the
                                     project. This will include determining eligibility and consenting to participate. Someone from LSVT
                                     Global will contact you via the email address or phone number you provided. Should you have any
                 questions or concerns, please contact <a href="mailto:speechaccessibility@beckman.illinois.edu">speechaccessibility@beckman.illinois.edu.</a>
             </p>
+            }
+            else
+            {
+            <h1>Thanks for sharing your voice with us! </h1>
+            <p>
+                After we've had a chance to listen to your speech, we’ll email and prompt you to complete our informed consent documents before continuing to record.
+
+                It may take up to 72 hours for us to let you know whether you qualify.
+            </p>
+            }
         </div>
     </div>
     <br />

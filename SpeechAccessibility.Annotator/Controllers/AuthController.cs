@@ -142,7 +142,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                                 NetId = principal.SamAccountName,
                                 Active = "Yes",
                                 UpdateTS = DateTime.Now,
-                                UpdateBy = "nle"//User.Identity.Description
+                                UpdateBy = User.Identity.Name
                             };
                             _userRepository.Insert(user);
                         }

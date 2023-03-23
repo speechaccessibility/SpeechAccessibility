@@ -138,11 +138,13 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             SelectListItem preferNotToAnswer = new SelectListItem { Value = "Prefer not to answer", Text = "Prefer not to answer" };
             ageList.Add(pleaseSelect);
             ageList.Add(preferNotToAnswer);
-            for (int i = 18; i < 101; i++)
+            for (int i = 18; i < 100; i++)
             {
                 SelectListItem item = new SelectListItem { Value = i.ToString(), Text = i.ToString() };
                 ageList.Add(item);
             }
+            SelectListItem oneHundredPlus = new SelectListItem { Value = "100+", Text = "100+" };
+            ageList.Add(oneHundredPlus);
             return ageList;
         }
 

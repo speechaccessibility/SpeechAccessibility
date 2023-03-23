@@ -120,9 +120,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             int skip = start != null ? Convert.ToInt32(start) : 0;
 
             //only display Contributors that are assigned to logged in annotator
-            //get assgined contributor list for annotator
+            //get assigned contributor list for annotator
             IQueryable<Contributor> contributors = null;
-            IQueryable<Contributor> test = null;
             var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
             var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 
@@ -150,6 +149,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                 var numberAssignedBlocks = _contributorAssignedBlockRepository.Find(b => b.ContributorId == contributor.Id);
                 var lastRecording = _recordingRepository.Find(r => r.ContributorId == contributor.Id && r.BlockId != null)
                     .OrderByDescending(r => r.CreateTS).FirstOrDefault();
+                var numberAssignedAnnotator = _contributorAssignedAnnotatorRepository.Find(b => b.ContributorId == contributor.Id);
 
                 var contributorVM = new ApprovedDeniedContributorViewModel
                 {
@@ -158,6 +158,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                 };
                 if (lastRecording != null)
                     contributorVM.LastRecording = lastRecording.CreateTS.ToShortDateString();
+                contributorVM.AnnotatorAssigned = numberAssignedAnnotator.Any() ? "Yes" : "No";
 
                 contributorViewModels.Add(contributorVM);
             }
@@ -167,32 +168,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             return Json(new { draw, data = wrk, recordsFiltered = recordsTotal, recordsTotal = recordsTotal });
 
-            //foreach (var contributor in contributors)
-            //{
-            //    var numberAssignedBlocks = _contributorAssignedBlockRepository.Find(b => b.ContributorId == contributor.Id);
-            //    var lastRecording = _recordingRepository.Find(r => r.ContributorId == contributor.Id && r.BlockId != null)
-            //        .OrderByDescending(r => r.CreateTS).FirstOrDefault();
-
-            //    var contributorVM = new ApprovedDeniedContributorViewModelNew
-            //    {
-            //        LastName = contributor.LastName,
-            //        FirstName = contributor.FirstName,
-            //        MiddleName = contributor.MiddleName,
-            //        Comments = contributor.Comments,
-            //        Id = contributor.Id,
-            //        NumberAssignBlocks = numberAssignedBlocks.Any() ? numberAssignedBlocks.Count() : 0
-            //    };
-            //    if (lastRecording != null)
-            //        contributorVM.LastRecording = lastRecording.CreateTS.ToShortDateString();
-
-            //    contributorViewModels.Add(contributorVM);
-            //}
-
-            //var wrk = DynamicSortingExtensions<ApprovedDeniedContributorViewModelNew>.SetOrderByDynamic(contributorViewModels.AsQueryable(), Request.Form);
-            //wrk = wrk.Skip(skip).Take(pageSize);
-
-            //return Json(new { draw, data = wrk, recordsFiltered = recordsTotal, recordsTotal = recordsTotal });
-
+         
         }
 
 
@@ -273,7 +249,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                 contributor.Comments = comment;
                 _contributorRepository.Update(contributor);
             }
-            //todo: need to send email for approval and deny here
+           
             StringBuilder message = new StringBuilder();
             var emailSubject = "";
             if (action == 2) //approve
@@ -290,7 +266,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
                 message.Append("Thank you for sharing your voice!");
 
-                message.Append("<br>If you have any questions, please contact speechaccessibility@beckman.illinois.edu.");
+                message.Append("<br>If you have any questions, please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] +  ".");
                 message.Append("<br>Sincerely,");
                 message.Append("<br>The Speech Accessibility Project Team");
                 message.Append("<br>University of Illinois Urbana - Champaign");
@@ -304,7 +280,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                 message.Append("Dear " + contributor.FirstName);
                 message.Append("<br>Thank you so much for your interest in participating in the Speech Accessibility Project.");
                 message.Append("<br>Unfortunately, you do not meet the current criteria for the project. If you have specific questions about this,");
-                message.Append("please contact speechaccessibility@beckman.illinois.edu.");
+                message.Append("please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] +".");
                 message.Append("<br>Sincerely,");
                 message.Append("<br>The Speech Accessibility Project Team");
                 message.Append("<br>University of Illinois Urbana - Champaign");
