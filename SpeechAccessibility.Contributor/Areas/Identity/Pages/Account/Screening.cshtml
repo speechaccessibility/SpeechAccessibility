@@ -1,0 +1,31 @@
+﻿@page
+@model SpeechAccessibility.Areas.Identity.Pages.Account.ScreeningModel
+@{
+}
+
+@{
+    ViewData["Title"] = "Screening";
+}
+
+<div class="container">
+    <div class="row">
+        <div id="messageDiv" class="col-md-10">
+            <h1>Thank you for your interest in the Speech Accessibility Project!</h1>
+            <div>
+                To help us determine whether we can record your voice, please answer a few questions about yourself.
+                The information provided in these pre-screening questions will only be used to confirm your eligibility in the study and will remain confidential. This information will not be shared outside of the UIUC research team.
+
+                <form method="post">
+                    <br /><button id="nextButton" class="btn btn-primary">Next</button>
+                </form>
+            </div>
+            
+        </div>
+        <div id="errorDiv" class="text-danger">
+        </div>
+    </div><br />
+</div>
+
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/js/RecordingSupported.js"></script>

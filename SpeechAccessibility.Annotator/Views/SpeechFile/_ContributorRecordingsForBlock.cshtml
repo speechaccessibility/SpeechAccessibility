@@ -1,0 +1,200 @@
+﻿@using System.Security.Claims
+@model List<SpeechAccessibility.Core.Models.Recording>
+@{
+    Layout = null;
+}
+<input type="hidden" id="hidContributorId" name="hidContributorId" value="@Model[0].ContributorId" />
+
+<table class="table table-sm table-bordered" id="ContributorRecordingsForBlock-table">
+
+    <tr role="row">
+        <th aria-label="Transcript">RecordingID</th>
+        <th aria-label="Transcript">Transcript</th>
+        <th aria-label="Recording Date" style="width: 100px;">Recording Date</th>
+        <th aria-label="Comment">Comment</th>
+        <th aria-label="Actions" style="width: 150px">Actions</th>
+    </tr>
+    @foreach (var recording in Model)
+    {
+        <tr>
+            <td>@recording.Id</td>
+            <td aria-label="Transcript">@recording.ModifiedTranscript</td>
+            <td aria-label="Recording Date">@recording.CreateTS.ToShortDateString()</td>
+            <td aria-label="Comment">@recording.Comment</td>
+            <td aria-label="Actions">
+               
+                <input type="hidden" id="FilePath" name="FilePath" value="@recording.SpeechFilePath" />
+                @{
+                    var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+
+                    if (userRole == "SLPAnnotator" || userRole == "SLPAnnotatorAdmin" || userRole == "SystemAdmin")
+                    {
+                        <a href="#" class="listen">Rate & Rate</a>
+                    }
+                    else
+                    {
+                        <a href="#" class="listen">Listen</a>
+                    }
+                }
+            </td>
+        </tr>
+    }
+
+</table>
+<script language="javascript" type="text/javascript">
+
+    $(document).ready(function () {
+        // view the recordings
+        $("#ContributorRecordingsForBlock-table").on("click", "a.rate", function (e) {
+            e.preventDefault();
+            var recordingId = $(this).closest('tr').find('td:eq(0)').text();
+            var getUrl = "@Url.Action("RateSpeechFiles", "SpeechFile")?recordingId=" + recordingId;
+
+            location.href = getUrl;
+        });
+
+        //$("#ContributorRecordingsForBlock-table").on("click", "a.listen", function (e) {
+        //    e.preventDefault();
+        //    //var recordingId = $(this).closest('tr').find('td:eq(0)').text();
+        //    var filePath = $('input[type=hidden]', $(this).closest("td")).val();
+        //    $("#lblListenContributorId").text($("#hidContributorId").val());
+        //    $("#lblListenTranscript").text($(this).closest('tr').find('td:eq(1)').text());
+        //    var audio = document.getElementById('listenRecording');
+        //    audio.setAttribute("src", filePath);
+        //         audio.load();
+        //        var dialog = $("#listen-dialog");
+        //        listenRecording(audio, dialog);
+        //        $("#listen-dialog").dialog('open');
+        //        return false;
+        //});
+
+        $('#ContributorRecordingsForBlock-table').on('click', 'a.listen', function (e) {
+            e.preventDefault();
+            if ($("#UserRole").val() == "SLPAnnotator" || $("#UserRole").val() == "SLPAnnotatorAdmin" || $("#UserRole").val() == "SystemAdmin") {
+                    var recordingId = $(this).closest('tr').find('td:eq(0)').text();
+                    var getUrl = "@Url.Action("RateSpeechFiles", "SpeechFile")?recordingId=" + recordingId;
+
+                    getRecordingInformation(getUrl);
+                    $("#listen-dialog").dialog('open');
+                    return false;          
+
+            }
+            else
+            {
+                var filePath = $('input[type=hidden]', $(this).closest("td")).val();
+                $("#lblListenContributorId").text($("#hidContributorId").val());
+                $("#lblListenTranscript").text($(this).closest('tr').find('td:eq(1)').text());
+                var audio = document.getElementById('listenRecording');
+                audio.setAttribute("src", filePath);
+                audio.load();
+                var dialog = $("#listen-dialog");
+                listenRecording(audio, dialog);
+                $("#listen-dialog").dialog('open');
+                return false;
+
+            }
+
+        });
+
+
+        function getRecordingInformation(getUrl) {
+            $("#listen-dialog").dialog({
+                title: "Listen and Rate Recording",
+                autoOpen: false,
+                resizable: false,
+                width: 1000,
+                height: 800,
+                show: { effect: 'drop', direction: "up" },
+                modal: true,
+                draggable: true,
+                closeOnEscape: true,
+                position: { my: "left top", at: "left+50 top+30", of: window },
+
+                open: function () {
+                    $(this).load(getUrl);
+
+                },
+                close: function () {
+
+                },
+                buttons: {
+                    submit: function () {
+
+                        var recordingId = $("#hidRecordingId").val();
+                        var dimensions = $('[name="Dimension"]');
+                        var dimenstionArray = [];
+
+                        $.each(dimensions, function () {
+                            var $this = $(this);
+                            // check if the checkbox is checked
+                            if ($this.is(":checked")) {
+                                //alert($this.val());
+                                var elementName = "dlSeverityLevel_" + this.value
+                                var ratingLevel = document.getElementById(elementName);
+                                var ratingLevelVal = null;
+                                var comment = null;
+                                if (ratingLevel == null || typeof ratingLevel == "undefined") //this is a textbox rating prompt
+                                {
+                                    var txtSeverityLevel = document.getElementById('txtSeverityLevel_' + this.value);
+                                    comment = $(txtSeverityLevel).val();
+                                }
+                                else {
+                                    ratingLevelVal = ratingLevel.options[ratingLevel.selectedIndex].value;
+                                }
+
+                                var otherText = "";
+                                var otherLabel = document.getElementById("lblDimension_" + this.value);
+                                if (otherLabel.innerHTML.trim() == "Other") {
+                                    var otherTextBox = document.getElementById("txtOther_" + this.value);
+                                    otherText = $(otherTextBox).val();
+                                }
+
+                                jsonObject = {
+                                    "RecordingId": recordingId,
+                                    "DimensionId": this.value,
+                                    "RatingLevel": ratingLevelVal,
+                                    "Comment": comment,
+                                    "Other": otherText
+                                };
+                                dimenstionArray.push(jsonObject);
+                            }
+                        });//end each loop
+
+                        var recording = {
+                            "Id": recordingId,
+                            "Comment": $("#txtRecordingComment").val(),
+                            "RecordingRating": dimenstionArray
+                        }
+
+                        $.ajax({
+                            url: '@Url.Action("RateSpeechFiles", "SpeechFile")',
+                            type: "POST",
+                            data: { "recordingForRating": recording },
+                            success: function (response) {
+                                if (response.success === true) {
+                                    $("#listen-dialog").dialog('close');
+                                }
+                                else {
+                                    alert(response.message);
+                                }
+                            },
+                            error: function () { alert('Error Rate Recording! It could be the timeout issue. Please try to reload your browser.'); }
+                        });
+
+
+                    },
+                    close: function () {
+
+                        $(this).dialog('close');
+                    }
+                }
+
+            });
+            
+        }
+
+    });//End document ready
+
+
+
+</script>

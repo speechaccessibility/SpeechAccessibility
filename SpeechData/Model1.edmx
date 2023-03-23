@@ -1,0 +1,149 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema Namespace="SpeechAccessibilityPersonalInformationModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="Contributor">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="nvarchar" MaxLength="450" Nullable="false" />
+          <Property Name="firstName" Type="nvarchar" MaxLength="30" />
+          <Property Name="middleName" Type="nvarchar" MaxLength="30" />
+          <Property Name="lastName" Type="nvarchar" MaxLength="30" />
+          <Property Name="stateResidence" Type="nvarchar(max)" />
+          <Property Name="speechDifficultyInd" Type="nvarchar(max)" />
+          <Property Name="isApproved" Type="bit" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Diagnosis">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="nvarchar" MaxLength="450" Nullable="false" />
+          <Property Name="name" Type="nvarchar(max)" />
+          <Property Name="yearOfDiagnosis" Type="nvarchar(max)" />
+          <Property Name="Contributorid" Type="nvarchar" MaxLength="450" />
+        </EntityType>
+        <Association Name="FK_Diagnosis_Contributor_Contributorid">
+          <End Role="Contributor" Type="Self.Contributor" Multiplicity="0..1" />
+          <End Role="Diagnosis" Type="Self.Diagnosis" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Contributor">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Diagnosis">
+              <PropertyRef Name="Contributorid" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="SpeechAccessibilityPersonalInformationModelStoreContainer">
+          <EntitySet Name="Contributor" EntityType="Self.Contributor" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Diagnosis" EntityType="Self.Diagnosis" Schema="dbo" store:Type="Tables" />
+          <AssociationSet Name="FK_Diagnosis_Contributor_Contributorid" Association="Self.FK_Diagnosis_Contributor_Contributorid">
+            <End Role="Contributor" EntitySet="Contributor" />
+            <End Role="Diagnosis" EntitySet="Diagnosis" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="SpeechAccessibilityPersonalInformationModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="Contributor">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="String" MaxLength="450" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="firstName" Type="String" MaxLength="30" FixedLength="false" Unicode="true" />
+          <Property Name="middleName" Type="String" MaxLength="30" FixedLength="false" Unicode="true" />
+          <Property Name="lastName" Type="String" MaxLength="30" FixedLength="false" Unicode="true" />
+          <Property Name="stateResidence" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="speechDifficultyInd" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="isApproved" Type="Boolean" Nullable="false" />
+          <NavigationProperty Name="Diagnosis" Relationship="Self.FK_Diagnosis_Contributor_Contributorid" FromRole="Contributor" ToRole="Diagnosis" />
+        </EntityType>
+        <EntityType Name="Diagnosi">
+          <Key>
+            <PropertyRef Name="id" />
+          </Key>
+          <Property Name="id" Type="String" MaxLength="450" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="name" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="yearOfDiagnosis" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Contributorid" Type="String" MaxLength="450" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Contributor" Relationship="Self.FK_Diagnosis_Contributor_Contributorid" FromRole="Diagnosis" ToRole="Contributor" />
+        </EntityType>
+        <Association Name="FK_Diagnosis_Contributor_Contributorid">
+          <End Role="Contributor" Type="Self.Contributor" Multiplicity="0..1" />
+          <End Role="Diagnosis" Type="Self.Diagnosi" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Contributor">
+              <PropertyRef Name="id" />
+            </Principal>
+            <Dependent Role="Diagnosis">
+              <PropertyRef Name="Contributorid" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="SpeechAccessibilityPersonalInformationEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="Contributors" EntityType="Self.Contributor" />
+          <EntitySet Name="Diagnosis" EntityType="Self.Diagnosi" />
+          <AssociationSet Name="FK_Diagnosis_Contributor_Contributorid" Association="Self.FK_Diagnosis_Contributor_Contributorid">
+            <End Role="Contributor" EntitySet="Contributors" />
+            <End Role="Diagnosis" EntitySet="Diagnosis" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="SpeechAccessibilityPersonalInformationModelStoreContainer" CdmEntityContainer="SpeechAccessibilityPersonalInformationEntities">
+          <EntitySetMapping Name="Contributors">
+            <EntityTypeMapping TypeName="SpeechAccessibilityPersonalInformationModel.Contributor">
+              <MappingFragment StoreEntitySet="Contributor">
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="firstName" ColumnName="firstName" />
+                <ScalarProperty Name="middleName" ColumnName="middleName" />
+                <ScalarProperty Name="lastName" ColumnName="lastName" />
+                <ScalarProperty Name="stateResidence" ColumnName="stateResidence" />
+                <ScalarProperty Name="speechDifficultyInd" ColumnName="speechDifficultyInd" />
+                <ScalarProperty Name="isApproved" ColumnName="isApproved" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Diagnosis">
+            <EntityTypeMapping TypeName="SpeechAccessibilityPersonalInformationModel.Diagnosi">
+              <MappingFragment StoreEntitySet="Diagnosis">
+                <ScalarProperty Name="id" ColumnName="id" />
+                <ScalarProperty Name="name" ColumnName="name" />
+                <ScalarProperty Name="yearOfDiagnosis" ColumnName="yearOfDiagnosis" />
+                <ScalarProperty Name="Contributorid" ColumnName="Contributorid" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="true" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

@@ -1,0 +1,50 @@
+﻿@model ContactViewModel
+@{
+    ViewData["Title"] = "Contact";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Scripts
+{
+    <script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.js"></script>
+}
+
+<div class="col-md-6 offset-med-3" style="margin-top:25px">
+    @if (Model != null && !String.IsNullOrEmpty(Model.Status))
+    {
+        <div class="alert alert-success alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            @Model.Status
+        </div>
+    }
+
+    @if (Model != null && !String.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            @Model.Error
+        </div>
+    }
+
+    <div class="card card-body bg-light">
+        <form method="post">
+            <div class="form-group">
+                <span style="color:red">*</span>
+                <label>Subject: </label>
+                <input type="text" class="form-control" asp-for="Subject" />
+                <span asp-validation-for="Subject" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span style="color:red">*</span>
+                <label>Message: </label>
+                <textarea id="emailMessage" rows="4" class="form-control" asp-for="Message"></textarea>
+                <span asp-validation-for="Message" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-envelope"></i> Send Message</button>
+            </div>
+        </form>
+    </div>
+</div>
+

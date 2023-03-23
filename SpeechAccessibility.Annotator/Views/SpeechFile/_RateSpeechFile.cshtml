@@ -1,0 +1,140 @@
+﻿@model SpeechAccessibility.Annotator.Models.RecordingRatingViewModel
+@{
+    Layout = null;
+}
+
+<input type="hidden" id="hidRecordingId" value="@Model.Recording.Id" />
+<b>Recording ID: </b><label id="lblRecordingId" name="lblRecordingId">@Model.Recording.Id</label>
+<br /><b>Transcript: </b><label id="lblTranscript" name="lblTranscript">@Model.Recording.ModifiedTranscript</label>
+<br /><b>Contributor: </b><label id="lblContributor" name="lblContributor">@Model.Recording.ContributorId</label>
+<br />
+<audio id="listenRecording" controls preload="none">
+    <source src="@Model.Recording.SpeechFilePath" />
+</audio>
+<br />
+<table class="table table-sm" id="rate-recording-table">
+    @{
+        foreach (var category in Model.DimensionCategoryList)
+        {
+            <tr>
+                <td>
+                    <p><b>@category.Description</b></p>
+                    <table>
+                        @{
+                            var dimensions = category.Dimension.Where(d => d.Active == "Yes");
+                        }
+                        @foreach (var dimension in dimensions)
+                        {
+                            var existRating = Model.RecordingRatingList.Any(r => r.DimensionId == dimension.Id);
+                            var selectedDimension = Model.RecordingRatingList.Find(d => d.DimensionId == dimension.Id);
+                            var ratingLevel = selectedDimension != null ? selectedDimension.RatingLevel != null ? selectedDimension.RatingLevel.Trim() : "" : "";
+                            var otherVisibility = selectedDimension != null ? dimension.Description.Trim() == "Other" ? "visible" : "hidden" : "hidden";
+                            var dimensionOther = selectedDimension?.Other ?? "";
+                            var comment = selectedDimension != null ? selectedDimension.Comment : "";
+
+                            <tr>
+                                <td>
+                                    @if (selectedDimension != null)
+                                    {
+                                        <input id="chkDimension_@dimension.Id" type="checkbox" name="Dimension" value="@dimension.Id" checked="checked" />
+                                    }
+                                    else
+                                    {
+                                        <input id="chkDimension_@dimension.Id" type="checkbox" name="Dimension" value="@dimension.Id" />
+                                    }
+
+                                    <label for="@dimension.Id" id="lblDimension_@dimension.Id">@dimension.Description</label>
+                                    <input type="hidden" id="hidSelectedDimension_@dimension.Id" value="@dimension.Id" />
+
+                                    <input type="text" id="txtOther_@dimension.Id" name="txtOther_@dimension.Id" style="visibility: @otherVisibility" value="@dimensionOther" />
+                                </td>
+
+                                <td>
+                                    @if (Model.Recording.OriginalPrompt.QuestionType.Trim() == "DropDown")
+                                    {
+                                        <div>
+                                            Severity Levels:
+                                            <select id="dlSeverityLevel_@dimension.Id" name="dlSeverityLevel">
+                                                <option value="">Select</option>
+
+                                                @{
+                                                    var severityLevelNum = Model.Recording.OriginalPrompt.SeverityLevels ?? 7;
+                                                    for (var i = 1; i <= severityLevelNum; i++)
+                                                    {
+                                                        if (i.ToString() == ratingLevel)
+                                                        {
+                                                            <option value="@i" selected="selected">@i</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@i">@i</option>
+                                                        }
+
+                                                    }
+                                                    if (ratingLevel == "NA")
+                                                    {
+                                                        <option value="NA" selected="selected">N/A</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="NA">N/A</option>
+                                                    }
+                                                }
+
+
+                                            </select>
+                                            <input type="hidden" id="hidSelectedRatingLevel_@dimension.Id" value="@ratingLevel" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <input type="text" id="txtSeverityLevel_@dimension.Id" name="txtSeverityLevel_@dimension.Id" value="@comment" />
+                                    }
+
+                                </td>
+
+                            </tr>
+                        }
+                    </table>
+
+                </td>
+
+            </tr>
+
+        }
+    }
+</table>
+<table>
+    <tr>
+        <td style="vertical-align: top"> Comment</td>
+        <td>
+
+            <textarea id="txtRecordingComment" name="txtRatingComment" rows="4" cols="50">@Model.Recording.Comment</textarea>
+        </td>
+    </tr>
+</table>
+<br />
+
+
+
+<script language="javascript" type="text/javascript">
+    
+    $(document).ready(function () {
+        $('input[type=checkbox][name=Dimension]').change(function () {
+            var textOther = document.getElementById("txtOther_" + this.value);
+            if ($(this).is(':checked')) {
+                var label = document.getElementById("lblDimension_" + this.value);
+                if (label.innerHTML.trim() == "Other") {
+                    $(textOther).css("visibility", "visible");
+                }
+            }
+            else {
+                $(textOther).css("visibility", "hidden");
+            }
+        });
+
+        
+
+        //end document ready         
+    });
+</script>

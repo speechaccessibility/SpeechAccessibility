@@ -1,0 +1,163 @@
+﻿@{
+    ViewData["Title"] = "Denied Contributors";
+}
+@{
+    ViewBag.Title = "Contributor";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<h1>Denied Contributors</h1>
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+<div style="width: 1000px">
+    <table class="table table-striped table-bordered table-hover" id="ContributorTable" cellspacing="0" align="center"></table>
+</div>
+
+<div id="rating-dialog" style="display: none">
+   
+</div>
+
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            //bind datatable for Contributor
+            var oContributorTable = $("#ContributorTable").on('error.dt',
+                function (e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                    "serverSide": true,
+                    "processing": true,
+                    "responsive": true,
+                    "iDisplayLength": 100,
+                    "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                        "<'row'<'col-sm-12'tr>>p",
+                    "ajax": ({
+                        "url": '@Url.Action("LoadApprovedDeniedContributors", "Contributor", new { filter = 3 })',
+                        "type": "POST",
+                        "datatype": "json"
+                    }),
+                    "bAutoWidth": false,
+                    "aaSorting": [[1, 'asc']],
+                    "columns": [
+                        {
+                            "title": "ID",
+                            "data": "contributor.id",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.Id"
+                        },
+
+                        {
+                            "title": "FirstName",
+                            "data": "contributor.firstName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.FirstName"
+                        },
+                        {
+                            "title": "MiddleName",
+                            "data": "contributor.middleName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.MiddleName"
+                        },
+                        {
+                            "title": "LastName",
+                            "data": "contributor.lastName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.LastName"
+                        },
+                        {
+                            "title": "Comments",
+                            "data": "contributor.comments",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.Comments"
+                        },
+                                  {
+                            "title": "Actions",
+                            "data": "contributor.id",
+                            //"targets": 0,
+                            "searchable": false,
+                            "orderable": false,
+                            "width": '200px',
+                            "classDescription": 'dt-body-center',
+                            "visible": true,
+                            "name": "contributor.id",
+                            "render": function (data, type, row) {
+                                //console.log(data);
+                                var link = '<a href="#" class="viewRating" >View SIT Rating</a>';
+                                return link;
+                                return "";
+                            }
+                        }
+                    ],
+                    "ordering": true,
+                    "paging": true,
+                    "pageLength": 100,
+                    "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+                });
+
+
+          
+            // rate the recording
+            $('#ContributorTable').on('click', 'a.viewRating', function (e) {
+                e.preventDefault();
+                var selectedRowData = oContributorTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                var getUrl = "@Url.Action("ViewSITRecordingRating", "SpeechFile")?contributorId=" + row.contributor.id;
+                $("#lblContributor").text(row.id);
+                getRecordingRating(getUrl);
+                $("#rating-dialog").dialog('open');
+                return false;
+            });
+            function getRecordingRating(getUrl) {
+                $("#rating-dialog").dialog({
+                    title: "SIT Speech File Rating",
+                    autoOpen: false,
+                    resizable: false,
+                    width: 1000,
+                    height: 700,
+                    show: { effect: 'drop', direction: "up" },
+                    modal: true,
+                    draggable: true,
+                    closeOnEscape: true,
+                    position: { my: "left top", at: "left+50 top+100", of: window },
+                                     
+                    open: function () {
+                        $(this).load(getUrl);
+                        //$('#rating-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+                    },
+                    close: function () {
+                      
+                    },
+                    buttons: {
+                       
+                        close: function () {
+                           
+                            $(this).dialog('close');
+                        }
+                    }
+
+                });
+            }
+
+
+        });//End document ready
+
+    </script>
+}

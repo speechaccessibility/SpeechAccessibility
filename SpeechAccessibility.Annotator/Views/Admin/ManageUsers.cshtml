@@ -1,0 +1,397 @@
+﻿@model SpeechAccessibility.Annotator.Models.ADMemberViewModel
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+@{
+    ViewBag.Title = "Manage Users";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<h1>Manage Users</h1>
+@foreach (var role in ViewBag.RoleList)
+{
+    <b>@role.Name: </b>@role.Description
+    <br>
+}
+<div id="top"></div>
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+
+<table style="border-collapse: collapse !important;border: none !important;">
+    <tr>
+        <td style="border: none !important;">
+            <label>NetID</label><span class="required">*</span>
+        </td>
+        <td style="border: none !important;">
+            <input id="NetID" name="NetID" type="text" value="">
+            <input type="button" id="btnUserInfo" name="btnUserInfo" value="Check NetID" class="btn btn-primary btn-sm" />
+            <span id="spValidNetId"></span>
+            <input type="hidden" id="hidValidNetId" name="hidValidNetID" value="No" />
+            <input type="hidden" id="hidNetID" name="hidNetID" value="" />
+        </td>
+    </tr>
+</table>
+<input type="hidden" asp-for="Id" value="@Model.Id" />
+@*<input type="hidden" asp-for="ExistingADDescription" value="@Model.ExistingADDescription" />*@
+<div id="divUserInfo">
+    <span class="errorMessage alert" style="display:none" id="spInvalidAccess"></span>
+     
+        <table id="table-user-info" class="table table-bordered" style="width: 1000px;">
+            <tr>
+                <th style="width:100px"><label asp-for="FirstName"></label></th>
+                <td>
+                    <label id="lblFirstName" name="lblFirstName"></label>
+                </td>
+
+                <th style="width:100px"><label asp-for="LastName"></label></th>
+                <td>
+                    <label id="lblLastName" name="lblLastName"></label>
+                </td>
+            </tr>
+           
+            <tr>
+                <th><label asp-for="RoleId"></label><span class="required">*</span></th>
+                <td  colspan="3" ><select asp-for="RoleId" asp-items="@Model.Roles"></select></td>
+               
+            </tr>
+
+            <tr>
+                <td colspan="4" style="text-align: center">
+                    <input type="button" id="btnSave" name="btnSave" value="Add New" styledisabled="disabled" />
+                    <input type="button" id="btnClear" name="btnClear" value="Clear" />
+                </td>
+            </tr>
+        </table>
+</div>
+
+
+<br />
+<div style="width: 1000px">
+    <table class="table table-striped table-bordered table-hover" id="UserTable" cellspacing="0" align="center"></table>
+
+</div>
+<div class="spinner" style="display:none">
+    <div class="center-div">
+        <div class="inner-div">
+            <div class="loader"></div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $("#divUserInfo").hide();
+            var spanTag = document.getElementById("spInvalidAccess");
+            spanTag.style.display = "none";
+
+            //bind datatable for UserList
+            var oUserTable = $("#UserTable").on('error.dt',
+                function(e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                "serverSide": true,
+                "processing": true,
+                "responsive": true,
+                "iDisplayLength": 100,
+                "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                    "<'row'<'col-sm-12'tr>>p", //'<"top"l>rift<"bottom"p><"clear">',
+                "ajax": ({
+                    "url": '@Url.Action("LoadUsers", "Admin")',
+                    "type": "POST",
+                    "datatype": "json"
+                }),
+                "bAutoWidth": false,
+                "aaSorting": [[1, 'asc']],
+                "columns": [
+                    {
+                        "title": "id",
+                        "data": "id",
+                        "searchable": true,
+                        "orderable": false,
+                        "visible": false,
+                        "name": "Id"
+                    },
+                    {
+                        "title": "Last Name",
+                        "data": "lastName",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": true,
+                        "name": "LastName"
+                    },
+                    {
+                        "title": "First Name",
+                        "data": "firstName",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": true,
+                        "name": "FirstName"
+                    },
+                    {
+                        "title": "NetID",
+                        "data": "netId",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": true,
+                        "name": "NetId"
+                    },
+                    {
+                        "title": "Role",
+                        "data": "roleName",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": true,
+                        "name": "RoleName"
+                    },
+                    {
+                        "title": "Actions",
+                        "data": "roleId",
+                        //"targets": 0,
+                        "searchable": false,
+                        "orderable": false,
+                        "width": '200px',
+                        "classDescription": 'dt-body-center',
+                        "visible": true,
+                        "name": "Id",
+                        "render": function(data, type, row) {
+                            //console.log(data);
+                            if (data !== 1) {
+                                var link = '<a href="#" class="editUser" >Edit</a> | <a href="#" class="deleteUser" >Delete</a>';
+                                return link;
+                            }
+
+                            return "";
+                        }
+                    }
+                ],
+                "ordering": true,
+                "paging": true,
+                "pageLength": 100,
+                "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+
+            });
+
+             //edit the existing Person
+            $('#UserTable').on('click',
+                'a.editUser',
+                function(e) {
+                    e.preventDefault();
+                    $('.spinner').css('display', 'block');
+                    clearAllFields();
+                    $("#divUserInfo").show();
+                    var selectedRow = $(this).parents('tr');
+                    selectedRow.addClass("row-selected");
+                    var selectedRowData = oUserTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();
+                    /*var userId = row.id;      */              
+                    $("#NetID").val(row.netId);
+                    getUserInformation(row.netId);
+                    $.scrollTo($("#top"), { offset: { top: -150, left: -100 } });
+                  
+                });
+
+
+            //delete the existing User
+            $('#UserTable').on('click',
+                'a.deleteUser',
+                function(e) {
+                    e.preventDefault();
+                    $('.spinner').css('display', 'block');
+                    var selectedRowData = oUserTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();
+
+                    var userName = row.lastName + ", " + row.firstName;
+                    //$("#Id").val(personId);
+                    const sureDelete = confirm(`Are you sure you want to remove ${userName}?`);
+                    if (sureDelete === true) {
+                        $.ajax({
+                            url: '@Url.Action("DeleteUser", "Admin")',
+                            type: "POST",
+                            data: { "netId": row.netId },
+                            success: function(response) {
+                                $('.spinner').css('display', 'none');
+                                if (response.success === true) {
+                                    oUserTable.draw();
+                                    $("#lblMessage").text(response.message);
+                                    $("#lblMessage").removeClass("alert-warning");
+                                    $("#lblMessage").addClass("alert-success");
+
+                                } else {
+                                    alert(response.message);
+                                    $("#lblMessage").text(response.message);
+                                    $("#lblMessage").addClass("alert-warning");
+                                    $("#lblMessage").removeClass("alert-success");
+                                }
+                            },
+                            error: function() {
+                                alert("Error: Delete User!");
+                                $('.spinner').css('display', 'none');
+                            }
+                        });
+                    } else {
+                        $('.spinner').css('display', 'none');
+                    }
+                    $.scrollTo($("#top"), { offset: { top: -150, left: -100 } });
+                    //return false;
+                });
+
+
+            //get staff information from AD
+            $('input:button[name="btnUserInfo"]').click(function() {
+                $('.spinner').css('display', 'block');
+                $("#lblMessage").removeClass("alert-warning");
+                $("#lblMessage").removeClass("alert-success");
+                $("#lblMessage").text("");
+                getUserInformation($("#NetID").val());
+
+                //return false;
+            });
+
+            $('input:button[name="btnClear"]').click(function() {
+                clearAllFields();
+                $("#NetID").focus();
+                //return false;
+            });
+
+            function clearAllFields() {
+                $("#lblMessage").removeClass("alert-warning");
+                $("#lblMessage").removeClass("alert-success");
+                $("#spValidNetId").html("");
+                $("#hidValidNetId").val("No");
+                $("#hidNetID").val("");
+                $("#Id").val("");
+                //$("#lblLastName").text("");
+                $("#lblName").text("");
+                $("#NetID").val("");
+                $("#btnSave").prop('disabled', true);
+            }
+
+
+            //add/update User
+            $('input:button[name="btnSave"]').click(function() {
+                $('.spinner').css('display', 'block');
+                //check for all required fields
+                if ($("#hidValidNetId").val() === "No" || $("#hidNetID").val() === "") {
+                    $('.spinner').css('display', 'none');
+                    alert('Valid NetID is required. Make sure you click "Get User Information" to validate NetID');
+                    $("#NetID").focus();
+                    return false;
+                }                
+                
+                var jsonObject = {
+                    "Id": $("#Id").val(),                    
+                    "NetID": $("#NetID").val(),
+                    "LastName": $("#lblLastName").text(),
+                    "FirstName": $("#lblFirstName").text(),                  
+                    "RoleId": $('#RoleId').val()                  
+                };
+
+                $.ajax({
+                    url: '@Url.Action("AddUpdateUser", "Admin")',
+                    type: "POST",
+                    data: { "userVM": jsonObject },
+                    success: function(response) {
+                        $('.spinner').css('display', 'none');
+                        if (response.success === true) {
+                            oUserTable.draw();
+                            clearAllFields();
+                            $("#lblMessage").text(response.message[0].message);
+                            $("#lblMessage").removeClass("alert-warning");
+                            $("#lblMessage").addClass("alert-success");
+                            $("#NetID").focus();
+
+                        } else {
+                            alert(response.message);
+                            clearAllFields();
+                            $("#lblMessage").text(response.message);
+                            $("#lblMessage").addClass("alert-warning");
+                            $("#lblMessage").removeClass("alert-success");
+                            $("#NetID").focus();
+                        }
+                    },
+                    error: function() {
+                        alert("Error: Delete User!");
+                        $('.spinner').css('display', 'none');
+                    }
+                });
+                //return false;
+            });
+
+            function getUserInformation(netId) {
+                $.ajax({
+                    url: '@Url.Action("GetUserInfoFromAD", "Extension")',
+                    type: "POST",
+                    data: { "netId": netId },
+                    success: function(response) {
+                        $('.spinner').css('display', 'none');
+                        if (response.success === true) {
+                            $("#Id").val(response.message.id);
+                            $("#hidNetID").val(response.message.netId);
+                            $("#lblLastName").text(response.message.lastName);
+                            $("#lblFirstName").text(response.message.firstName);
+                            if (response.message.id === 0) {
+                                $("#RoleId").val(3).trigger("chosen:updated");                              
+                                $("#btnSave").val("Add New");
+                                $("#btnSave").prop('disabled', false);                              
+
+                            } else { //existing person
+                                if (response.message.roleId == 1)
+                                {
+                                    $("#spInvalidAccess").text("This person is a SystemAdmin. Updating is not available.");
+                                    document.getElementById("spInvalidAccess").style.display = "inline";
+
+                                    $("#btnSave").prop('disabled', true);
+                                }
+                                else 
+                                {
+
+                                    //if (response.message.role.name === "") {
+                                    //    $("#spInvalidAccess").text("This person was added in the database but was not added to the Speech Accessibility Active Directory group. Please click Update to give this user permission to the Portal.");
+                                    //}
+                                    var spanTag = document.getElementById("spInvalidAccess");
+                                    spanTag.style.display = "none";
+                                    $("#RoleId").val(response.message.roleId).trigger("chosen:updated");   
+                                    $("#btnSave").val("Save");
+                                    $("#btnSave").prop('disabled', false); 
+                                }                                                          
+                            }
+                                
+                            $("#hidValidNetId").val("Yes");
+                            $("#spValidNetId").html("&#10004;");
+                           
+                            $("#divUserInfo").show();
+                            $('.spinner').css('display', 'none');
+                        } else {
+                            $("#lblMessage").text(response.message);
+                            $("#lblMessage").addClass("alert-warning");
+                            $("#lblMessage").removeClass("alert-success");
+                            $("#spValidNetId").html("&#10060;");
+                            $("#hidValidNetId").val("No");
+                            $("#hidUserNetID").val("");
+                            $("#lblLastName").text("");
+                            $("#lblFirstName").text("");
+                            $("#btnSave").prop('disabled', true);
+                            $("#divUserInfo").hide();
+                            $('.spinner').css('display', 'none');
+                        }
+
+                    },
+                    error: function() {
+                        alert("Error: Validate NetID!");
+                        $('.spinner').css('display', 'none');
+                    }
+                });
+            }
+
+
+        });
+
+    </script>
+}

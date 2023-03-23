@@ -1,0 +1,736 @@
+﻿@import"https://fonts.googleapis.com/css?family=Montserrat";
+
+
+html {
+    font-size: x-large;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+@media print {
+    @page {
+        margin: 0;
+    }
+
+    .no-print {
+        display: none !important;
+        height: 0;
+    }
+}
+
+
+.border-top {
+    border-top: 1px solid #e5e5e5;
+}
+
+.border-bottom {
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.box-shadow {
+    box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+}
+
+button.accept-policy {
+    font-size: 1rem;
+    line-height: inherit;
+}
+
+
+
+body {
+    /* Margin bottom by footer height */
+    margin-bottom: 60px;
+    /*padding-top: 5rem;*/
+    color: black !important;
+    font-family: "Montserrat";
+}
+
+
+.main-body {
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+@media (max-width: 1024px) {
+    td {
+        display: block;
+    }
+}
+
+
+.bg-beckman {
+    background-color: #13294B !important;
+}
+
+
+.illinois-wordmark--horizontal {
+    height: 3rem;
+    display: block;
+    padding: 5px 5px 1rem;
+}
+
+.beckman-logo--full {
+    /*display: block;*/
+    max-height: 12rem;
+    margin: 0;
+    margin-bottom: 37px;
+    /* max-height: 12rem;
+    margin: 0;
+    max-width: 100%;
+    width: 325px;*/
+}
+
+.illinois_logo_link {
+    display: flex;
+    background-image: url('../images/BlockI-Logo-Reversed-Orange-RGB.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    width: 52px;
+    height: 63px;
+    color: transparent;
+}
+
+.beckman_logo_link {
+    display: flex;
+    height: 75px;
+    border-left: 1px solid #fff;
+    margin-left: 15px;
+    padding-left: 15px;
+    align-items: center;
+    font-size: 30px;
+    color: #fff;
+    text-decoration: none;
+    font-family: "Source Sans Pro",sans-serif;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: #fff !important;
+}
+
+.nav-link:hover {
+    border: 1px solid #fff !important;
+}
+
+.nav-link {
+
+    border-left: 1px solid #fff;
+    margin:5px;
+}
+
+.nav-item.active {
+    font-weight: 700 !important;
+}
+
+.dropdown-item.active, .dropdown-item:active {
+    background-color: #d9d9d9 !important;
+}
+
+.dropdown-item {
+    color: black !important;
+}
+#university-logo {
+    flex-direction: row;
+    display: flex;
+    align-items: center;
+    height: 75px;
+}
+
+.illinois-logo {
+    
+    height: 43px;
+    width: 30px;
+    display: flex;
+}
+
+
+.university-banner {
+    border-top: solid 7px #ff5f05;
+
+}
+
+    .university-banner p {
+        margin-left: 14px;
+        text-transform: uppercase;
+        font-size: 14px;
+        font-weight: 600;
+        color: #13294b;
+        font-family: sans-serif;
+    }
+
+
+#top-banner {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#site-name {   
+    text-decoration: none;
+    font-family: "Montserrat";
+    color:black;
+}
+
+#user-info {
+    margin-top: 10px;
+    color: #ffffff;
+    float: right;
+    margin-bottom: 0 !important;
+}
+
+.wordmark-site-title {
+    border-left: 1px solid #13294B;
+    margin-left: 20px;
+    padding-left: 20px;
+    align-items: center;
+    font-size: 20px;
+    text-decoration: none;
+    color:black;
+    font-family: "Montserrat";
+    font-size: x-large;
+}
+
+#site-name-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.btn-primary {
+    background-color: #13294B;
+    border-color: #13294B;
+    font-size:x-large;
+}
+
+.btn-primary:disabled {
+    background-color: darkgrey;
+}
+
+
+.nameLabel {
+    display:block;
+}
+
+audio,
+canvas,
+iframe,
+img,
+svg,
+video {
+    vertical-align: middle;
+}
+
+#consentDiv {
+    margin-top: 20px;
+}
+
+#waveform {
+    background-color:black;
+}
+
+#recordingDiv {
+    display:none;
+    padding: 5px;
+}
+
+a {
+    color: #1D58A7;
+}
+
+
+#prompt {
+
+    font-size: xx-large;
+    border: 1px solid #13294B;
+    padding:10px;
+}
+
+label {
+    font-size: x-large;
+    color:#13294B;
+    
+}
+
+
+div {
+    font-size: x-large;
+}
+
+input[type=text] {
+    font-size: x-large;
+}
+
+input[type=email] {
+    font-size: x-large;
+
+}
+
+input[type=password] {
+    font-size: x-large;
+}
+
+input[type=tel] {
+    font-size: x-large;
+}
+
+
+input[type=checkbox] {
+    width: 30px;
+    height: 30px;
+}
+
+input[type=radio]
+{
+    width:25px;
+    height:25px;
+}
+
+option
+{
+    font-size:x-large;
+}
+
+#emailMessage {
+    font-size: x-large;
+}
+
+#speechChangeDescription
+{
+    font-size:x-large;
+}
+
+@media (min-width: 1136px) {
+    .google_slide__wrapper {
+        max-width: 1040px;
+        margin: auto;
+        padding: 0px 0px 35% 0px
+    }
+}
+
+.footer {
+    background-color: #13294B;
+    margin: 0 auto;
+    margin-top: auto;
+    position: absolute;
+    width: 100%;
+}
+
+    .footer *:focus {
+        outline: 2px solid white;
+        z-index: 100000
+    }
+
+.footer__right {
+    max-width: 500px
+}
+
+.footer__left {
+    padding-top: 10px
+}
+
+.footer__logo {
+    width: 82%;
+    padding-top: 10px;
+    margin-bottom: 40px
+}
+
+    .footer__logo img {
+        max-width: 235px;
+        max-height: 61px;
+        width: 100%;
+        height: 100%
+    }
+
+.footer__wrapper {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    margin: 0 auto;
+    max-width: 300px;
+    padding: 64px 0
+}
+
+.socialmedia__wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    margin-left: -38px;
+    max-width: 285px
+}
+
+.socialmedia__icon {
+    margin-right: 8px
+}
+
+.socialmedia__svg {
+    position: relative;
+    z-index: 1;
+    fill: #13294B
+}
+
+    .socialmedia__svg:hover {
+        fill: #ff552e
+    }
+
+.socialmedia__link {
+    border: 2px solid #13294B;
+    border-radius: 50%;
+    height: 48px;
+    width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative
+}
+
+    .socialmedia__link:before {
+        position: absolute;
+        content: "";
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        transform: scale(0);
+        background-color: #13294B;
+        transition: transform .25s ease-in-out;
+        border-radius: 50%
+    }
+
+    .socialmedia__link:hover:before {
+        transform: scale(1)
+    }
+
+    .socialmedia__link:focus:before {
+        transform: scale(1)
+    }
+
+    .socialmedia__link:hover .socialmedia__svg, .socialmedia__link:focus .socialmedia__svg {
+        fill: #f8f8f8
+    }
+
+.socialmedia__icon img {
+    height: 100%;
+    width: 100%
+}
+
+.socialmedia_link-text {
+    display: none
+}
+
+.footer .socialmedia__link {
+    border: 2px solid #ff4d00
+}
+
+    .footer .socialmedia__link:before {
+        background-color: #ff4d00
+    }
+
+.footer .socialmedia__svg {
+    fill: #ffffff
+}
+
+    .footer .socialmedia__svg:hover {
+        fill: #13294B
+    }
+
+.footer li {
+    list-style-type: none
+}
+
+
+.footer-nav__wrapper {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    flex-direction: row;
+    padding: 0
+}
+
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    .footer-nav__wrapper {
+        width: 500px
+    }
+}
+
+.footer-nav__link {
+    border-top: 2px solid #c3c3c3
+}
+
+    .footer-nav__link a {
+        font-size: 16px;
+        color: #fff;
+        text-decoration: none;
+        width: 100%;
+        display: block;
+        padding-top: 10px;
+        padding-bottom: 25px;
+        position: relative
+    }
+
+        .footer-nav__link a:before {
+            position: absolute;
+            top: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #ff4d00;
+            content: "";
+            transform: scaleX(0);
+            transform-origin: left center;
+            transition: transform .25s ease-in-out
+        }
+
+        .footer-nav__link a:hover:before {
+            transform: scaleX(1)
+        }
+
+        .footer-nav__link a:focus:before {
+            transform: scaleX(1)
+        }
+
+.footer-nav-heading {
+    font-family: "Oswald",sans-serif;
+    font-size: 48px;
+    letter-spacing: 3px;
+    line-height: 1.17;
+    color: #fff;
+    text-transform: uppercase;
+    margin: 0 0 3.2rem 0
+}
+
+.footer p {
+    color: #fff;
+    font-size: 16px
+}
+
+.contact-info {
+    font-size: 16px;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-content: flex-start;
+    width: 95%;
+    padding: 0
+}
+
+.ci_label {
+    font-weight: 900;
+    margin: 0;
+    font-size: 16px;
+    letter-spacing: 1px;
+    line-height: 1;
+    margin-bottom: 5px;
+    width: 62%
+}
+
+.contact-info__email a, .contact-info__phone a {
+    color: #fff;
+    text-decoration: underline;
+    -webkit-text-decoration-color: #ff4d00;
+    text-decoration-color: #ff4d00
+}
+
+.contact-info__unit {
+    color: #fff;
+    font-weight: bold
+}
+
+.contact-info__address {
+    margin-top: 8px;
+    margin-bottom: 16px
+}
+
+.phone-num, .fax-num, .email-link {
+    text-decoration: underline;
+    -webkit-text-decoration-color: #ff4d00;
+    text-decoration-color: #ff4d00;
+    margin: 0;
+    line-height: 1;
+    margin-bottom: 16px;
+    word-wrap: break-word
+}
+
+@media (max-width: 432px) {
+    .footer__logo {
+        max-width: 300px;
+        width: 80%
+    }
+
+    .footer-nav__wrapper {
+        flex-direction: column
+    }
+}
+
+@media (max-width: 688px) {
+    .footer__wrapper {
+        flex-direction: column
+    }
+
+    .footer__right {
+        order: -1;
+        max-width: 100%
+    }
+}
+
+@media (min-width: 849px) and (max-width: 1136px) {
+    .footer__wrapper {
+        margin: 0 4.8rem
+    }
+}
+
+@media (max-width: 848px) {
+    .footer-nav-heading {
+        font-size: 32px
+    }
+
+    .footer__wrapper {
+        margin: 0 2.4rem;
+        max-width: 100%
+    }
+}
+
+@media (min-width: 433px) and (max-width: 1136px) {
+    .footer__logo {
+        padding-top: 20px;
+        width: 300px
+    }
+
+    .footer__left {
+        min-width: 345px
+    }
+
+    .footer-nav__link {
+        flex: 1 1 40%;
+        margin-right: 10px
+    }
+}
+
+@media (min-width: 689px) and (max-width: 1136px) {
+    .footer__wrapper {
+        max-width: 1200px
+    }
+
+    .footer__right {
+        max-width: 350px
+    }
+
+    .ci_label {
+        min-width: 55%
+    }
+
+    .contact-info {
+        font-size: 16px;
+        color: white;
+        display: flex;
+        width: 85%;
+        flex-wrap: wrap
+    }
+
+    .footer__logo {
+        max-width: 345px;
+        padding-top: 0
+    }
+
+    .socialmedia__wrapper {
+        margin-left: -40px;
+        margin-top: 0
+    }
+
+    .email-link {
+        min-width: 200px
+    }
+}
+
+@media (min-width: 1137px) {
+    .footer__wrapper {
+        max-width: 1040px
+    }
+
+    .socialmedia__wrapper {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        flex-wrap: nowrap;
+        justify-content: space-evenly;
+        width: 80%
+    }
+
+    .footer-nav__wrapper {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        flex-direction: row
+    }
+
+    .footer-nav__link, .footer-nav__link a {
+        width: 240px
+    }
+
+
+    .contact-info {
+        font-size: 16px;
+        color: white;
+        display: flex;
+        width: 85%;
+        flex-wrap: wrap
+    }
+
+    .contact-info__phone, .contact-info__fax {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start
+    }
+
+    .contact-info__email {
+        display: flex;
+        flex-direction: row
+    }
+
+    .phone-num, .fax-num, .email-link {
+        width: 100%
+    }
+
+    .ci_label {
+        width: 80px
+    }
+}
+
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    .socialmedia__wrapper {
+        width: 65%
+    }
+}
+
+.skip-to-main-content-link {
+    position: absolute;
+    left: -9999px;
+    z-index: 999;
+    padding: 1em;
+    background-color: black;
+    color: white;
+    opacity: 0;
+}
+
+    .skip-to-main-content-link:focus {
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 1;
+    }
+
+.validation-summary-valid {
+    display: none;
+}
+
+.text-danger {
+    color: #ab0313 !important;
+}
+

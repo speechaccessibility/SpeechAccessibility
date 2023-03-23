@@ -1,0 +1,44 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+@inject IdentityContext identityContext; 
+
+<ul class="navbar-nav ml-auto">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        var current_User = await UserManager.GetUserAsync(User);
+
+        Contributor contributor = identityContext.Contributor
+               .Where(o => o.IdentityUser.Id == current_User.Id)
+               .FirstOrDefault();
+
+        TempData["userId"] = current_User.Id;
+        TempData["contributorId"] = contributor.Id;
+
+@*< li class="nav-item">
+<a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Member ID: @current_User.Id</a>
+</li>*@
+<li class="nav-item">
+    <div class="dropdown">
+        <a class="nav-link text-light dropdown-toggle" href="#" role="button" id="dropdownLogoutLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span>@current_User.Email</span>
+        </a>
+        <div class="dropdown-menu" aria-labelledby="dropdownLogoutLink">
+                    <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index" style="font-size:x-large">Manage Account</a>
+            <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                <button type="submit" class="dropdown-item" style="font-size:x-large">Logout</button>
+            </form>
+        </div>
+    </div>
+</li>
+}
+else
+{
+<li class="nav-item">
+    <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
+</li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Screening">Sign Up</a>
+        </li>
+}
+</ul>

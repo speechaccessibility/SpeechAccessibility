@@ -1,0 +1,295 @@
+﻿@using System.Security.Claims
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model SpeechAccessibility.Annotator.Models.BlockViewModel
+@{
+    ViewData["Title"] = "Blocks";
+}
+@{
+    ViewBag.Title = "Blocks";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowgroup/1.3.0/css/rowGroup.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<h1>Blocks</h1>
+<div id="top"></div>
+@{
+    var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+}
+<input type="hidden" id="UserRole" value="@userRole" />
+
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+<span class="bg-warning"><b>Note:</b> We current can only edit prompts for Block #1.</span>
+@{
+    if (userRole == "TextAnnotatorAdmin" || userRole == "SystemAdmin")
+    {
+        <br />@Html.ActionLink("Add Prompt to Block", "Index", new { id = 0 }, new { @class = "addPrompt", title = "Add Prompt" })
+        
+    }
+
+}
+
+
+<div id="divAddPrompt" style="display: none; border-style: groove; border-width: thin;">
+    
+    <table>
+        <tr>
+            <td><b>Block</b></td>
+            <td>
+                <select asp-for="@Model.Id" asp-items="@Model.Blocks"></select>
+            </td>
+        </tr>
+        <tr>
+            <td><b>Category: </b></td>
+            <td><select asp-for="@Model.CategoryId" asp-items="@Model.Categories"></select></td>
+        </tr>
+        <tr>
+            <td>
+                <b>Prompt:</b>
+            </td>
+            <td>
+                <span id="lblPromptTranscription" name="lblPromptTranscription" class="hidden"></span>
+                <input type="hidden" id="lblPromptId" name="lblPromptId" value=""/>
+                <input type="text" name="txtPrompt" id="txtPrompt" class="form-control" size="100" value=""/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="button" value="Add" id="btnAdd"/>
+                <input type="button" value="Cancel" id="btnCancel"/>
+            </td>
+        </tr>
+    </table>
+    <br/><br/>
+</div>
+<div>
+    <table class="table table-striped table-bordered table-hover" id="BlockTable" cellspacing="0" align="center"></table>
+</div>
+
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/rowgroup/1.3.0/js/dataTables.rowGroup.min.js"></script>
+
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {            
+         
+            //bind the search box for prompts
+            $("#txtPrompt").autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: "@Url.Action("GetPromptList", "Block")",
+                        type: "POST",
+                        dataType: "json",
+                        data: { search: request.term, categoryId: $("#CategoryId").val() },
+                        success: function (data) {
+                            
+                            response($.map(data,
+                                function (item) {
+                                    return {
+                                        label: item.transcript,
+                                        value: item.transcript,
+                                        id: item.id
+                                    };
+                                }));
+                        }
+                    });
+                },
+                open: function () {
+                   
+                },
+                select: function (event, ui) {
+                    $("#lblPromptId").val(ui.item.id);
+                    $("#lblPromptTranscription").text(ui.item.value);
+                }
+            });
+                      
+            //bind datatable for Prompts
+           
+            var oBlockTable = $("#BlockTable").on('error.dt',
+                function(e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                "serverSide": true,
+                "processing": true,
+                "responsive": true,
+                "iDisplayLength": 50,
+                "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                    "<'row'<'col-sm-12'tr>>p",
+                "ajax": ({
+                        "url": '@Url.Action("LoadMasterOfPrompts", "Block")',
+                    "type": "POST",
+                    "datatype": "json"
+                }),
+                "bAutoWidth": false,
+                "aaSorting": [[2, 'asc']],
+                "columns": [
+                    {
+                        "title": "",
+                            "data": "prompt.id",
+                        "searchable": true,
+                        "orderable": false,
+                        "visible": true,
+                        "name": "Prompt.id"
+                            ,
+                            render: function (data, type, row, meta) {
+                                return meta.row + meta.settings._iDisplayStart + 1;
+                            }
+                    },
+                    {
+                        "title": "Transcript",
+                            "data": "prompt.transcript",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": true,
+                            "name": "Prompt.Transcript"
+                    },
+                    {
+                        "title": "Category",
+                        "data": "prompt.category.description",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": true,
+                        "width": '200px',
+                            "name": "Prompt.CategoryId"
+                    },
+                    {
+                        "title": "Block",
+                        "data": "blockMaster.description",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": true,
+                        "width": '80px',
+                        "name": "BlockMaster.Description"
+                    },
+                        //{
+                        //    "title": "SubCategory",
+                        //    "data": "prompt.subCategory.description",
+                        //    "searchable": true,
+                        //    "orderable": true,
+                        //    "visible": true,
+                        //    "name": "prompt.subCategoryId"
+                        //},
+
+                    {
+                        "title": "Actions",
+                        "data": "id",
+                        //"targets": 0,
+                        "searchable": false,
+                        "orderable": false,
+                        "width": '50px',
+                        "classDescription": 'dt-body-center',
+                        "visible": true,
+                        "name": "Id",
+                        "render": function(data, type, row) {
+                                if ($("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
+                                    var link = '<a href="#" class="remove" >Remove</a>';
+                                    return link;
+                                }
+                               
+                            return "";
+                        }
+                    }
+                ],
+                  //"rowGroup": {
+                  //      dataSrc: 3
+                  //  },
+                "ordering": true,
+                "paging": true,
+                "pageLength": 50,
+                "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+            });
+            
+             $(".addPrompt").on("click", function (e) {
+                e.preventDefault();
+                $("#lblMessage").text("");
+                $("#divAddPrompt").show();
+                
+            });
+
+            $("#CategoryId").change(function () {
+                $("#txtPrompt").val("");
+            });
+
+            $("#btnCancel").click(function () {
+                $("#txtPrompt").val("");
+                $('#CategoryId').prop('selectedIndex', 0);
+                $('#Id').prop('selectedIndex', 0);
+            });
+            $("#btnAdd").click(function () {
+                var promptId = $("#lblPromptId").val();
+                var categoryId = $("#CategoryId").val();
+                var blockId = $("#Id").val();
+               
+                $.ajax({
+                    url: '@Url.Action("AddPromptToBlock", "Block")',
+                    type: "POST",
+                    data: { "blockMasterId": blockId, "categoryId": categoryId, "promptId": promptId },
+                    success: function (response) {
+                        if (response.success === true) {
+                            $("#txtPrompt").val("");
+                            $('#CategoryId').prop('selectedIndex', 0);
+                            $('#Id').prop('selectedIndex', 0);
+                            $("#lblMessage").text("Prompt is added.");
+                            $("#lblMessage").after("<br />");
+                            oBlockTable.draw();
+                        } else {
+                            $("#lblMessage").text(response.message );
+                            $("#lblMessage").after("<br />");
+                        }
+                    },
+                    error: function () { alert('Error Add New Prompt! It could be the timeout issue. Please try to reload your browser.'); }
+                });
+
+            });
+
+            //delete the prompt
+            $('#BlockTable').on('click',
+                'a.remove',
+                function (e) {
+                    e.preventDefault();
+                 var selectedRowData = oBlockTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();
+
+                    const sureDelete = confirm("Are you sure to remove this prompt: " + row.prompt.transcript);
+                if (sureDelete === true) {
+                        
+                        $.ajax({
+                            url: '@Url.Action("RemovePromptToBlock", "Block")',
+                            type: "POST",
+                            data: { "blockMasterPromptId": row.id },
+                            success: function (response) {
+                                if (response.success === true) {
+                                    $("#lblMessage").text("Prompt is removed.");
+                                    $("#lblMessage").after("<br />");
+                                    $.scrollTo($("#top"), { offset: { top: -150, left: -100 } });
+                                    oBlockTable.draw();
+                                } else {
+                                    $("#lblMessage").text(response.message);
+                                    $("#lblMessage").after("<br />");
+                                }
+                            },
+                            error: function () { alert('Error Remove Prompt! It could be the timeout issue. Please try to reload your browser.'); }
+                        });
+
+                    
+                }
+                   
+                   
+            });
+
+
+
+           
+
+
+        });//End document ready
+
+    </script>
+}

@@ -1,0 +1,30 @@
+﻿@model List<SpeechAccessibility.Core.Models.BlockOfPrompts>
+@{
+    Layout = null;
+}
+<p><b>Block Number: </b>@ViewBag.AssignedBlockDescription</p>
+<table class="table table-sm table-bordered" id="contributor-assigned-prompts-table">
+   
+    <tr role="row">
+        <th aria-label="PromptID">PromptID</th>
+        <th aria-label="Transcript">Transcript</th>
+        <th aria-label="Category">Category</th>
+        <th aria-label="SubCategory">SubCategory</th>
+    </tr>
+    @foreach (var prompt in Model)
+    {
+        <tr>
+            <td aria-label="PromptID">@prompt.Prompt.Id</td>
+            <td aria-label="Transcript">@prompt.Prompt.Transcript</td>
+            <td aria-label="Category">@prompt.Prompt.Category.Description</td>
+            <td aria-label="SubCategory">
+                @if (@prompt.Prompt.SubCategory != null)
+                {
+                    @prompt.Prompt.SubCategory.Description
+                }
+              
+            </td>
+        </tr>
+    }
+   
+</table>

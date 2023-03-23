@@ -1,0 +1,170 @@
+﻿@page
+@model RegisterModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<form asp-route-returnUrl="@Model.ReturnUrl" method="post">
+    <hr />
+    @{
+            foreach (string error in Model.resultErrorList)
+            {
+                <span class="text-danger">@error</span><br />
+            }
+
+    }
+
+    <div asp-validation-summary="All" class="text-danger">
+                    <h2>Register Errors:</h2>
+                </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-3">
+            <label asp-for="Input.firstName"><span style="color:red">*</span>First Name</label>
+            <input asp-for="Input.firstName" class="form-control" />
+            <span asp-validation-for="Input.firstName" class="text-danger"></span>
+        </div>
+        <div class="form-group col-md-3">
+            <label asp-for="Input.middleName">Middle Name</label>
+            <input asp-for="Input.middleName" class="form-control" />
+            <span asp-validation-for="Input.middleName" class="text-danger"></span>
+        </div>
+        <div class="form-group col-md-3">
+            <label asp-for="Input.lastName"><span style="color:red">*</span>Last Name</label>
+            <input asp-for="Input.lastName" class="form-control" />
+            <span asp-validation-for="Input.lastName" class="text-danger"></span>
+        </div>
+            </div>
+        <div class="form-row">
+            <div class="form-group col-sm-4">
+            <label asp-for="Input.phoneNumber"><span style="color:red">*</span>Phone Number</label>
+            <input asp-for="Input.phoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
+            <span asp-validation-for="Input.phoneNumber" class="text-danger"></span>
+        </div>
+        </div>
+    <div class="form-row">
+        <div class="form-group col-sm-4">
+
+            <label asp-for="Input.Email"><span style="color:red">*</span>Email</label>
+            <input asp-for="Input.Email" class="form-control" />
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+
+    </div>
+    <div class="form-row">
+              <div class="form-group col-sm-4">
+            <br/>
+            <details open>
+                <summary>Password Requirements</summary>
+                <ul>
+                    <li>Passwords must have at least one non alphanumeric character.</li>
+                    <li>Passwords must have at least one digit ('0'-'9').</li>
+                    <li>Passwords must have at least one uppercase ('A'-'Z').</li>
+                    <li>The Password must be at least 9 and at max 100 characters long.</li>
+                </ul>
+            </details></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-sm-4">
+            <label asp-for="Input.Password"><span style="color:red">*</span>Password</label>
+            <input asp-for="Input.Password" class="form-control" /> 
+            <span asp-validation-for="Input.Password" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-sm-4">           
+            <label asp-for="Input.ConfirmPassword"><span style="color:red">*</span>Confirm Password</label>
+            <input asp-for="Input.ConfirmPassword" class="form-control" />
+            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <fieldset>               
+                <legend><span style="color:red">*</span>Will someone be helping you with this process? (caregiver, family, or friend)</legend>
+                <input id="helperYes" asp-for="Input.HelperInd" type="radio" value="Yes" onclick="checkHelperInd()" />
+                <label for="helperYes">Yes</label>
+                <input id="helperNo" asp-for="Input.HelperInd" type="radio" value="No" onclick="checkHelperInd()" />
+                <label for="helperNo">No</label>
+            </fieldset>
+            <br /> <span asp-validation-for="Input.HelperInd" class="text-danger"></span>
+        </div>
+    </div>
+
+    @*The HelperEmail will be hidden when the page first loads.
+        If a validation error occurs on submit, we want to make sure
+        the HelperEmail displays if the HelperInd is true when the page refreshes*@
+    @if (Model != null && Model.Input != null && "Yes".Equals(Model.Input.HelperInd))
+    {
+        <div class="form-row" id="helperDiv">
+            <div class="form-group col-md-3">
+                <label for="helperEmail"><span style="color:red">*</span>Helper's Email</label>
+                <input id="helperEmail" asp-for="Input.HelperEmail" class="form-control" />
+                <span class="text-danger">@Html.ValidationMessage("helperEmailValidation")</span>
+            </div>
+            <div class="form-group col-md-3">
+                <label for="helperFirstName"><span style="color:red">*</span>Helper's First Name</label>
+                <input id="helperFirstName" asp-for="Input.HelperFirstName" class="form-control" />
+                <span class="text-danger">@Html.ValidationMessage("helperFirstNameValidation")</span>
+            </div>
+            <div class="form-group col-md-3">
+                <label for="helperLastName"><span style="color:red">*</span>Helper's Last Name</label>
+                <input id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
+                <span class="text-danger">@Html.ValidationMessage("helperLastNameValidation")</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        @*hide email when the HelperInd is set to No*@
+
+        <div class="form-row" id="helperDiv" style="display:none">
+            <div class="form-group col-md-3">
+                <label for="helperEmail"><span style="color:red">*</span>Helper's Email</label>
+                <input id="helperEmail" asp-for="Input.HelperEmail" class="form-control" />
+                <span class="text-danger">@Html.ValidationMessage("helperEmailValidation")</span>
+            </div>
+            <div class="form-group col-md-3">               
+                <label for="helperFirstName"><span style="color:red">*</span>Helper's First Name</label>
+                <input id="helperFirstName" asp-for="Input.HelperFirstName" class="form-control" />
+                <span class="text-danger">@Html.ValidationMessage("helperFirstNameValidation")</span>
+            </div>
+            <div class="form-group col-md-3">
+                <label for="helperLastName"><span style="color:red">*</span>Helper's Last Name</label>
+                <input id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
+                <span class="text-danger">@Html.ValidationMessage("helperLastNameValidation")</span>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <fieldset>
+                     <legend><span style="color:red">* </span>Do you wish us to contact you, or do you want to record some sentences, so we can evaluate your speech online?</legend>
+                <input id="contactLSVTTrue" asp-for="Input.ContactLSVT" type="radio" value=true />
+                    <label style="display:inline" for="contactLSVTTrue">I would prefer to have a mentor from LSVT contact me, so I can talk to a human being about the consent process. <strong>(Recommended)</strong></label>
+                    <br /><br/>
+                    <input id="contactLSVTFalse" asp-for="Input.ContactLSVT" type="radio" value=false />
+                    <label style="display:inline" for="contactLSVTFalse">I would prefer to record a few sentences now, and then wait for your team to evaluate them before I proceed with the study on my own.</label>
+                </fieldset>              
+                <br /> <span asp-validation-for="Input.ContactLSVT" class="text-danger"></span>
+            </div>
+        </div>
+
+    }
+
+    <input hidden asp-for="Input.state" />
+    <input hidden asp-for="Input.understandSpeechInd" />
+    <input hidden asp-for="Input.parkinsonsInd"/>
+    <input hidden asp-for="Input.eighteenOrOlderInd" />
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

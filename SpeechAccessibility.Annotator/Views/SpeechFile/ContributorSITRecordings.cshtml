@@ -1,0 +1,242 @@
+﻿
+
+@{
+    ViewData["Title"] = "View Contributor Speech Files";
+}
+
+@{
+    ViewBag.Title = "Waiting For Approval Speech Files";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<h3>Contributor Speech Files</h3>
+<div id="top"></div>
+
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+<b>Contributor ID: </b><label id="lblContributorId" name="lblContributorId"></label>
+<br><b>First Name: </b><label id="lblContributorFirstName" name="lblContributorFirstName"></label>&nbsp;&nbsp;
+<b>Last Name: </b><label id="lblContributorLastName" name="lblContributorLastName"></label>
+
+<div>
+    <table class="table table-striped table-bordered table-hover" id="ContributorRecordingsTable" cellspacing="0" align="center"></table>
+</div>
+
+<div id="rate-dialog" style="display: none"></div>
+<div class="spinner" style="display:none">
+    <div class="center-div">
+        <div class="inner-div">
+            <div class="loader"></div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script type="text/javascript">   
+ 
+        $.urlParam = function(name){
+	        var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+	        return results[1] || 0;
+        }
+
+        $(document).ready(function () {
+
+            var contributorId = $.urlParam('contributorId');
+            $("#lblContributorId").text(contributorId);
+            var lastName = $.urlParam('LastName');
+            $("#lblContributorLastName").text(lastName);
+            var firstName = $.urlParam('FirstName');
+            $("#lblContributorFirstName").text(firstName);
+
+            //bind datatable for Prompts
+            var oContributorRecordings = $("#ContributorRecordingsTable").on('error.dt',
+                function (e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                    "serverSide": true,
+                    "processing": true,
+                    "responsive": true,
+                    "iDisplayLength": 100,
+                    "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'>>" +
+                        "<'row'<'col-sm-12'tr>>p",
+                    "ajax": ({
+                        "url": '@Url.Action("LoadContributorSITRecordings", "SpeechFile")',
+                        "type": "POST",
+                        "datatype": "json",
+                        data: { "contributorId": contributorId },
+                    }),
+                    "bAutoWidth": false,
+                    "aaSorting": [[0, 'asc']],
+                    "columns": [
+                       
+                        {
+                            "title": "ID",
+                            "data": "id",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "Id"
+                        },
+
+                        {
+                            "title": "Transcript",
+                            "data": "modifiedTranscript",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "ModifiedTranscript"
+                        },
+                        {
+                            "title": "Recording Date",
+                            "data": "createTS",
+                            'render': function (data) {
+                                var date = new Date(data);
+                                var month = date.getMonth() + 1;
+                                return (month.toString().length > 1 ? month : "0" + month) + "/" + date.getDate() + "/" + date.getFullYear();
+                            },
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "createTS"
+                        },
+                          {
+                            "title": "RetryCount",
+                            "data": "retryCount",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "RetryCount"
+                        },
+
+                        {
+                            "title": "Comment",
+                            "data": "comment",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "Comment"
+                        },
+                        {
+                            "title": "Actions",
+                            "data": "id",
+                            //"targets": 0,
+                            "searchable": false,
+                            "orderable": false,
+                            "width": '100px',
+                            "classDescription": 'dt-body-center',
+                            "visible": true,
+                            "name": "Id",
+                            "render": function (data, type, row) {
+                                //console.log(data);
+                                var link = '<a href="#" class="listen" style="pointer-events: none;">Listen</a>  | <a href="#" class="rate" >Rate</a>';
+                                return link;
+                                return "";
+                            }
+                        }
+                    ],
+                    "ordering": true,
+                    "paging": true,
+                    "pageLength": 100,
+                    "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+
+                });
+
+
+            // rate the recording
+            $('#ContributorRecordingsTable').on('click', 'a.rate', function (e) {
+                e.preventDefault();
+                var selectedRowData = oContributorRecordings.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                var getUrl = "@Url.Action("RateRecording", "SpeechFile")?recordingId=" + row.id;
+                rateRecordings(getUrl);
+                $("#rate-dialog").dialog('open');
+                return false;
+            });
+            function rateRecordings(getUrl) {
+                $("#rate-dialog").dialog({
+                    title: "Rate Recording",
+                    autoOpen: false,
+                    resizable: false,
+                    width: 900,
+                    show: { effect: 'drop', direction: "up" },
+                    modal: true,
+                    draggable: true,
+                    closeOnEscape: true,
+                    position: { my: "left top", at: "left+50 top+100", of: window },
+                    open: function () {
+                        $(this).load(getUrl);
+                        $('#rate-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+                    },
+                    close: function () {
+                      
+                    },
+                    buttons: {
+                        "Submit": function () {
+                            var recordingId = $("#hidRecordingId").val();
+                            var numDimension = $("#hidNumberDimension").val();
+
+                            var dimenstionArray = [];
+                            for (var i = 1; i <= numDimension; i++) {
+                                var dimension = document.getElementById('dlDimension_' + i);
+                                var selectedVal = dimension.options[dimension.selectedIndex].value;
+                                var ratingLevel = document.getElementById('dlSeverityLevel_' + i);
+                                var otherText = "";
+                                if (dimension.options[dimension.selectedIndex].text == "Other") {
+                                    var textOther = document.getElementById("txtOther_" + i);
+                                    otherText = $(textOther).val();
+                                }
+                                if(selectedVal != "")
+                                {
+                                    jsonObject = {
+                                        "RecordingId": recordingId,
+                                        "DimensionId": selectedVal,
+                                        "RatingLevel": ratingLevel.options[ratingLevel.selectedIndex].value,
+                                        "Other": otherText
+                                    };
+                                    dimenstionArray.push(jsonObject);
+                                }
+                               
+                                var recording = {
+                                    "Id": recordingId,
+                                    "Comment": $("#txtRecordingComment").val(),
+                                    "RecordingRating": dimenstionArray
+                                }
+
+                            }
+
+                            $.ajax({
+                                url: '@Url.Action("RateRecording", "SpeechFile")',
+                                type: "POST",
+                                data: { "recordingForRating": recording },
+                                success: function (response) {
+                                    if (response.success === true) {
+                                        oContributorRecordings.draw();
+                                        $('#rate-dialog').dialog('close');
+                                    } else {
+
+                                    }
+                                },
+                                error: function () { alert('Error Rate Recording! It could be the timeout issue. Please try to reload your browser.'); }
+                            });
+
+                        },
+                        close: function () {
+                           
+                            $(this).dialog('close');
+                        }
+                    }
+
+                });
+            }
+
+        });//End document ready
+
+    
+    </script>
+}

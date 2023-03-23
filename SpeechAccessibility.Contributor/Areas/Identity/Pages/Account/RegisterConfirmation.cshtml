@@ -1,0 +1,17 @@
+﻿@page
+@model RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Register confirmation";
+}
+
+    <div class="container">
+        <h1>@ViewData["Title"]</h1>
+    <div class="row">
+        <div class="col-md-8">
+            <div>Thank you! Now, you can start recording your samples at any time.  You may do these recordings at any time at your own convenience. You will only be able to record each prompt one time. If you make a mistake or are interrupted, you can just move on to the next prompt. We estimate that providing the full set of samples will take about 10 minutes total of your time. After you have submitted the full set of speech samples, the UIUC research team will evaluate the quality of your recordings. Within one week, the UIUC research team will contact you to either confirm that you may continue to participate in the study, to work with you to improve your recording environment, or to let you know that you will not be asked to participate any further in this study. If you are not eligible to be in the study based on your speech samples, we will delete all of your data including your email address. If you have questions, please contact speechaccessibility@beckman.illinois.edu.</div>
+    <br/>
+                <a class="btn btn-primary" asp-controller="Home" asp-action="RecordPrompt">Continue</a>
+    </div>
+    </div>
+    </div>
+

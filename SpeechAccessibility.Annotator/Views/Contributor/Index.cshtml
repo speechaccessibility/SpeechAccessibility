@@ -1,0 +1,305 @@
+﻿@using System.Security.Claims
+@{
+    ViewData["Title"] = "Approved Contributors";
+}
+@{
+    ViewBag.Title = "Approved Contributors";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<h1>Approved Contributors</h1>
+@{
+    var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+}
+<input type="hidden" id="UserRole" value="@userRole" />
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+<div style="width: 1000px">
+    <table class="table table-striped table-bordered table-hover" id="ContributorTable" cellspacing="0" align="center"></table>
+</div>
+
+<div id="rating-dialog" style="display: none"></div>
+<div id="assignedAnnotators-dialog" style="display: none"></div>
+<div id="assignedBlockPrompts-dialog" style="display: none"></div>
+
+<div id="contributorRecordings-dialog" style="display: none"></div>
+<div id="listen-dialog" style="display: none">
+    <p>
+        <b>ContributorID:</b><label id="lblListenContributorId" name="lblListenContributorId"></label>
+        <br/>
+        <b>Transcript:</b><label id="lblListenTranscript" name="lblListenTranscript"></label>
+        <br/>
+        <input type="hidden" id="hidFileName"/>
+        <audio id="listenRecording" controls>
+            <source src="">
+        </audio>
+
+    </p>
+</div>
+
+
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="~/js/listenrecording.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            //bind datatable for Contributor
+            var oContributorTable = $("#ContributorTable").on('error.dt',
+                function (e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                    "serverSide": true,
+                    "processing": true,
+                    "responsive": true,
+                    "iDisplayLength": 100,
+                    "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                        "<'row'<'col-sm-12'tr>>p",
+                    "ajax": ({
+                        "url": '@Url.Action("LoadApprovedDeniedContributors", "Contributor", new { filter = 2 })',
+                        "type": "POST",
+                        "datatype": "json"
+                    }),
+                    "bAutoWidth": false,
+                    "aaSorting": [[6, 'desc']],
+                    "columns": [
+                         {
+                             "title": "View Blocks",
+                            "className": 'details-control',
+                            "orderable": false,
+                            "data": null,
+                            "defaultContent": '',
+                            "width": "20px"
+                        },
+                        {
+                            "title": "ID",
+                            "data": "contributor.id",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.Id"
+                        },
+
+                        {
+                            "title": "FirstName",
+                            "data": "contributor.firstName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.FirstName"
+                        },
+                        {
+                            "title": "MiddleName",
+                            "data": "contributor.middleName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.MiddleName"
+                        },
+                        {
+                            "title": "LastName",
+                            "data": "contributor.lastName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.LastName"
+                        },
+                        {
+                            "title": "#AssignedBLocks",
+                            "data": "numberAssignBlocks",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "NumberAssignBlocks"
+                        },
+                        {
+                            "title": "LastRecording",
+                            "data": "lastRecording",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "LastRecording"
+                        },
+                        {
+                            "title": "Actions",
+                            "data": "contributor.id",
+                            //"targets": 0,
+                            "searchable": false,
+                            "orderable": false,
+                            "width": '250px',
+                            "classDescription": 'dt-body-center',
+                            "visible": true,
+                            "name": "Contributor.Id",
+                            "render": function (data, type, row) {
+                                var link="";
+                                if ($("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
+                                    link = '<a href="#" class="assignAnnotator" >Assign Annotators</a> | <a href="#" class="viewSITRating" >View SIT Rating</a>';
+                                    return link;
+                                }
+                                link = '<a href="#" class="viewSITRating" >View SIT Rating</a>';
+                                return link;
+                               
+                            }
+                        }
+                    ],
+                    "ordering": true,
+                    "paging": true,
+                    "pageLength": 100,
+                    "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+                });
+
+
+            $('#ContributorTable tbody').on('click',
+                'td.details-control',
+                function() {
+                    var tr = $(this).closest('tr');
+                    var row = oContributorTable.row(tr);
+                    var contributorId = oContributorTable.row(this).data().contributor.id;
+                                       
+
+                    if (row.child.isShown()) {
+                        // This row is already open - close it
+                        row.child.hide();
+                        tr.removeClass('shown');
+                    } else {
+                         //close other child rows
+                        oContributorTable.rows().every(function () {
+                            var row = this;
+                            if (row.child.isShown()) {
+                                row.child.hide();
+                                $(this.node()).removeClass('shown');                            
+                            }
+                        });
+
+                        // Open this row
+                        row.child(formatDataTableDetailRow(contributorId)).show();
+                        tr.addClass('shown');
+                        buildContributorAssignedBlocksTable(contributorId);
+                    }
+                   
+
+                });
+
+            function buildContributorAssignedBlocksTable(contributorId) {
+                $.ajax({
+                    url: '@Url.Action("LoadContributorAssignedBlocks", "SpeechFile")',
+                    type: 'POST',
+                    data: {
+                        'contributorId': contributorId
+                    },
+                    success: function (data) {
+                        var recordingList = $("#AssignedBlocks_" + contributorId);
+                        recordingList.html(data);
+                        
+                    },
+                    error: function () {
+                        alert("Error loading Contributor Assigned Blocks");
+                    }
+                });
+
+            }
+            function formatDataTableDetailRow(contributorId) {
+                return '<div id="AssignedBlocks_' + contributorId + '"></div>';
+
+            }
+
+
+
+            // view SIT Rating
+            $('#ContributorTable').on('click', 'a.viewSITRating', function (e) {
+                e.preventDefault();
+                var selectedRowData = oContributorTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                var getUrl = "@Url.Action("ViewSITRecordingRating", "SpeechFile")?contributorId=" + row.contributor.id;
+                //$("#lblContributor").text(row.id);
+                getRecordingRating(getUrl);
+                $("#rating-dialog").dialog('open');
+                return false;
+            });
+            function getRecordingRating(getUrl) {
+                $("#rating-dialog").dialog({
+                    title: "SIT Speech File Rating",
+                    autoOpen: false,
+                    resizable: false,
+                    width: 1000,
+                    height: 700,
+                    show: { effect: 'drop', direction: "up" },
+                    modal: true,
+                    draggable: true,
+                    closeOnEscape: true,
+                    position: { my: "left top", at: "left+50 top+100", of: window },
+
+                    open: function () {
+                        $(this).load(getUrl);
+                        //$('#rating-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+                    },
+                    close: function () {
+                        $("#rating-dialog").empty();
+                    },
+                    buttons: {
+
+                        close: function () {
+                            $("#rating-dialog").empty();
+                            $(this).dialog('close');
+                        }
+                    }
+
+                });
+            }
+
+
+            // assign Annotators
+            $('#ContributorTable').on('click', 'a.assignAnnotator', function (e) {
+                e.preventDefault();
+                var selectedRowData = oContributorTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                var getUrl = "@Url.Action("GetAssignContributorAnnotators", "Contributor")?contributorId=" + row.contributor.id;
+                //$("#lblContributor").text(row.id);
+                getAnnotators(getUrl);
+                $("#assignedAnnotators-dialog").dialog('open');
+                return false;
+            });
+            function getAnnotators(getUrl) {
+                $("#assignedAnnotators-dialog").dialog({
+                    title: "Assign Annotators",
+                    autoOpen: false,
+                    resizable: false,
+                    width: 1000,
+                    height: 700,
+                    show: { effect: 'drop', direction: "up" },
+                    modal: true,
+                    draggable: true,
+                    closeOnEscape: true,
+                    position: { my: "left top", at: "left+50 top+100", of: window },
+
+                    open: function () {
+                        $(this).load(getUrl);
+                        //$('#rating-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+                    },
+                    close: function () {
+
+                    },
+                    buttons: {
+
+                        close: function () {
+
+                            $(this).dialog('close');
+                        }
+                    }
+
+                });
+            }
+
+           
+
+           
+
+        });//End document ready
+
+    </script>
+}

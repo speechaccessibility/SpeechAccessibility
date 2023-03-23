@@ -1,0 +1,108 @@
+﻿@model SpeechAccessibility.Annotator.Models.BlockViewModel
+@{
+    Layout = null;
+}
+@if (Model != null)
+{
+
+    <input type="hidden" id="blockId" value="@Model.Id"/>
+    <b><label for="blockId">Block Name: </label></b>
+    <label>@Model.Description</label>
+<br>
+
+<h5>Digital Assistant Commands</h5>
+<div id="divDigitalAssistantCommands">
+    <table class="table table-striped table-bordered table-hover table-sm" id="DigitalAssistantCommandsTable" cellspacing="0" align="center">
+        <tr role="row">
+            <th aria-label="PromptID">PromptID</th>
+            <th aria-label="Transcript">Transcript</th>
+            <th aria-label="SubCategory">SubCategory</th>
+        </tr>
+      @*  @{
+            if (Model.DigitalAssistantQuestions.Count > 0)
+            {
+               
+                foreach (var question in Model.DigitalAssistantQuestions)
+                {
+                    <tr>
+                        <td> @question.Prompt.Id</td>
+                        <td>@question.Prompt.Transcript</td>
+                        <td>
+                                @if (question.Prompt.SubCategory != null)
+                            {
+                                    @question.Prompt.SubCategory.Description
+                            }
+              
+                        </td>
+                    </tr>
+                }
+            }
+        }
+     *@
+    </table>
+</div>
+<br/>
+<h5>Novel Sentences</h5> 
+<div id="divNovelSentences">
+    <table class="table table-striped table-bordered table-hover" id="NovelSentencesTable" cellspacing="0" align="center">
+            <tr role="row">
+                <th aria-label="PromptID">PromptID</th>
+                <th aria-label="Transcript">Transcript</th>
+                <th aria-label="SubCategory">SubCategory</th>
+            </tr>
+        @{
+            //if (Model.NovelSentencesQuestions.Count > 0)
+            //{
+
+            //    foreach (var question in Model.NovelSentencesQuestions)
+            //    {
+            //        <tr>
+            //            <td> @question.Prompt.Id</td>
+            //            <td>@question.Prompt.Transcript</td>
+            //            <td>
+            //                @if (question.Prompt.SubCategory != null)
+            //                {
+            //                    @question.Prompt.SubCategory.Description
+            //                }
+              
+            //            </td>
+            //        </tr>
+            //    }
+            //}
+
+        }
+    </table>
+</div>
+<br/>
+<h5>Spontaneous Speech Prompts</h5> 
+<div  id="divSpontaneousSpeechPrompts">
+    <table class="table table-striped table-bordered table-hover" id="SpontaneousSpeechPromptsTable" cellspacing="0" align="center">
+        <tr role="row">
+            <th aria-label="PromptID">PromptID</th>
+            <th aria-label="Transcript">Transcript</th>
+            <th aria-label="SubCategory">SubCategory</th>
+        </tr>
+      @*  @{
+            if (Model.SpontaneousSpeechQuestions.Count > 0)
+            {
+
+                foreach (var question in Model.SpontaneousSpeechQuestions)
+                {
+                    <tr>
+                        <td> @question.Prompt.Id</td>
+                        <td>@question.Prompt.Transcript</td>
+                        <td>
+                            @if (question.Prompt.SubCategory != null)
+                            {
+                                @question.Prompt.SubCategory.Description
+                            }
+
+                        </td>
+                    </tr>
+                }
+            }
+        }*@
+    </table>
+
+</div>
+}

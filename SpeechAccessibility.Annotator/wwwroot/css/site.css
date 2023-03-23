@@ -1,0 +1,369 @@
+﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
+for details on configuring this project to bundle and minify static web assets. */
+
+a.navbar-brand {
+  white-space: normal;
+  text-align: center;
+  word-break: break-all;
+}
+
+/* Provide sufficient contrast against white background */
+a {
+  color: #0366d6;
+}
+
+
+
+/* Sticky footer styles
+-------------------------------------------------- */
+/* for responsive layout*/
+@media only screen and (max-width: 1026px) {
+    #university-logo, #user-info {
+        display: none;
+    }
+
+    #site-name {
+        /*font-size: 80% !important;*/
+        width: 1000px !important;
+        margin-left: 20px !important;
+        margin-right: 10px !important;
+    }
+}
+
+
+
+/* end reponsive layout */
+
+
+html {
+  font-size: 14px;
+}
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.border-top {
+  border-top: 1px solid #e5e5e5;
+}
+.border-bottom {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.box-shadow {
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+}
+
+button.accept-policy {
+  font-size: 1rem;
+  line-height: inherit;
+}
+
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+    position: relative;
+    min-height: 100%;
+    width: 100%;
+}
+
+body {
+    /* Margin bottom by footer height */
+    margin-bottom: 60px;
+    width: 100%;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 60px; /* Vertically center the text there */
+}
+
+.main-body {
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+.container {
+    margin-left: 15px;
+}
+#navbarsSA {
+    font-size: 1rem;
+}
+
+.bg-beckman {
+    background-color: #13294B !important;
+}
+
+a.bg-beckman:hover, a.bg-beckman:focus,
+button.bg-beckman:hover,
+button.bg-beckman:focus {
+    background-color: #1d2124 !important;
+}
+
+.illinois-wordmark--horizontal {
+    height: 3rem;
+    display: block;
+    padding: 5px 5px 1rem;
+}
+
+.beckman-logo--full {
+    /*display: block;*/
+    max-height: 12rem;
+    margin: 0;
+    margin-bottom: 37px;
+    /* max-height: 12rem;
+    margin: 0;
+    max-width: 100%;
+    width: 325px;*/
+}
+
+.illinois_logo_link {
+    display: flex;
+    background-image: url('../images/BlockI-Logo-Reversed-Orange-RGB.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    width: 52px;
+    height: 63px;
+    color: transparent;
+}
+
+.beckman_logo_link {
+    display: flex;
+    height: 75px;
+    border-left: 1px solid #fff;
+    margin-left: 15px;
+    padding-left: 15px;
+    align-items: center;
+    font-size: 30px;
+    color: #fff;
+    text-decoration: none;
+    font-family: "Source Sans Pro",sans-serif;
+}
+
+.navbar {
+    margin-top: 0 !important;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: #fff !important;
+}
+
+.nav-item.active {
+    font-weight: 700 !important;
+}
+
+.dropdown-item.active, .dropdown-item:active {
+    background-color: #d9d9d9 !important;
+}
+
+.dropdown-item {
+    color: black !important;
+}
+
+
+#top-banner {
+    margin-top: 5px;
+}
+.illinois-logo {
+    padding-top: 10px;
+    margin-left: 15px;
+}
+
+#site-name {
+    margin-top: 10px;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 24px;
+    margin-bottom: 0 !important;
+}
+
+#user-info {
+    margin-top: 10px;
+    color: #ffffff;
+    float: right;
+    margin-bottom: 0 !important;
+}
+.wordmark-site-title {
+   height: 75px;
+    border-left: 1px solid #fff;
+    margin-left: 15px;
+    padding-left: 10px;
+    align-items: center;
+    font-size: 20px;
+    color: #fff;
+    text-decoration: none;
+    font-family: "Source Sans Pro",sans-serif;
+}
+
+#top-banner {
+    margin-top: 5px;
+}
+
+
+.errorMessage {
+    color: #cc0000;
+    font-weight: bold;
+}
+
+.required {
+    color: red;
+}
+
+.hidden {
+    display: none;
+}
+
+
+.btn-primary {
+    color: #fff;
+    background-color: #1d2124 !important;
+    border-color: #1d2124 !important;
+}
+
+.btn-primary:hover {
+    color: #fff;
+    background-color: #1d2124 !important;
+    border-color: #1d2124 !important;
+}
+
+.btn-primary:focus, .btn-primary.focus {
+    box-shadow: 0 0 0 0.2rem #1d2124 !important;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+    color: #fff;
+    background-color: #1d2124;
+    border-color: #1d2124;
+}
+
+caption {
+    caption-side: top !important;
+}
+
+div.large {
+    margin: 5px;
+    padding: 5px;
+    width: 700px;
+    height: 600px;
+    overflow: auto;
+    text-align: justify;
+}
+
+div.medium {
+    margin: 5px;
+    padding: 5px;
+    width: 700px;
+    height: 400px;
+    overflow: auto;
+    text-align: justify;
+}
+
+div.small {
+    margin: 5px;
+    padding: 5px;
+    width: 700px;
+    height: 200px;
+    overflow: auto;
+    text-align: justify;
+}
+
+
+/*.btn-primary {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}*/
+
+
+
+/*/*format for datatable*/
+#UserTable th, #PromptTable th, #SpeechFileTable th, #BlockTable th, #ContributorTable th, #ContributorAssignedBlocksTable th, #ContributorRecordingsTable th, #view-recording-rating-table th, #WaitingForApprovalContributorTable th, #contributor-assigned-prompts-table th, #DigitalAssistantCommandsTable th, #NovelSentencesTable th, #SpontaneousSpeechPromptsTable th, #contributor-assigned-annotators-table th, #ContributorRecordingsForBlock-table th, #AssignedConntributorTable th {
+    background-color: #13294B !important;
+    color: white;
+    text-align: center;
+    padding: 0 10px 10px 10px; /*top right bottom left*/
+}
+/*highlighted row color */
+.table.dataTable tr.row-selected td {
+    background-color: #2da5fa !important;
+}
+
+#UserTable, #PromptTable, #SpeechFileTable, #BlockTable, #ContributorTable, #ContributorAssignedBlocksTable, #ContributorRecordingsTable, #view-recording-rating-table, #WaitingForApprovalContributorTable, #contributor-assigned-prompts-table, #DigitalAssistantCommandsTable, #NovelSentencesTable, #SpontaneousSpeechPromptsTable, #contributor-assigned-annotators-table, #ContributorRecordingsForBlock-table, #AssignedConntributorTable {
+    font-size: small;
+}
+
+td.details-control {
+    background: url('../images/details_open.png') no-repeat center center;
+    cursor: pointer;
+}
+
+tr.shown td.details-control {
+    background: url('../images/details_close.png') no-repeat center center;
+}
+
+
+/*/*END format for datatable*/
+
+/* for dialog */
+.ui-widget-header {
+    background-color: #13294B !important;
+}
+.ui-dialog .ui-dialog-title {
+    color: white !important;
+}
+    /* end dialog */
+    /**************** For Spinner*/
+    .center-div {
+    width: 300px;
+    height: 300px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -150px;
+    margin-top: -150px;
+}
+
+.spinner {
+    position: fixed;
+    z-index: 999;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    background-color: Black;
+    filter: alpha(opacity=60);
+    opacity: 0.6;
+    -moz-opacity: 0.8;
+}
+
+.loader {
+    margin: auto;
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #15a0ec;
+    border-bottom: 16px solid #15a0ec;
+    width: 120px;
+    height: 120px;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+}
+
+.inner-div {
+    background-color: white;
+    border-radius: 15px;
+    margin: auto;
+    padding: 2%;
+    width: 150px;
+}
+
+/****************End For Spinner*/

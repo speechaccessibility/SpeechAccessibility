@@ -1,0 +1,71 @@
+﻿@model List<SpeechAccessibility.Annotator.Models.RecordingRatingViewModel>
+@{
+    Layout = null;
+}
+
+<b>Contributor ID: </b><label id="lblContributorId" name="lblContributorId">@ViewBag.RatingContributorId</label>
+<br /><b>First Name: </b><label id="lblFirstName" name="lblFirstName">@ViewBag.RatingContributorFirstName</label>
+&nbsp;<b>Last Name: </b><label id="lblLastName" name="lblLastName">@ViewBag.RatingContributorLastName</label>
+@{
+    if (!string.IsNullOrEmpty(ViewBag.BlockNumber))
+    {
+        <br/><b>Block Number: </b>
+        <label id="lblBlockId" name="lblBlockId">@ViewBag.BlockNumber</label>
+    }
+}
+<br />
+<div>
+    @{
+        if (Model != null && Model.Count > 0)
+        {
+            foreach (var recording in Model)
+            {
+                <p style="background-color: rgba(140, 136, 136, 0.26);"><b>Transcript:</b> @recording.Recording.ModifiedTranscript
+                    <br /><b>Comments:</b> @recording.Recording.Comment
+                </p>
+                <table class="table table-bordered table-sm" id="view-recording-rating-table">
+                    <tr role="row">
+                        <th aria-label="DimensionCategory">Category</th>
+                        <th aria-label="Transcript">Dimension</th>
+                        <th aria-label="Rating">SeverityLevel</th>
+                        <th aria-label="Rating">Comment</th>
+                        <th aria-label="Rate Date">Rated Date</th>
+                        <th aria-label="Rating By">Rated by</th>
+                    </tr>
+   
+
+        
+                    @foreach (var recordingRating in recording.RecordingRatingList)
+                    {
+                        <tr>
+                    
+                            <td aria-label="Transcript">@recordingRating.Dimension.DimensionCategory.Description</td>
+                            <td aria-label="Transcript">
+                                @{
+                                    var description = !string.IsNullOrEmpty(recordingRating.Other)
+                                        ? recordingRating.Dimension.Description + " - " + recordingRating.Other
+                                        : recordingRating.Dimension.Description;
+                                }
+                                @description</td>
+                   
+                            <td aria-label="Rating">@recordingRating.RatingLevel</td>
+                            <td aria-label="Coment">@recordingRating.Comment</td>
+                            <td aria-label="Recording Date">@recordingRating.RatingTS.ToShortDateString()</td>
+                            <td aria-label="Rating By">@recordingRating.RatingBy</td>
+
+                        </tr>
+                    }
+            
+        
+    
+                </table>
+            }
+            
+        }
+        else
+        {
+            <p>There is no rating for this Contributor.</p>
+        }
+        
+    }
+</div>

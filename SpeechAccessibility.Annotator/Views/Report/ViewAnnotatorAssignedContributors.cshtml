@@ -1,0 +1,75 @@
+﻿@{
+    ViewData["Title"] = "View Annotator Assigned Contributors";
+}
+@{
+    ViewBag.Title = "Annotator Assigned Contributors";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h1>View Annotator Assigned Contributors</h1>
+<table>
+    <tr>
+        <td><b>Select an Annotator: </b></td>
+        <td><select asp-items="@ViewBag.ExistingAnnotators" id="dropAnnotator"></select></td>
+        <td><input type="button" id="btnView" name="btnView" value="View" class="btn btn-primary btn-sm" /></td>
+    </tr>
+</table>
+
+<br/>
+<table id="AssignedConntributorTable" class="table table-sm table-bordered">
+    @* <tbody>*@
+    <thead>
+    <tr><th>Contributor Id</th><th>Last Name</th><th>First Name</th></tr>
+    </thead>
+    @* </tbody>*@
+    <tbody id="tblBody">
+
+    </tbody>
+
+</table>
+
+@section scripts {
+    
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+
+            
+            $('input:button[name="btnView"]').click(function () {
+                getAssignedContributors($("#dropAnnotator").val());
+                //return false;
+            });
+
+
+            function getAssignedContributors(annotatorId) {
+                $.ajax({
+                    url: '@Url.Action("GetAnnotatorAssignedContributors", "Report")',
+                    type: "POST",
+                    data: { "annotatorId": annotatorId },
+                    success: function (response) {
+
+                        if (response.counter >0) {
+                            $('#AssignedConntributorTable tbody').empty();
+                            //$("#divAssignedContributors").text("The number of assigned Contributors" + response.counter );
+                            for (var i = 0; i < response.contributors.length; i++) {
+                                var contributor = response.contributors[i];
+                                var row="<tr><td>" + contributor.id + "</td><td>" + contributor.lastName + "</td><td>" + contributor.firstName + "</td><tr>";
+                                $("#AssignedConntributorTable > tbody:last").append(row);
+                            }
+                           
+                            
+                        } else {
+                            $('#AssignedConntributorTable tbody').empty();
+                        }
+
+                    },
+                    error: function () {
+                        alert("Error: Validate NetID!");
+                        $('.spinner').css('display', 'none');
+                    }
+                });
+            }
+
+        });
+
+    </script>
+}

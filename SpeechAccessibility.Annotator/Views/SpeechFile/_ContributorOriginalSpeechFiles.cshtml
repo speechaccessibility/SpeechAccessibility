@@ -1,0 +1,73 @@
+﻿@model List<SpeechAccessibility.Core.Models.Recording>
+@{
+    Layout = null;
+}
+@{
+    if (Model.Count > 0)
+    {
+        <input type="hidden" id="hidContributorId" name="hidContributorId" value="@Model[0].ContributorId" />
+    }
+}
+
+<table class="table table-sm" id="original-recording-table">
+   
+    <tr role="row">
+      
+        <th aria-label="Transcript">Transcript</th>
+        <th aria-label="Recording Date">Recording Date</th>
+        <th aria-label="Category">Category</th>
+        <th aria-label="RetryCount">RetryCount</th>
+        <th aria-label="Comment">Comment</th>
+        <th aria-label="Actions" style="width: 150px">Action</th>
+    </tr>
+    @foreach (var recording in Model)
+    {
+        <tr>
+          
+            <td aria-label="Transcript">@recording.OriginalPrompt.Transcript</td>
+            <td aria-label="Recording Date">@recording.CreateTS.ToShortDateString()</td>
+            <td aria-label="Category">@recording.OriginalPrompt.Category.Description</td>
+            <td aria-label="RetryCount">@recording.RetryCount</td>
+            <td aria-label="Comment">@recording.Comment</td>
+            <td aria-label="Actions"><a href="#" class="listen">Listen</a>
+                | <a href='@Url.Action("DownloadSpeechFile", "SpeechFile")?recordingId=@recording.Id&location=raw'>Download</a>
+                <input type="hidden" id="FilePath" name="FilePath" value="@recording.SpeechFilePath" />
+               
+                </td>
+
+        </tr>
+    }
+   
+</table>
+<script language="javascript" type="text/javascript">
+   
+    $(document).ready(function () {
+      
+        
+         //listen the recording
+        $('#original-recording-table').on('click', 'a.listen', function (e) {
+            e.preventDefault();
+            var filePath = $('input[type=hidden]', $(this).closest("td")).val();
+            $("#lblListenContributorId").text($("#hidContributorId").val());
+            $("#lblListenTranscript").text($(this).closest('tr').find('td:eq(0)').text());
+
+            var audio = document.getElementById('listenRecording');
+              
+            audio.setAttribute("src", filePath);
+            audio.load();
+            var dialog = $("#listen-dialog");
+            listenRecording(audio, dialog);
+               
+            $("#listen-dialog").dialog('open');
+            return false;
+        });
+                     
+
+
+
+
+    });//End document ready
+
+
+
+</script>

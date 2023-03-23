@@ -1,0 +1,176 @@
+﻿@model List<SpeechAccessibility.Core.Models.ContributorAssignedBlock>
+@{
+    Layout = null;
+}
+
+<table class="table table-sm" id="contributor-assigned-blocks-table" style="width: 550px">
+   
+    <tr role="row">
+        @*  <th>BlockID</th>*@
+        <th aria-label="BlockNumber">BlockNumber</th>
+        <th aria-label="Actions" style="width: 350px">Actions</th>
+    </tr>
+    @foreach (var block in Model)
+    {
+        <tr>
+            @* <td>@block.Block.Id</td>*@
+            <td aria-label="BlockNumber">@block.Block.Description</td>
+            <td aria-label="Actions">
+                <input type="hidden" class="BlockId" id="hdBlockId" value="@block.Block.Id"/>
+                <input type="hidden" class="ContributorId" id="hdContributorId" value="@block.ContributorId"/>
+                <a href="#" class="viewPrompts">View Prompts</a> | <a href="#" class="viewRecordings">View Recording</a> | <a href="#" class="viewRating">View Rating</a>
+            </td>
+        </tr>
+    }
+   
+</table>
+
+
+<script language="javascript" type="text/javascript">
+
+   
+    $(document).ready(function () {
+        
+
+        // view Rating
+        $('#contributor-assigned-blocks-table').on('click', 'a.viewPrompts', function (e) {
+            e.preventDefault();            
+            var blockId = $(this).parent().find('.BlockId').val();     
+           
+            var getUrl = "@Url.Action("ViewAssignedBlockPrompts", "SpeechFile")?blockId=" + blockId;           
+            getAssignedBlockPrompts(getUrl);
+            $("#assignedBlockPrompts-dialog").dialog('open');
+            return false;
+        });
+
+        function getAssignedBlockPrompts(getUrl) {
+           
+            $("#assignedBlockPrompts-dialog").dialog({
+                    title: "Contributor Assigned Block Prompts",
+                    autoOpen: false,
+                    resizable: false,
+                    width: 1000,
+                    height: 700,
+                    show: { effect: 'drop', direction: "up" },
+                    modal: true,
+                    draggable: true,
+                    closeOnEscape: true,
+                    position: { my: "left top", at: "left+50 top+100", of: window },
+
+                    open: function () {
+                        $(this).load(getUrl);
+                        
+                    },
+                    close: function () {
+
+                    },
+                    buttons: {
+
+                        close: function () {
+
+                             $("#assignedBlockPrompts-dialog").dialog('close');
+                        }
+                    }
+
+                });
+            }
+            
+            
+        //view contributor recording for selected block
+        //contributorRecordings-dialog        
+        $('#contributor-assigned-blocks-table').on('click', 'a.viewRecordings', function (e) {
+            e.preventDefault();
+
+            var blockId = $(this).parent().find('.BlockId').val();
+            var contributorId = $(this).parent().find('.ContributorId').val();
+
+            var getUrl = "@Url.Action("ViewContributorRecordingsForBlock", "SpeechFile")?contributorId=" + contributorId + "&blockId=" + blockId;
+
+            getRecordings(getUrl);
+            $("#contributorRecordings-dialog").dialog('open');
+            return false;
+        });
+
+
+        function getRecordings(getUrl) {
+
+            $("#contributorRecordings-dialog").dialog({
+                title: "Contributor Recordings",
+                autoOpen: false,
+                resizable: false,
+                width: 1000,
+                height: 700,
+                show: { effect: 'drop', direction: "up" },
+                modal: true,
+                draggable: true,
+                closeOnEscape: true,
+                position: { my: "left top", at: "left+50 top+100", of: window },
+
+                open: function () {
+                    $(this).load(getUrl);
+
+                },
+                close: function () {
+
+                },
+                buttons: {
+
+                    close: function () {
+
+                        $("#contributorRecordings-dialog").dialog('close');
+                    }
+                }
+
+            });
+        }
+        
+         // view Recording Rating
+        $('#contributor-assigned-blocks-table').on('click', 'a.viewRating', function (e) {
+                e.preventDefault();
+            var blockId = $(this).parent().find('.BlockId').val();
+            var contributorId = $(this).parent().find('.ContributorId').val();
+            //alert(blockId);
+
+            var getUrl = "@Url.Action("ViewBlockRecordingsRating", "SpeechFile")?contributorId=" + contributorId + "&blockId=" + blockId;
+                
+                getRecordingRating(getUrl);
+                $("#rating-dialog").dialog('open');
+                return false;
+            });
+            function getRecordingRating(getUrl) {
+                $("#rating-dialog").dialog({
+                    title: "Speech File Rating",
+                    autoOpen: false,
+                    resizable: false,
+                    width: 1000,
+                    height: 700,
+                    show: { effect: 'drop', direction: "up" },
+                    modal: true,
+                    draggable: true,
+                    closeOnEscape: true,
+                    position: { my: "left top", at: "left+50 top+100", of: window },
+
+                    open: function () {
+                        $(this).load(getUrl);
+                        //$('#rating-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+                    },
+                    close: function () {
+                    $("#rating-dialog").empty();
+                    },
+                    buttons: {
+
+                        close: function () {
+                        $("#rating-dialog").empty();
+                            $(this).dialog('close');
+                        }
+                    }
+
+                });
+            }
+
+
+    });//End document ready
+
+
+
+</script>

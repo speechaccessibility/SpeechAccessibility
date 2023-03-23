@@ -1,0 +1,212 @@
+﻿@using System.Security.Claims
+@{
+    ViewData["Title"] = "Excluded Speech Files";
+}
+
+@{
+    ViewBag.Title = "Excluded Speech Files";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<h1>Excluded Speech Files</h1>
+<div id="top"></div>
+@{
+    var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+}
+<input type="hidden" id="UserRole" value="@userRole" />
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+<div style="width: 100%">
+    <table class="table table-striped table-bordered table-hover" id="SpeechFileTable" cellspacing="0" align="center"></table>
+</div>
+
+<div id="listen-dialog" style="display: none">
+    <p>
+        <b>ContributorID:</b><label id="lblListenContributorId" name="lblListenContributorId"></label>
+        <br/>
+        <b>Transcript:</b><label id="lblListenTranscript" name="lblListenTranscript"></label>
+        <br/>
+        <input type="hidden" id="hidFileName"/>
+        <audio id="listenRecording" controls>
+            <source src="">
+        </audio>
+
+    </p>
+</div>
+
+<div id="exclude-dialog" style="display: none">
+    <p>
+        <input type="hidden" id="hidExcludeRecordingId" />
+        <span class="ui-icon ui-icon-alert" style="float: left; margin: 0 7px 20px 0;"></span>
+        <label id="lblExcludeMessage">Are you sure to exclude this speech file?</label><br />
+        <b>ContributorID: </b><label id="lblExcludeContributorId" name="lblExcludeContributorId"></label><br />
+        <b>Transcript: </b><label id="lblExcludeTranscript" name="lblExcludeTranscript"></label>
+        <br />
+        <b>Comments:</b><br/><textarea id="txtExcludeComment" name="txtExcludeComment" rows="4" cols="50"></textarea>
+    </p>
+</div>
+
+
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="~/js/listenrecording.js"></script>
+    <script src="~/js/popupdialog.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            //bind datatable for Prompts
+            var oSpeechFileTable = $("#SpeechFileTable").on('error.dt',
+                function (e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                    "serverSide": true,
+                    "processing": true,
+                    "responsive": true,
+                    "iDisplayLength": 100,
+                    "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                        "<'row'<'col-sm-12'tr>>p",
+                    "ajax": ({
+                        "url": '@Url.Action("LoadExcludedSpeechFiles", "SpeechFile")',
+                        "type": "POST",
+                        "datatype": "json"
+                    }),
+                    "bAutoWidth": false,
+                    "aaSorting": [[4, 'desc']],
+                    "columns": [
+                        {
+                            "title": "FileId",
+                            "data": "id",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "Id"
+                        },
+                        {
+                            "title": "ContributorID",
+                            "data": "contributorId",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "ContributorId"
+                        },
+                        {
+                            "title": "Transcript",
+                            "data": "modifiedTranscript",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "ModifiedTranscript"
+                        },
+                        {
+                            "title": "Category",
+                            "data": "originalPrompt.category.description",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "OriginalPrompt.Category.Description"
+                        },
+                        
+                        {
+                            "title": "Recorded Date",
+                            "data": "createTS",
+                            'render': function (data) {
+                                var date = new Date(data);
+                                var month = date.getMonth() + 1;
+                                return (month.toString().length > 1 ? month : "0" + month) + "/" + date.getDate() + "/" + date.getFullYear();
+                            },
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "CreateTS"
+                        },
+                        {
+                            "title": "Comment",
+                            "data": "comment",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Comment"
+                        },                      
+                        {
+                            "title": "Action",
+                            "data": "id",
+                            //"targets": 0,
+                            "searchable": false,
+                            "orderable": false,
+                            "width": '150px',
+                            "classDescription": 'dt-body-center',
+                            "visible": true,
+                            "name": "Id",
+                            "render": function (data, type, row) {
+                                var link="";
+                                if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
+                                    link = '<a href="#" class="listen">Listen</a> | <a href="#" class="unexclude">Un-Exclude</a>';
+                                    return link;
+                                }
+                                link = '<a href="#" class="listen">Listen</a> ';
+                                return link;
+                               
+                            }
+                        }
+                    ],
+                    "ordering": true,
+                    "paging": true,
+                    "pageLength": 100,
+                    "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+
+                });
+
+            //listen the recording
+            $('#SpeechFileTable').on('click', 'a.listen', function (e) {
+                e.preventDefault();
+                //DownloadSpeechFile
+                var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                 $("#lblListenContributorId").text(row.contributorId);
+                $("#lblListenTranscript").text(row.modifiedTranscript);
+                $("#hidFileName").val(row.speechFilePath);
+                var audio = document.getElementById('listenRecording');
+                audio.setAttribute("src", row.speechFilePath);
+                audio.load();
+                var dialog = $("#listen-dialog");
+                listenRecording(audio, dialog);
+                $("#listen-dialog").dialog('open');
+                return false;
+            });
+
+
+
+            //exclude the recording
+            $('#SpeechFileTable').on('click', 'a.unexclude', function (e) {
+                e.preventDefault();
+                var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                clearExcludedInputFields();
+                $("#hidExcludeRecordingId").val(row.id);
+                $("#lblExcludeTranscript").text(row.modifiedTranscript);
+                $("#lblExcludeContributorId").text(row.contributorId);
+                $("#txtExcludeComment").val(row.comment);
+                openDialogForRecording($("#exclude-dialog"), "Un-Exclude Speech File", $("#hidExcludeRecordingId"), $("#txtExcludeComment"), "edit", '@Url.Action("PublishExcludeRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+
+                $("#exclude-dialog").dialog('open');
+                return false;
+            });
+            
+            function clearExcludedInputFields() {
+                $("#hidExcludeRecordingId").val("");
+                $("#lblExcludeTranscript").text("");
+                $("#lblExcludeContributorId").text("");
+                $("#txtExcludeComment").val("")
+            }
+        
+
+        });//End document ready
+
+    </script>
+}

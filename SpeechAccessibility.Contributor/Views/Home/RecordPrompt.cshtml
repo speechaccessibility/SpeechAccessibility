@@ -1,0 +1,233 @@
+﻿@model RecordPromptModel
+@{
+    ViewData["Title"] = "Record Prompt";
+}
+<link href="~/lib/font-awesome/css/all.min.css" rel="stylesheet" />
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="container">
+    <div id="errorDiv" class="text-danger">
+
+    </div>
+    <div id="consentDiv"></div>
+
+        <div id="messageDiv" class="text-danger">
+        <strong>Note: Please do not mention your personal information in your recording. The recording will automatically stop after two minutes.</strong>
+    </div>
+
+    <dialog id="maxTimeDialog">
+        <h1>Time limit met.</h1>
+        <p>Recording has met the max time limit. You may proceed to the next prompt.</p>
+        <form method="dialog">
+            <button>OK</button>
+        </form>
+    </dialog>
+
+    @if (Model.prompt.Category.Id == 1)
+    {
+        int assessmentPromptsCompleteCount = Model.assessmentCount - 1;
+
+        int percentComplete = (int)Math.Round((double)(100 * assessmentPromptsCompleteCount) / Model.assessmentMax);
+
+        if (percentComplete != 0)
+        {
+            <div class="progress" style="height: 35px;" data-label="@percentComplete">
+                <div class="progress-bar" role="progressbar" aria-valuenow="@percentComplete" style="width:@percentComplete%;">                   
+                </div>
+            </div>
+            <span style="font-size:large"><strong>@percentComplete%</strong></span>
+        }
+
+    }
+    else 
+    {
+        int blockCompleteCount = Model.currentBlockOfPromptsCount;
+
+        int percentComplete = (int)Math.Round((double)(100 * blockCompleteCount) / Model.blockMax);
+
+        int categoryCount = Model.digitalCommandMax + Model.novelSentenceMax;
+
+        if (Model.currentBlockOfPromptsCount == Model.digitalCommandMax)
+        {
+            <div class="alert alert-success alert-dismissible" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <i class="fa-solid fa-star fa-bounce" style="padding-right:10px"></i>Congratulations! You completed Section 1 of Block @Model.totalBlockCount!
+            </div>
+        }
+
+        if (Model.currentBlockOfPromptsCount == categoryCount)
+        {
+
+            <div class="alert alert-success alert-dismissible" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <i class="fa-solid fa-star fa-bounce" style="padding-right:10px"></i>Congratulations! You completed Section 2 of Block @Model.totalBlockCount!
+            </div>
+
+             <input hidden id="showOpenEndedMessage" value="true" />
+
+            <dialog id="openEndedMessage">
+                <h1>You have completed Section 2 of Block @Model.totalBlockCount!</h1>
+                <p>
+                    The next section will contain open-ended questions.<br />
+                    Please answer each question using one or more sentences.<br />
+                    Don’t read the question out loud – just speak your answer!
+                </p>
+
+                <form method="dialog">
+                    <button>OK</button>
+                </form>
+            </dialog>
+        }
+
+        if (Model.totalBlockCount != 0 && percentComplete == 0)
+        {
+            <div class="alert alert-success alert-dismissible" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <i class="fa-solid fa-star fa-bounce" style="padding-right:10px"></i>Congratulations! You completed Block @Model.totalBlockCount!
+            </div>
+
+            <input hidden id="showSection1And2Message" value="true" />
+            
+                <dialog id="section1And2Message">
+                <h1>You have completed Block @Model.totalBlockCount!</h1>
+                <p>
+                    The next section will contain digital command prompts and novel sentences.<br/>
+                    Please record yourself speaking the prompts.
+                </p>
+                <form method="dialog">
+                    <button>OK</button>
+                </form>
+            </dialog>
+
+        }
+        else if (Model.totalBlockCount != 0)
+        {
+            <div class="progress" style="height: 35px;">
+                <div class="progress-bar" role="progressbar"
+             aria-valuenow="@percentComplete" style="width:@percentComplete%;">
+                </div>
+            </div>
+            <span style="font-size:large"><strong>Block @Model.totalBlockCount Progress: @percentComplete%</strong></span>
+
+            <br />
+        }
+
+    }
+
+    <br />
+    <div>
+        @if(Model.prompt.SubCategory.Id == 3)
+        {
+            <p>Recording Prompt @Model.assessmentCount:</p>
+        }
+        else if (Model.prompt.SubCategory.Id==1)
+        {
+            <p>Please speak <i>your response</i> to the prompt below: </p>
+        }
+        else if (Model.prompt.SubCategory.Id==2)
+        {
+            <p>In this section, you will be explaining the steps to completing specific activities. Do not worry if you have not done the activity before. There are no right or wrong answers. Just try your best. Imagine you are teaching something to someone who has never done this activity before.</p><br />
+        }
+        else if(Model.prompt.SubCategory.Id==4)
+        {
+            <dialog id="subCategory4Message">
+                <h1>You have completed section 1!</h1>
+                <p>
+                    In the next section you will be given some instructions.<br />
+                    Don’t read the question out loud – just do as instructed!
+                </p>
+                <form method="dialog">
+                    <button>OK</button>
+                </form>
+            </dialog>
+            <p id="prompt">@Model.prompt.Transcript</p>
+        }
+        else if (Model.prompt.SubCategory.Id==5)
+        {            
+
+            <p>Please choose one of the prompts below to talk about. Try to speak for about 30 seconds. Imagine that you are talking to a good friend or family member.</p>
+            <br />
+            int count = 0;
+                        <dialog id="subCategory5Message">
+                            <h1>You have completed section 2!</h1>
+                <p>
+                    In the next section you will select an open-ended question to answer.<br />
+                    Please answer the question using one or more sentences.<br />
+                    Don’t read the question out loud – just speak your answer!
+                </p>
+                <form method="dialog">
+                    <button>OK</button>
+                </form>
+            </dialog>
+            <fieldset id="prompt">
+                @{
+                    foreach (Prompt prompt in Model.spontaneousSpeechList)
+                    {
+                        count++;
+                        string inputId = "option" + prompt.Id;
+                        string promptId = "promptDesc" + count;
+
+                        @if (count == 1)
+                        {
+                            <input id="@inputId" name="selectedPromptId" type="radio" value="@prompt.Id" aria-labelledby="@inputId @promptId" checked>
+                        }
+                        else
+                        {
+                            <input id="@inputId" name="selectedPromptId" type="radio" value="@prompt.Id" aria-labelledby="@inputId @promptId">
+                        }
+                        string label = "Option " + @count + ":";
+                        <label for="@inputId">@label</label>
+
+                        <div class="form-group col-md-8" id="@promptId">
+                            <p>@prompt.Transcript</p>
+                        </div>
+
+                    }
+                }
+            </fieldset>
+          
+
+        }
+        else
+        {
+            <p>Please record yourself speaking the prompt below:</p>
+        }
+
+        @if((Model.prompt.SubCategory.Id!=4 && Model.prompt.SubCategory.Id!=5))
+        {
+        <p id="prompt">@Model.prompt.Transcript</p>
+        }
+
+    </div>
+    <div class="p-3">
+        <canvas id="waveform"></canvas>
+    </div>
+    <div class="p-3" aria-live="polite">
+        <span id="recordingStatus" class="sr-only"></span>
+        <input hidden id="retryCount" asp-for="@Model.retryCount" value="@Model.retryCount" />
+        <form style="display: inline-block;" method="post">
+            <input hidden id="contributorId" asp-for="@Model.contributorId" value="@Model.contributorId" />
+            <input hidden id="promptId" asp-for="@Model.prompt.Id" value="@Model.prompt.Id" />
+            <input hidden id="categoryId" asp-for="@Model.prompt.Category.Id" value="@Model.prompt.Category.Id" />
+            <input hidden id="blockId" asp-for="@Model.blockId" value="@Model.blockId" />
+            <input hidden id="subCategoryId" asp-for="@Model.prompt.SubCategory.Id" value="@Model.prompt.SubCategory.Id" />
+            <input hidden id="phonationPromptCount" asp-for="@Model.phonationPromptCount" value="@Model.phonationPromptCount" />
+            <button hidden type="submit" class="btn btn-primary" id="nextButton" style="margin-right:10px">Next</button>
+        </form>
+         <button id="recordButton" class="btn btn-primary">Record</button>
+        <button hidden id="playButton" class="btn btn-primary">Listen</button>
+        <span style="padding-left:10px" id="rerecordMessage"></span>
+    </div>
+
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script>
+    Cookies = 'existent global'
+</script>
+<script src="~/lib/font-awesome/js/all.min.js"></script>
+<script src="~/lib/js-cookie/dist/js.cookie.js"></script>
+<script src="~/lib/js-cookie/dist/js.cookie.min.js"></script>
+<script src="~/js/Recorder.js" type="module"></script>
+<script src="~/js/site.js"></script>

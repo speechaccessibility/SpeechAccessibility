@@ -1,0 +1,108 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SpeechAccessibility</title>
+    <link href="~/lib/font-awesome/css/all.min.css" rel="stylesheet" />
+     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="~/css/site.css" rel="stylesheet" />
+   
+</head>
+<body>
+    <header>
+        <div class="university-banner" role="banner">
+            <p>University of Illinois Urbana-Champaign</p>
+        </div>
+
+        <a href="#main" class="skip-to-main-content-link">Skip to main content</a>
+
+        <div class="container-fluid">
+             <div id="top-banner" class="row" role="banner">
+            <div id="university-logo" class="col-sm-4">
+               <a href="https://illinois.edu" class="illinois-logo" target="_blank">
+                    <img src="~/images/BlockI-Logo-Reversed-Orange-RGB.png" alt="University of Illinois at Urbana-Champaign logo.">
+                </a>
+                <a class="wordmark-site-title" href="https://beckman.illinois.edu" target="_blank">Beckman Institute</a>
+           </div>
+            <div id="site-name-wrapper" class="col-sm-4">
+                <a id="site-name" asp-controller="Home" asp-action="Index">Speech Accessibility Project</a>
+                </div>
+        </div>
+        </div>
+       
+        <nav class="navbar navbar-expand-md navbar-dark bg-beckman" aria-label="Main">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse">
+                <ul class="navbar-nav flex-grow-1">
+                    <li class="nav-item">
+                        <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="RecordPrompt">Record Prompt</a>
+                    </li>
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        <li class="nav-item">
+                            <div class="dropdown">
+                                <a class="nav-link text-light dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Help
+                                </a>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                    <a class="dropdown-item" asp-controller="Home" asp-action="Contact">Contact Us</a>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+                <partial name="_LoginPartial" />
+
+            </div>
+        </nav>
+    </header>
+    <main role="main" id="main" style="padding-top:25px;padding-bottom:100px;" >
+        <div class="main-body">
+            @RenderBody()
+        </div>
+    </main><!-- /.container -->
+    <br />
+
+    <a href="#main" class="skip-to-main-content-link">Skip to main content</a>
+
+    <footer class="footer" role="contentinfo">
+        <div class="footer__wrapper">
+            <div class="footer__left">
+                <div class="footer__logo"> <img src="~/images/university-wordmark-reversed-orange-rgb.png" alt="University of Illinois Urbana-Champaign Wordmark" /> </div> <ul class="contact-info">
+                    <li class="contact-info__unit">Speech Accessibility Project - Beckman Institute for Advanced Science and Technology</li>
+                    <li class="contact-info__address">
+                        405 N. Mathews Ave. M/C 251, Urbana, IL 61801
+                    </li>
+                    <li class="contact-info__email"> <p class="ci_label">Email</p> <p class="email-link"><a href="mailto:speechaccessibility@beckman.illinois.edu">speechaccessibility@beckman.illinois.edu</a></p> </li>
+                </ul>  </div> <div class="footer__right">
+                <div class="footer__navtitle"> </div> <div class="footer__nav">
+
+                    <nav aria-label="Footer">
+                        <ul class="footer-nav__wrapper">
+                            <li class="footer-nav__link"><a href="https://illinois.edu/resources/website/copyright.html" target="_self">Copyright</a></li>
+                            <li class="footer-nav__link"><a href="https://illinois.edu/resources/website/accessibility.html" target="_self">Accessibility</a></li>
+                            <li class="footer-nav__link"><a href="https://www.vpaa.uillinois.edu/resources/web_privacy" target="_self">Privacy Statement and Terms of Use</a></li>
+                        </ul>
+                    </nav>
+
+                </div>
+            </div>
+        </div> 
+    </footer>
+
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js"></script>
+    <script src="~/lib/font-awesome/js/all.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

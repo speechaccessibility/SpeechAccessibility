@@ -1,0 +1,430 @@
+﻿@using System.Security.Claims
+@{
+    ViewData["Title"] = "Modified Speech Files";
+}
+
+@{
+    ViewBag.Title = "Modified Speech Files";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<h1>WIP Speech Files</h1>
+<div id="top"></div>
+@{
+    var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+}
+<input type="hidden" id="UserRole" value="@userRole" />
+
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+<div>
+    <table class="table table-striped table-bordered table-hover" id="SpeechFileTable" cellspacing="0" align="center"></table>
+</div>
+
+
+<div id="exclude-dialog" style="display: none">
+    <p>
+        <input type="hidden" id="hidExcludeRecordingId" />
+        <span class="ui-icon ui-icon-alert" style="float: left; margin: 0 7px 20px 0;"></span>
+        <label id="lblExcludeMessage">Are you sure to exclude this speech file?</label><br/>
+        <b>ContributorID: </b><label id="lblExcludeContributorId" name="lblExcludeContributorId"></label><br/>
+        <b>Transcript: </b><label id="lblExcludeTranscript" name="lblExcludeTranscript"></label>
+        <br/><textarea id="txtExcludeComment" name="txtExcludeComment" rows="4" cols="50"></textarea>
+    </p>
+</div>
+
+<div id="publish-dialog" style="display: none">
+    <p>
+        <input type="hidden" id="hidPublishRecordingId" />
+        <label id="lblPublishMessage">Are you sure to publish this speech file?</label><br/>
+        <b>ContributorID: </b><label id="lblPublishContributorId" name="lblPublishContributorId"></label><br/>
+        <b>Transcript: </b><label id="lblPublishranscript" name="lblPublishranscript"></label>
+        <br />
+        <b>Comments:</b><br />
+        <textarea id="txtPublishComment" name="txtPublishComment" rows="4" cols="50"></textarea>
+       
+    </p>
+</div>
+
+<div id="upload-dialog" style="display: none">
+    <input type="hidden" id="hidUploadRecordingId" name="recordingId" />
+        <input type="hidden" id="hidUploadContributorId" name="contributorId" />
+    <label id="lblUploadTranscriptMessage" name="lblUploadTranscriptMessage" class="errorMessage alert-info"></label><br/>
+        <b>Transcript:</b>
+        <label id="lblUploadTranscript" name="lblUploadTranscript"></label>
+        <br/><b>ContributorID:</b><label id="lblUploadContributorId" name="lblUploadContributorId"></label>
+    <input type="file" id="recordingFile" name="recordingFile" accept="audio/wav" />
+</div>
+
+<div id="listen-dialog" style="display: none">
+    <p>
+        <input type="hidden" id="hidUpdateTranscriptRecordingId" />
+        <b>ContributorID:</b><label id="lblContributorId" name="lblContributorId"></label>
+        <br/>
+        <input type="hidden" id="hidFileName"/>
+        <audio id="listenRecording" controls preload="none">
+            <source src="" type="audio/wav"/>
+        </audio>
+
+        <br/>
+        <b>Transcript:</b><br/>
+
+        <textarea id="txtTranscript" name="txtTranscript" rows="4" cols="50"></textarea>
+
+    </p>
+</div>
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="~/js/listenrecording.js"></script>
+    <script src="~/js/popupdialog.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            //bind datatable for Prompts           
+              var oSpeechFileTable = $("#SpeechFileTable").on('error.dt',
+                function (e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                    "serverSide": true,
+                    "processing": true,
+                    "responsive": true,
+                    "iDisplayLength": 100,
+                    "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                        "<'row'<'col-sm-12'tr>>p", //'<"top"l>rift<"bottom"p><"clear">',
+                    "ajax": ({
+                        "url": '@Url.Action("LoadModifiedSpeechFiles", "SpeechFile")',
+                        "type": "POST",
+                        "datatype": "json"
+                    }),
+                    "bAutoWidth": false,
+                    "aaSorting": [[1, 'asc']],
+                    "columns": [
+                        {
+                            "title": "RecordingId",
+                            "data": "id",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "Id"
+                        },
+                        {
+                            "title": "ContributorID",
+                            "data": "contributorId",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "ContributorId"
+                        },
+                        {
+                            "title": "Transcript",
+                            "data": "modifiedTranscript",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "ModifiedTranscript"
+                        },
+                        {
+                            "title": "Category",
+                            "data": "originalPrompt.category.description",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "OriginalPrompt.Category.Description"
+                        },                       
+                        {
+                            "title": "Recorded Date",
+                            "data": "createTS",
+                            'render': function (data) {
+                                var date = new Date(data);
+                                var month = date.getMonth() + 1;
+                                return (month.toString().length > 1 ? month : "0" + month) + "/" + date.getDate() + "/" + date.getFullYear();
+                            },
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "CreateTS"
+                        },
+                        {
+                            "title": "Comment",
+                            "data": "comment",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Comment"
+                        },
+                      
+                        {
+                            "title": "Actions",
+                            "data": "id",                           
+                            "searchable": false,
+                            "orderable": false,
+                            "width": '300px',
+                            "classDescription": 'dt-body-center',
+                            "visible": true,
+                            "name": "Id",
+                            "render": function (data, type, row) {
+                                var link="";
+                                if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
+                                    link = '<a href="#" class="listen">Listen</a> | <a href="@Url.Action("DownloadSpeechFile", "SpeechFile")?recordingId=' + data + '&location=modified">Download</a> | <a href="#" class="upload" >Update Recording</a> | <a href="#" class="exclude">Exclude</a> | <a href="#" class="publish">Publish</a>';
+                                      return link;
+                                }
+
+                                link = '<a href="#" class="listen">Listen</a>';
+                                return link;
+                            }
+                        }
+                    ],
+                    "ordering": true,
+                    "paging": true,
+                    "pageLength": 100,
+                    "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+
+                });
+                
+                 //listen the recording
+            $('#SpeechFileTable').on('click', 'a.listen', function (e) {
+                e.preventDefault();
+                
+                var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                $("#hidUpdateTranscriptRecordingId").val(row.id);
+                $("#hidFileName").val(row.speechFilePath);
+                $("#lblContributorId").text(row.contributorId);
+                //$("#txtTranscript").val(row.modifiedTranscript);
+                var currentRow = $(this).closest("tr");
+                $("#txtTranscript").val(currentRow.find("td:eq(1)").text());
+                var audio = document.getElementById('listenRecording');
+                audio.setAttribute("src", row.speechFilePath);
+                 audio.load();
+                var dialog = $("#listen-dialog");
+                 if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
+                    listenEditTanscriptRecording(audio, dialog, $(this).closest('tr'));
+                }
+                 else
+                 {
+                    listenRecording(audio, dialog);
+                 }
+                    
+                $("#listen-dialog").dialog('open');
+                return false;
+            });
+
+            function listenEditTanscriptRecording(audio, dialog, currentRow) {
+                $("#listen-dialog").dialog({
+                    title: "Listen Speech File",
+                    autoOpen: false,
+                    resizable: false,
+                    width: 700,
+                    show: { effect: 'drop', direction: "up" },
+                    modal: true,
+                    draggable: true,
+                    closeOnEscape: true,
+                    position: { my: "left top", at: "left+50 top+100", of: window },
+                    open: function () {
+                        dialog.css('overflow', 'hidden'); //hide the vertial bar on the dialog
+                    },
+                    close: function () {
+                        audio.setAttribute("src", "");
+                    },
+                    buttons: {
+                        Update: function(){
+                                var recordingId = $("#hidUpdateTranscriptRecordingId").val();
+                                var transcript = $("#txtTranscript").val();
+                                $.ajax({
+                                    url: '@Url.Action("UpdateRecordingTranscript", "SpeechFile")',
+                                    type: "POST",
+                                    data: {
+                                        "recordingId": recordingId, "transcript": transcript
+                                    },
+                                    success: function (response) {
+                                        if (response.success === true) {
+                                            clearUpdateTranscriptInputFields();
+                                            audio.setAttribute("src", "");
+                                            $("#listen-dialog").dialog('close');
+                                            //oSpeechFileTable.draw();
+                                        currentRow.find('td:eq(1)').text(transcript);
+                                       
+                                        }
+                                    },
+                                    error: function () { alert('Error Updating Transcript! It could be the timeout issue. Please try to reload your browser.'); }
+                                });
+
+                        }
+
+
+                        ,close: function () {
+                            audio.setAttribute("src", "");
+                            $(this).dialog('close');
+                        }
+                    }
+
+                });
+            }
+
+            
+
+
+       
+            //exclude the recording
+            $('#SpeechFileTable').on('click', 'a.exclude', function (e) {
+                e.preventDefault();
+                  var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();
+                clearExcludedInputFields();
+                $("#hidExcludeRecordingId").val(row.id);
+                $("#lblExcludeTranscript").text(row.modifiedTranscript);
+                $("#lblExcludeContributorId").text(row.contributorId);
+                $("#txtExcludeComment").val(row.comment);
+                openDialogForRecording($("#exclude-dialog"), "Exclude Speech File", $("#hidExcludeRecordingId"), $("#txtExcludeComment"), "exclude", '@Url.Action("PublishExcludeRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+
+                $("#exclude-dialog").dialog('open');
+                return false;
+            });
+
+           
+
+        //publish the recording
+            $('#SpeechFileTable').on('click', 'a.publish', function (e) {
+            e.preventDefault();
+                var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                clearPublishedInputFields();
+                $("#hidPublishRecordingId").val(row.id);
+                $("#lblPublishranscript").text(row.modifiedTranscript);
+                $("#lblPublishContributorId").text(row.contributorId);
+                $("#txtPublishComment").val(row.comment);
+
+                openDialogForRecording($("#publish-dialog"), "Publish Speech File", $("#hidPublishRecordingId"), $("#txtPublishComment"), "publish", '@Url.Action("PublishExcludeRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+                $("#publish-dialog").dialog('open');
+            return false;
+        });
+
+        
+        
+        
+        //upload new recording
+          $('#SpeechFileTable').on('click',
+                'a.upload',
+                function (e) {
+                e.preventDefault();
+                    var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();
+              
+                    $("#hidUploadRecordingId").val(row.id);
+                    $("#hidUploadContributorId").val(row.contributorId);
+                    $("#lblUploadContributorId").text(row.contributorId);
+                    $("#lblUploadTranscript").text(row.modifiedTranscript);
+                    uploadNewRecording();
+                    $("#upload-dialog").dialog('open');
+                    return false;
+            });
+
+        //upload new recording
+        function uploadNewRecording() {
+                $("#upload-dialog").dialog({
+                title: "Upload New Recording",
+                autoOpen: false,
+                resizable: false,
+                width: 700,
+                show: { effect: 'drop', direction: "up" },
+                modal: true,
+                draggable: true,
+                closeOnEscape: true,
+                position: { my: "left top", at: "left+50 top+100", of: window },
+                open: function () {
+                        $('#upload-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+                },
+                close: function () {
+                   clearUploadRecordingInputFields();
+                },
+                buttons: {
+                    "Upload": function () {
+                        if ($("#recordingFile").val() != "") {
+                            var contributorId = $("#hidUploadContributorId").val();
+                            var recordingId = $("#hidUploadRecordingId").val();
+                            var recordingVM = new FormData();
+                            recordingVM.append("Id", recordingId);
+                            recordingVM.append("ContributorId", contributorId);
+                            recordingVM.append('file', $('#recordingFile')[0].files[0]);
+
+
+                            $.ajax({
+                                    url: '@Url.Action("UploadModifiedRecording", "SpeechFile")',
+                                type: "POST",
+                                dataType: "json",
+                                contentType: false,
+                                processData: false,
+                                data: recordingVM,                           
+                                success: function (response) {
+                                        clearUploadRecordingInputFields();                                      
+                                      
+                                        if (response.success === true) {                                  
+                                            
+                                            $("#lblMessage").text(response.message);
+                                            $("#upload-dialog").dialog('close');
+                                        } 
+                                        else
+                                        {
+                                            $("#lblUploadTranscriptMessage").text(response.message);
+                                        }
+                                     
+                                },
+                                error: function () { alert('Error Uploading Recording! It could be the timeout issue. Please try to reload your browser.'); }
+                            });
+
+                        }
+                        else
+                        {
+                                $("#lblUploadTranscriptMessage").text("File Upload field cannot be empty.");
+                        }
+                            
+
+                    },
+                    close: function () {
+                            clearUploadRecordingInputFields();
+                        $(this).dialog('close');
+                    }
+                }
+
+            });
+        }
+
+
+        function clearExcludedInputFields() {
+            $("#hidExcludeRecordingId").val("");
+            $("#lblExcludeTranscript").text("");
+            $("#lblExcludeContributorId").text("");
+            $("#txtExcludeComment").val("")
+        }
+        
+        function clearPublishedInputFields() {
+            $("#hidPublishRecordingId").val("");
+            $("#lblPublishranscript").text("");
+            $("#lblPublishContributorId").text("");
+        }
+
+        function clearUpdateTranscriptInputFields() {
+                $("#hidUpdateTranscriptRecordingId").val("");
+                $("#lblContributorId").text("");
+                $("#txtTranscript").val("");
+        }
+        function clearUploadRecordingInputFields() {
+                $("#hidUploadRecordingId").val("");
+                $("#lblUploadTranscriptMessage").text("");
+                $("#lblUploadTranscript").text("");
+                $("#hidUploadContributorId").val("")
+                $("#lblUploadContributorId").text("")
+                $("#recordingFile").val("");            
+        }
+        
+
+        });//End document ready
+
+    </script>
+}

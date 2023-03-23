@@ -1,0 +1,137 @@
+﻿@model SpeechAccessibility.Annotator.Models.ContributorAssignedAnnotatorViewModel
+@{
+    Layout = null;
+}
+@{
+    // string.Join(",", persons.Select(p => p.FirstName))
+    var existingId = string.Join(",", Model.ContributorAssignedAnnotators.Select(a => a.User.Id));
+}
+<b>Contributor ID: </b><label id="lblContributorId" name="lblContributorId">@Model.Contributor.Id</label>
+<br><b>First Name: </b><label id="lblContributorFirstName" name="lblContributorFirstName">@Model.Contributor.FirstName</label>&nbsp;&nbsp;
+<b>Last Name: </b><label id="lblContributorLastName" name="lblContributorLastName">@Model.Contributor.LastName</label>
+<input type="hidden" id="hidExistingAnnotators" value="@existingId" />
+<div>
+    <h5>Assigned Annotators:</h5>
+    <table class="table table-sm table-bordered" id="contributor-assigned-annotators-table" style="width: 500px">
+
+        <tr role="row">
+            <th aria-label="NetId">NetId</th>
+            <th aria-label="LastName">LastName</th>
+            <th aria-label="FirstName">FirstName</th>
+            <th></th>
+        </tr>
+        @{
+            foreach (var annotator in Model.ContributorAssignedAnnotators)
+            {
+                <tr>
+                    <td aria-label="NetId">@annotator.User.NetId</td>
+                    <td aria-label="LastName">@annotator.User.LastName</td>
+                    <td aria-label="FirstName">@annotator.User.FirstName</td>
+                    <td>
+                        <a href="#" class="removeAnnotator">Remove</a>
+                        <input type="hidden" class="annotatorId" id="assignAnnotatorId_@annotator.Id" name="assignAnnotatorId" value="@annotator.Id" />
+                    </td>
+                </tr>
+            }
+        }
+    </table>
+</div>
+<hr />
+<table>
+    <tr>
+        <td>
+            Assign New Annotator:
+            <select asp-for="AnnotatorId" asp-items="@Model.ExistingAnnotators"></select>
+        </td>
+        <td>
+            <input type="button" id="btnAssign" name="btnAssign" value="Assign" class="btn btn-primary btn-sm" />
+        </td>
+    </tr>
+</table>
+<script language="javascript" type="text/javascript">
+
+
+    $(document).ready(function () {
+
+        //Assign Annotator
+        $('input:button[name="btnAssign"]').click(function () {
+            var annotatorIdArray = $("#hidExistingAnnotators").val().split(',');
+            var selectAnnotatorId = $("#AnnotatorId").val();
+            if (annotatorIdArray.includes(selectAnnotatorId)) {
+                alert("Selected Annotator is already assigned.");
+            }
+            else {
+
+                $.ajax({
+                    url: '@Url.Action("AssignContributorAnnotator", "Contributor")',
+                    type: "POST",
+                    data: { "contributorId": $("#lblContributorId").text(), "userId": $("#AnnotatorId").val() },
+                    success: function (response) {
+
+                        if (response.success === true) {
+                            var newRow = "<tr><td aria-label='NetId'>" + response.message[0].annotator.netId + "</td><td aria-label='LastName'>" + response.message[0].annotator.lastName
+                                + "</td><td aria-label='FirstName'>" + response.message[0].annotator.firstName
+                                + " </td><td><input class='annotatorId' type='hidden' id='assignAnnotatorId_'" + response.message[0].id
+                                + " name = 'assignAnnotatorId' class='annotatorId' value = '" + response.message[0].id
+                                + "'/><a href='#' class='removeAnnotator'>Remove</a> "
+                                + "</tr>";
+                            $("#contributor-assigned-annotators-table tbody").append(newRow);
+                            var existingAnnotators = $("#hidExistingAnnotators").val();
+                            if ($.trim(existingAnnotators) != '') {
+                                existingAnnotators = existingAnnotators + "," + response.message[0].annotator.id;
+                               
+                            }
+                            else
+                            {
+                                existingAnnotators = response.message[0].annotator.id;
+                            }
+                            $("#hidExistingAnnotators").val(existingAnnotators);
+                }
+            },
+            error: function () {
+                alert("Error: Assign Annotator!");
+            }
+                        });
+                }
+
+
+                });
+
+    //remove annotator
+    $('#contributor-assigned-annotators-table').on('click', 'a.removeAnnotator', function (e) {
+        e.preventDefault();
+        var currentRow = $(this);
+        var annotatorId = $(this).parent().find('.annotatorId').val();
+        
+
+        $.ajax({
+            url: '@Url.Action("RemoveContributorAnnotator", "Contributor")',
+            type: "POST",
+            data: { "assignAnnotatorId": annotatorId },
+            success: function (response) {
+                if (response.success === true) {
+                    $(currentRow).closest("tr").remove();
+                    //var existingAnnotators = $("#hidExistingAnnotators").val();
+                    //var annotatorIdArray = $("#hidExistingAnnotators").val().split(',');
+                    //    console.log(annotatorIdArray.length);
+                    //var newAnnotators = jQuery.grep(annotatorIdArray, function(value) {
+                    //    return value != $("#AnnotatorId").val();
+                    //});
+
+                        $("#hidExistingAnnotators").val(response.message);
+                    }
+            },
+            error: function () {
+                alert("Error: remove Annotator!");
+            }
+        });
+
+
+        return false;
+    });
+
+
+
+        });//End document ready
+
+</script>

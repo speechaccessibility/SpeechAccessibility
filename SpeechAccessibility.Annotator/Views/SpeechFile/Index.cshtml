@@ -1,0 +1,157 @@
+﻿@{
+    ViewData["Title"] = "Original Speech Files";
+}
+
+@{
+    ViewBag.Title = "Original Speech Files";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+<h1>Original Speech Files</h1>
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+<div style="width: 1000px">
+    <table class="table table-striped table-bordered table-hover" id="SpeechFileTable" cellspacing="0" align="center"></table>
+</div>
+
+
+
+<div id="listen-dialog" style="display: none">
+    <p>
+        <b>ContributorID:</b><label id="lblListenContributorId" name="lblListenContributorId"></label>
+        <br/>
+        <b>Transcript:</b><label id="lblListenTranscript" name="lblListenTranscript"></label>
+        <br/>
+        <input type="hidden" id="hidFileName"/>
+        <audio id="listenRecording" controls preload="none">
+            <source src="" type="audio/wav"/>
+        </audio>
+
+
+
+    </p>
+</div>
+
+
+
+@section scripts {
+    
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="~/js/listenrecording.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            //bind datatable for Prompts
+            var oSpeechFileTable = $("#SpeechFileTable").on('error.dt',
+                function(e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                "serverSide": true,
+                "processing": true,
+                "responsive": true,
+                "iDisplayLength": 100,
+                "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                    "<'row'<'col-sm-12'tr>>p", //'<"top"l>rift<"bottom"p><"clear">',
+                "ajax": ({
+                        "url": '@Url.Action("LoadApprovedContributors", "Contributor")',
+                    "type": "POST",
+                    "datatype": "json"
+                }),
+                "bAutoWidth": false,
+                "aaSorting": [[3, 'asc']],
+                "columns": [
+                        {
+                            "className": 'details-control',
+                            "orderable": false,
+                            "data": null,
+                            "defaultContent": '',
+                            "width": "20px"
+                        },
+
+                        {
+                            "title": "ContributorID",
+                            "data": "id",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Id"
+                        },
+
+                        {
+                            "title": "FirstName",
+                            "data": "firstName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "FirstName"
+                        },
+                        {
+                            "title": "LastName",
+                            "data": "lastName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "LastName"
+                        },
+                  
+                ],
+                "ordering": true,
+                "paging": true,
+                "pageLength": 100,
+                "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+
+            });
+
+         
+            $('#SpeechFileTable tbody').on('click',
+                'td.details-control',
+                function() {
+                    var tr = $(this).closest('tr');
+                    var row = oSpeechFileTable.row(tr);
+                    var contributorId = oSpeechFileTable.row(this).data().id;
+
+                    if (row.child.isShown()) {
+                        // This row is already open - close it
+                        row.child.hide();
+                        tr.removeClass('shown');
+                    } else {
+                        // Open this row
+                        row.child(formatDataTableDetailRow(contributorId)).show();
+                        tr.addClass('shown');
+                        buildContributorOriginalRecordingTable(contributorId);
+                    }
+                });
+
+            function buildContributorOriginalRecordingTable(contributorId) {
+                $.ajax({
+                    url: '@Url.Action("LoadContributorOriginalSpeechFiles", "SpeechFile")',
+                    type: 'POST',
+                    data: {
+                        'contributorId': contributorId
+                    },
+                    success: function (data) {
+                        var recordingList = $("#OriginalRecordings_" + contributorId);
+                        recordingList.html(data);
+                        
+                    },
+                    error: function () {
+                        alert("Error loading Contributor recordings");
+                    }
+                });
+
+            }
+            function formatDataTableDetailRow(contributorId) {
+                return '<div id="OriginalRecordings_' + contributorId + '"></div>';
+
+            }
+
+        });//End document ready
+
+    </script>
+}

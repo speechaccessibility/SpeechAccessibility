@@ -1,0 +1,148 @@
+﻿@using System.Security.Claims
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Speech Accessibility Annotator</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header class="bg-beckman no-print">
+        @{
+            var siteName = Configuration.GetSection("AppSettings")["SiteName"];
+            var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+        }
+        <div id="top-banner" class="row" role="banner">
+            <div id="university-logo" class="col-sm-3">
+                <a href="https://illinois.edu" class="illinois-logo" target="_blank">
+                    <img src="~/images/BlockI-Logo-Reversed-Orange-RGB.png" alt="University of Illinois at Urbana-Champaign logo." width="30" height="40">
+                    <span class="sr-only sr-only-focusable">University of Illinois Homepage</span>
+                </a>
+                <a class="wordmark-site-title" href="https://beckman.illinois.edu" target="_blank">Beckman Institute</a>
+               
+            </div>
+
+            <div id="site-name" class="col-sm-5">
+
+                @if (siteName.Contains("Development") || siteName.Contains("LocalHost") || siteName.Contains("Test"))
+                {
+                    <label id="lblSiteName" style="background-color: #FFFF00; color: red;">@siteName</label>
+                }
+                else
+                {
+                    <label id="lblSiteName">@siteName</label>
+                }
+            </div>
+            <div id="user-info" class="col-sm-2">
+                <label id="user">
+                    @User.Claims.FirstOrDefault(c => c.Type == "FullName")?.Value as @userRole
+                </label>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(userRole))
+        {
+            <nav class="navbar navbar-expand-md navbar-dark bg-beckman ">
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsSA" aria-controls="navbarsSA" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarsSA">
+                    <ul class="navbar-nav mr-auto">
+                        @if (userRole is "TextAnnotatorAdmin" or "TextAnnotator" or "SLPAnnotatorAdmin" or "SLPAnnotator" or "SystemAdmin") //clarion group
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="order" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Speech Files</a>
+                                <div class="dropdown-menu" aria-labelledby="order">
+                                    @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotatorAdmin" or "SLPAnnotator" or "SystemAdmin")
+                                    {
+                                        <a class="dropdown-item" href="@Url.Action("AllSITSpeechFiles", "SpeechFile")">SIT Speech Files</a>
+                                    }
+                                  
+                                    <a class="dropdown-item" href="@Url.Action("Index", "SpeechFile")">Original Speech Files</a>
+                                    <a class="dropdown-item" href="@Url.Action("ModifiedSpeechFiles", "SpeechFile")">WIP Speech Files</a>
+                                    <a class="dropdown-item" href="@Url.Action("PublishedSpeechFiles", "SpeechFile")">Published Speech Files</a>
+                                    <a class="dropdown-item" href="@Url.Action("ExcludedSpeechFiles", "SpeechFile")">Excluded Speech Files</a>
+                                </div>
+                            </li>
+                        }
+
+
+                        @if (userRole is "TextAnnotator" or "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "SystemAdmin") //Heejin group
+                        {  
+                            <li class="nav-item dropdown">
+                               <a class="nav-link dropdown-toggle" href="#" id="order" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Contributor</a>
+                                <div class="dropdown-menu" aria-labelledby="order">
+                                    @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "SystemAdmin")
+                                    {
+                                        <a class="dropdown-item" href="@Url.Action("ContributorsWaitingForApproval", "Contributor")">Contributors Waiting For Approval</a>
+
+                                    }
+                                    
+                                    <a class="dropdown-item" href="@Url.Action("Index", "Contributor")">Approved Contributors</a>
+                                    <a class="dropdown-item" href="@Url.Action("DeniedContributors", "Contributor")">Denied Contributors</a>
+
+                                </div>
+                           </li>
+
+                        }
+
+                        @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotatorAdmin" or "SystemAdmin")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Index", "Prompt")">Prompts</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Index", "Block")">Blocks</a>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="order" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Report</a>
+                                <div class="dropdown-menu" aria-labelledby="order">
+                                    <a class="dropdown-item" href="@Url.Action("ViewAnnotatorAssignedContributors", "Report")">View Annotator Assigned Contributors</a>
+                                
+
+                                </div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("ManageUsers", "Admin")">Manage Users</a>
+
+                            </li>
+                        }
+
+                        @if (userRole == "SystemAdmin")
+                        {
+                           
+                        }
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Logout", "Auth")">Logout</a>
+                        </li>
+
+
+                    </ul>
+
+                </div>
+            </nav>
+        }
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2022 - SpeechAccessibility.Annotator - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

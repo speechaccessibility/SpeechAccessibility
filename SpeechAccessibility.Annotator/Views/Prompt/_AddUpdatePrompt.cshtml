@@ -1,0 +1,106 @@
+﻿@model SpeechAccessibility.Annotator.Models.PromptViewModel
+@{
+    Layout = null;
+}
+
+<label id="lblAddUpdatePromptMessage"></label>
+<br />
+
+<input type="hidden" id="hidPromptId" value="@Model.Prompt.Id" />
+<input type="hidden" id="hidCategoryId" value="@Model.Prompt.CategoryId" />
+<input type="hidden" id="hidSubCategoryId" value="@Model.Prompt.SubCategoryId" />
+<input type="hidden" id="hidQuestionType" value="@Model.Prompt.QuestionType.Trim()" />
+    @{
+        if (Model.Prompt.Id >0)
+        {
+        <b>Prompt ID: </b><label id="lblPromptId" name="lblPromptId"> @Model.Prompt.Id</label>
+        }
+    }
+
+
+<br /><b>Transcript:</b><br/>
+@Html.TextAreaFor(m => m.Prompt.Transcript,4,50, null)
+
+<table>
+    <tr>
+        <td><b>Category: </b></td>
+        <td><select asp-for="@Model.Prompt.CategoryId" asp-items="@Model.Categories"></select></td>
+    </tr>
+    <tr>
+        <td><b>Sub Category: </b></td>
+        <td><select asp-for="@Model.Prompt.SubCategoryId" asp-items="@Model.SubCategories"></select></td>
+    </tr>
+</table>
+<div id="divQuestionType" style="display: none">
+    <table>
+        <tr>
+            <td><b>For Rating:</b></td>
+        <td>
+            <select id="QuestionType" name="QuestionType">
+                    <option value="DropDown">Dropdown</option>
+                    <option value="TextBox">TextBox</option>
+            </select>
+        </td>
+
+        <tr/>
+
+    </table>
+</div>
+<script language="javascript" type="text/javascript">
+
+    function getSubCategories(categoryId) {        
+        $.ajax({
+                url: '@Url.Action("GetSubCategories", "Prompt")?categoryId=' + categoryId,
+                type: "GET",
+                dataType: "json",
+                success: function(data) {
+                var subCategories = $("#Prompt_SubCategoryId");
+                subCategories.empty();
+           
+                $.each(data, function (i, obj) {               
+                        subCategories.append(new Option(obj.text, obj.value)); 
+                });
+            },
+            error: function () {
+                alert("Error: Get SubCategories!");
+            }
+        });
+
+     
+    }
+
+    $(document).ready(function () {
+        var categoryId = $("#hidCategoryId").val();
+        var subCategoryId = $("#hidSubCategoryId").val();
+        var questionType = $("#hidQuestionType").val();
+        $("#Prompt_CategoryId").val(categoryId);
+         if (categoryId==="1"){
+            $("#divQuestionType").show();
+            $("#QuestionType").val(questionType); 
+        }
+       
+
+        $("#Prompt_CategoryId").change(function () {          
+            var categoryId = this.value;
+            getSubCategories(categoryId);
+            if (categoryId==="1"){
+                $("#divQuestionType").show();
+            }
+            else
+            {
+                $("#QuestionType").val("DropDown");
+                $("#divQuestionType").hide();
+            }
+               
+
+        });
+
+
+    
+        //end document ready
+    });
+
+
+
+</script>
+

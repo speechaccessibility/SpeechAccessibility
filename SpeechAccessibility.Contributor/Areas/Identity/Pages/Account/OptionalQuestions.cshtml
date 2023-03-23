@@ -1,0 +1,347 @@
+﻿@page
+@model SpeechAccessibility.Areas.Identity.Pages.Account.OptionalQuestionsModel
+@{
+    ViewData["Title"] = "Optional Questions";
+}
+
+<div asp-validation-summary="All" class="text-danger">
+                    <h2>Validation Errors:</h2>
+                </div>
+
+<form method="post">
+<div class="container">
+<div>
+    You have the option of providing extra information to help researchers interpret your speech
+    recordings. Providing answers to such questions is not a requirement for participation in this study; if
+    you prefer not to answer, you will be able to choose the option “Prefer not to answer.”
+    This information will only be used to confirm diverse representation in this data collection, and, if
+    provided, will not be shared outside of the UIUC research team.
+</div>
+<br />
+
+<div class="form-group">       
+    <fieldset>
+             <div class="form-check">                                 
+             <legend><span style="color:red">* </span>Do you consider yourself to be a member of one of the following racial groups?</legend>
+                    <input id="americanIndianOrAlaskaNative" asp-for="Input.americanIndianOrAlaskaNative" type="checkbox" value="true">
+                    <label for="americanIndianOrAlaskaNative" class="form-check-label">
+                        American Indian or Alaska Native
+                    </label>
+            </div>
+            <div class="form-check">
+                <input id="asian" asp-for="Input.asian" type="checkbox" value="true">
+                <label for="asian" class="form-check-label">
+                    Asian
+                </label>
+            </div>
+            <div class="form-check">
+                <input id="blackOrAfricanAmerican" asp-for="Input.blackOrAfricanAmerican" type="checkbox" value="true">
+                <label for="blackOrAfricanAmerican" class="form-check-label">
+                    Black or African American
+                </label>
+            </div>
+            <div class="form-check">
+                <input id="white" asp-for="Input.white" type="checkbox" value="true">
+                <label for="white" class="form-check-label">
+                    White
+                </label>
+            </div>
+            <div class="form-check">
+                <input id="otherRace" asp-for="Input.otherRace" type="checkbox" value="true" onclick="checkOtherRaceInd()">
+                <label for="otherRace" class="form-check-label">
+                    Some other race
+                </label>
+                @if (Model != null && Model.Input != null && Model.Input.otherRace)
+                {
+                    <div id="otherRaceDiv" style="display:inline-block">
+                        <input id="otherRaceText" asp-for="Input.otherRaceText" type="text" />
+                        <span class="text-danger">@Html.ValidationMessage("otherRaceValidation")</span>
+                    </div>
+                }
+                else
+                {
+                    <div id="otherRaceDiv" style="display:none">
+                        <input id="otherRaceText" asp-for="Input.otherRaceText" type="text" />
+                        <span class="text-danger">@Html.ValidationMessage("otherRaceValidation")</span>
+                    </div>
+                }
+
+
+            </div>
+            <div class="form-check">
+                <input id="preferNotToAnswerRace" asp-for="Input.preferNotToAnswerRace" type="checkbox" value="true" onclick="clearOtherRaces()">
+                <label for="preferNotToAnswerRace" class="form-check-label">
+                    Prefer not to answer
+                </label>                         
+                </div>
+            </fieldset>
+     <span class="text-danger">@Html.ValidationMessage("racialGroupValidation")</span>   
+ </div>
+
+<div class="form-row">
+    <span style="color:red">*</span>
+    <div class="form-group col-md-8">
+        <div class="form-group">
+            <fieldset>
+                 <legend>Do you consider yourself to be Hispanic or Latino/a?</legend>
+            <input id="hispanicOrLatinoYes" asp-for="Input.hispanicOrLatino" type="radio" value="Yes" />
+            <label for="hispanicOrLatinoYes">Yes</label>
+                <input id="hispanicOrLatinoNo" asp-for="Input.hispanicOrLatino" type="radio" value="No" />
+            <label for="hispanicOrLatinoNo">No</label>
+                <input id="hispanicOrLatinoNoAnswer" asp-for="Input.hispanicOrLatino" type="radio" value="Prefer not to answer" />
+            <label for="hispanicOrLatinoNoAnswer">Prefer not to answer</label><br />
+        
+            </fieldset>
+            <span asp-validation-for="Input.hispanicOrLatino" class="text-danger"></span>
+        </div>
+    </div>
+</div>
+
+<div class="form-row">
+    <span style="color:red">*</span>
+    <div class="form-group col-md-10">
+        <div class="form-group">
+            <fieldset>
+            <legend>What is your gender?</legend>
+            <input id="genderMale" asp-for="Input.gender" type="radio" value="Male" />
+            <label for="genderMale">Male</label>
+            <input id="genderFemale" asp-for="Input.gender" type="radio" value="Female" />
+            <label for="genderFemale">Female</label>
+            <input id="genderNonBinary" asp-for="Input.gender" type="radio" value="Non-binary" />
+            <label for="genderNonBinary">Non-binary</label>
+            <input id="genderNoAnswer" asp-for="Input.gender" type="radio" value="Prefer not to answer" />
+            <label for="genderNoAnswer">Prefer not to answer</label><br />      
+            </fieldset>
+            <span asp-validation-for="Input.gender" class="text-danger"></span>
+        </div>
+    </div>
+</div>
+
+<div class="form-row">
+    <div class="form-group col-md-3">
+        <label for="age"><span style="color:red">* </span>How old are you?</label><br />
+            <select id="age" asp-for="Input.age" asp-items="@Model.ageList" data-dropup-auto="false">
+            </select><br />
+            <span asp-validation-for="Input.age" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="form-row">
+    <div class="form-group col-md-6">
+        <label for="state"><span style="color:red">* </span>What state do you live in?</label><br/>
+            <select id="state" asp-for="Input.state" asp-items="@Model.stateList" data-dropup-auto="false">
+            </select><br />
+            <span asp-validation-for="Input.state" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="form-row">
+    <div class="form-group col-md-6">
+        <label for="education"><span style="color:red">* </span>What is your highest level of education?</label>
+            <select id="education" asp-for="Input.education" asp-items="@Model.educationList" data-dropup-auto="false">
+            </select><br />
+            <span asp-validation-for="Input.education" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="form-row">
+    <span style="color:red">*</span>
+    <div class="form-group col-md-8">
+        <div class="form-group">
+            <fieldset>
+                 <legend>Are you currently retired?</legend>
+            <input id="retiredYes" asp-for="Input.retired" type="radio" value="Yes" />
+            <label for="retiredYes">Yes</label>
+            <input id="retiredNo" asp-for="Input.retired" type="radio" value="No" />
+            <label for="retiredNo">No</label>
+            <input id="retiredNoAnswer" asp-for="Input.retired" type="radio" value="Prefer not to answer" />
+            <label for="retiredNoAnswer">Prefer not to answer</label><br />
+        
+            </fieldset>
+               <span asp-validation-for="Input.retired" class="text-danger"></span>
+        </div>
+    </div>
+</div>
+
+
+<div class="form-row">
+            <div class="form-group col-md-6">
+        <label for="occupation"><span style="color:red">* </span>What is your occupation, or if you are retired, what was your occupation before retirement?</label>
+            <select id="occupation" asp-for="Input.occupation" asp-items="@Model.occupationList"  data-dropup-auto="false">
+            </select><br />
+            <span asp-validation-for="Input.occupation" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="form-row">
+    <span style="color:red">*</span>
+    <div class="form-group col-md-8">
+        <div class="form-group">
+            <fieldset>
+                <legend>Did you regularly converse in a language other than English before your 12th birthday?</legend>
+            <input id="otherLanguageYes" asp-for="Input.converseInEnglish" type="radio" value="Yes" onclick="checkOtherLanguage()" />
+            <label for="otherLanguageYes">Yes</label>
+                    <input id="otherLanguageNo" asp-for="Input.converseInEnglish" type="radio" value="No" onclick="checkOtherLanguage()" />
+            <label for="otherLanguageNo">No</label>
+                    <input id="otherLanguageNoAnswer" asp-for="Input.converseInEnglish" type="radio" value="Prefer not to answer" onclick="checkOtherLanguage()" />
+            <label for="otherLanguageNoAnswer">Prefer not to answer</label><br />
+         
+            </fieldset>
+                   <span asp-validation-for="Input.converseInEnglish" class="text-danger"></span>
+        </div>
+                @if (Model != null && Model.Input != null && "Yes".Equals(Model.Input.converseInEnglish))
+                {
+                    <div id="otherLanguageDiv" style="display:inline-block">
+                          <label for="otherLanguage">What language(s) did you speak?</label>
+                        <input id="otherLanguage" class="form-control"asp-for="Input.otherLanguage" type="text"/>
+                        <br />
+                         <span style="color:red">*</span>
+                        <label for="converseInOtherLanguageAge">What age did you start speaking English?</label>
+                        <select id="converseInOtherLanguageAge" asp-for="Input.converseInOtherLanguageAge" asp-items="@Model.otherLanguageAgeList" data-dropup-auto="false">
+                        </select><br />
+                    </div>
+                
+                }
+                else
+                {
+                    <div id="otherLanguageDiv" style="display:none">
+                        <label for="otherLanguage">What language(s) did you speak?</label>
+                        <input id="otherLanguage" class="form-control"asp-for="Input.otherLanguage" type="text"/>
+                        <br/>
+                        <span style="color:red">*</span>
+                        <label for="converseInOtherLanguageAge">What age did you start speaking English?</label>
+                        <select id="converseInOtherLanguageAge" asp-for="Input.converseInOtherLanguageAge" asp-items="@Model.otherLanguageAgeList" data-dropup-auto="false">
+                        </select><br />
+                    </div>
+
+                }
+                <br />
+                <span class="text-danger">@Html.ValidationMessage("otherLanguageAgeValidation")</span>
+    </div>
+</div>
+
+<label>
+    <span style="color:red">*</span>
+    The next questions ask how easy or difficult it is for you to do certain things when you speak.
+    Please answer as best you can. There are no wrong or right answers. It’s just your opinion.</label>
+
+<table class ="table table-striped table-bordered table-responsive-stack">
+
+    <tbody>
+        <tr>
+            <th scope="row">Speak with a few familiar people at home (e.g. friends or family)?
+                      <br /><span asp-validation-for="Input.familiarPeopleAtHomeRating" class="text-danger"></span>
+            </th>                 
+                    <td><input asp-for="Input.familiarPeopleAtHomeRating" type="radio" value="Very Easy" id="familiarPeopleAtHomeRatingVeryEasy"><label for="familiarPeopleAtHomeRatingVeryEasy">Very Easy</label></td>
+                    <td><input asp-for="Input.familiarPeopleAtHomeRating" type="radio" value="Somewhat Easy" id="familiarPeopleAtHomeRatingSomewhatEasy"><label for="familiarPeopleAtHomeRatingSomewhatEasy">Somewhat Easy</label></td>
+                    <td><input asp-for="Input.familiarPeopleAtHomeRating" type="radio" value="Neither easy nor difficult" id="familiarPeopleAtHomeRatingNotEasyOrDifficult"><label for="familiarPeopleAtHomeRatingNotEasyOrDifficult">Neither easy nor difficult</label></td>
+                    <td><input asp-for="Input.familiarPeopleAtHomeRating" type="radio" value="Somewhat Difficult" id="familiarPeopleAtHomeRatingSomewhatDifficult"><label for="familiarPeopleAtHomeRatingSomewhatDifficult">Somewhat Difficult</label></td>
+                    <td><input asp-for="Input.familiarPeopleAtHomeRating" type="radio" value="Very Difficult" id="familiarPeopleAtHomeVeryDifficult"><label for="familiarPeopleAtHomeVeryDifficult">Very Difficult</label></td>
+                    <td><input asp-for="Input.familiarPeopleAtHomeRating" type="radio" value="Prefer not to answer" id="familiarPeopleAtHomePreferNotToAnswer"><label for="familiarPeopleAtHomePreferNotToAnswer">Prefer not to answer</label></td>
+                </tr>
+         <tr>
+            <th scope="row">Speak with an unfamiliar person(e.g. waitstaff, store clerk)? 
+                  <br /><span asp-validation-for="Input.unfamiliarPeopleAtHomeRating" class="text-danger"></span>
+            </th>
+                <td><input asp-for="Input.unfamiliarPeopleAtHomeRating" type="radio" value="Very Easy" id="unfamiliarPeopleAtHomeRatingVeryEasy"><label for="unfamiliarPeopleAtHomeRatingVeryEasy">Very Easy</label></td>
+                    <td><input asp-for="Input.unfamiliarPeopleAtHomeRating" type="radio" value="Somewhat Easy" id="unfamiliarPeopleAtHomeRatingSomewhatEasy"><label for="unfamiliarPeopleAtHomeRatingSomewhatEasy">Somewhat Easy</label></td>
+                <td><input asp-for="Input.unfamiliarPeopleAtHomeRating" type="radio" value="Neither easy nor difficult" id="unfamiliarPeopleAtHomeRatingNotEasyOrDifficult"><label for="unfamiliarPeopleAtHomeRatingNotEasyOrDifficult">Neither easy nor difficult</label></td>
+                    <td><input asp-for="Input.unfamiliarPeopleAtHomeRating" type="radio" value="Somewhat Difficult" id="unfamiliarPeopleAtHomeRatingSomewhatDifficult"><label for="unfamiliarPeopleAtHomeRatingSomewhatDifficult">Somewhat Difficult</label></td>
+                    <td><input asp-for="Input.unfamiliarPeopleAtHomeRating" type="radio" value="Very Difficult" id="unfamiliarPeopleAtHomeRatingVeryDifficult"><label for="unfamiliarPeopleAtHomeRatingVeryDifficult">Very Difficult</label></td>
+                <td><input asp-for="Input.unfamiliarPeopleAtHomeRating" type="radio" value="Prefer not to answer" id="unfamiliarPeopleAtHomeRatingNoAnswer"><label for="unfamiliarPeopleAtHomeRatingNoAnswer">Prefer not to answer</label></td>
+        </tr>
+        <tr>
+            <th scope="row">Speak in a noisy environment(e.g. a social gathering)?
+                        <br /><span asp-validation-for="Input.noisyEnvironmentRating" class="text-danger"></span>
+            </th>
+                    <td><input asp-for="Input.noisyEnvironmentRating" type="radio" value="Very Easy" id="noisyEnvironmentRatingVeryEasy"><label for="noisyEnvironmentRatingVeryEasy">Very Easy</label></td>
+                <td><input asp-for="Input.noisyEnvironmentRating" type="radio" value="Somewhat Easy" id="noisyEnvironmentRatingSomewhatEasy"><label for="noisyEnvironmentRatingSomewhatEasy">Somewhat Easy</label></td>
+                <td><input asp-for="Input.noisyEnvironmentRating" type="radio" value="Neither easy nor difficult" id="noisyEnvironmentRatingNeither"><label for="noisyEnvironmentRatingNeither">Neither easy nor difficult</label></td>
+                    <td><input asp-for="Input.noisyEnvironmentRating" type="radio" value="Somewhat Difficult" id="noisyEnvironmentRatingSomewhatDifficult"><label for="noisyEnvironmentRatingSomewhatDifficult">Somewhat Difficult</label></td>
+                <td><input asp-for="Input.noisyEnvironmentRating" type="radio" value="Very Difficult" id="noisyEnvironmentRatingVeryDifficult"><label for="noisyEnvironmentRatingVeryDifficult">Very Difficult</label></td>
+                    <td><input asp-for="Input.noisyEnvironmentRating" type="radio" value="Prefer not to answer" id="noisyEnvironmentRatingNoAnswer"><label for="noisyEnvironmentRatingNoAnswer">Prefer not to answer</label></td>
+        </tr>
+           
+    </tbody>
+</table>
+<br />
+<label>
+    <span style="color:red">*</span>
+    How much do you agree or disagree with the statements below? Please answer as best you
+    can. There are no wrong or right answers. It’s just your opinion.
+</label>
+<table class="table table-striped table-bordered">
+    <tbody>
+<tr>
+    <th scope="row">I rely on others to help me communicate.
+                        <br /><span asp-validation-for="Input.relyOnOthersRating" class="text-danger"></span>
+
+                    </th>
+                <td><input asp-for="Input.relyOnOthersRating" type="radio" value="Strongly Agree" id="relyOnOthersRatingStronglyAgree"><label for="relyOnOthersRatingStronglyAgree">Strongly Agree</label></td>
+                <td><input asp-for="Input.relyOnOthersRating" type="radio" value="Somewhat Agree" id="relyOnOthersRatingSomewhatAgree"><label for="relyOnOthersRatingSomewhatAgree">Somewhat Agree</label></td>
+                    <td><input asp-for="Input.relyOnOthersRating" type="radio" value="Neither agree nor disagree" id="relyOnOthersRatingNeither"><label for="relyOnOthersRatingNeither">Neither agree nor disagree</label></td>
+                <td><input asp-for="Input.relyOnOthersRating" type="radio" value="Somewhat Disagree" id="relyOnOthersRatingSomewhatDisagree"><label for="relyOnOthersRatingSomewhatDisagree">Somewhat Disagree</label></td>
+                <td><input asp-for="Input.relyOnOthersRating" type="radio" value="Strongly Disagree" id="relyOnOthersRatingStronglyDisagree"><label for="relyOnOthersRatingStronglyDisagree">Strongly Disagree</label></td>
+                <td><input asp-for="Input.relyOnOthersRating" type="radio" value="Prefer not to answer" id="relyOnOthersRatingNoAnswer"><label for="relyOnOthersRatingNoAnswer">Prefer not to answer</label></td>
+
+</tr>
+<tr>
+    <th scope="row">I have to repeat myself often.
+        <br /><span asp-validation-for="Input.repeatMyselfRating" class="text-danger"></span>
+
+    </th>
+                <td><input asp-for="Input.repeatMyselfRating" type="radio" value="Strongly Agree" id="repeatMyselfRatingStronglyAgree"><label for="repeatMyselfRatingStronglyAgree">Strongly Agree</label></td>
+                <td><input asp-for="Input.repeatMyselfRating" type="radio" value="Somewhat Agree" id="repeatMyselfRatingSomewhatAgree"><label for="repeatMyselfRatingSomewhatAgree">Somewhat Agree</label></td>
+                <td><input asp-for="Input.repeatMyselfRating" type="radio" value="Neither agree nor disagree" id="repeatMyselfRatingNeither"><label for="repeatMyselfRatingNeither">Neither agree nor disagree</label></td>
+                <td><input asp-for="Input.repeatMyselfRating" type="radio" value="Somewhat Disagree" id="repeatMyselfRatingSomewhatDisagree"><label for="repeatMyselfRatingSomewhatDisagree">Somewhat Disagree</label></td>
+                    <td><input asp-for="Input.repeatMyselfRating" type="radio" value="Strongly Disagree" id="repeatMyselfRatingStronglyDisagree"><label for="repeatMyselfRatingStronglyDisagree">Strongly Disagree</label></td>
+                <td><input asp-for="Input.repeatMyselfRating" type="radio" value="Prefer not to answer" id="repeatMyselfRatingNoAnswer"><label for="repeatMyselfRatingNoAnswer">Prefer not to answer</label></td>
+
+</tr>
+<tr>
+    <th scope="row">Other people have difficulty hearing me.
+                        <br /><span asp-validation-for="Input.difficultyHearingRating" class="text-danger"></span>
+
+                    </th>
+                <td><input asp-for="Input.difficultyHearingRating" type="radio" value="Strongly Agree" id="difficultyHearingRatingStronglyAgree"><label for="difficultyHearingRatingStronglyAgree">Strongly Agree</label></td>
+                    <td><input asp-for="Input.difficultyHearingRating" type="radio" value="Somewhat Agree" id="difficultyHearingRatingSomewhatAgree"><label for="difficultyHearingRatingSomewhatAgree">Somewhat Agree</label></td>
+                <td><input asp-for="Input.difficultyHearingRating" type="radio" value="Neither agree nor disagree" id="difficultyHearingRatingNeither"><label for="difficultyHearingRatingNeither">Neither agree nor disagree</label></td>
+                <td><input asp-for="Input.difficultyHearingRating" type="radio" value="Somewhat Disagree" id="difficultyHearingRatingSomewhatDisagree"><label for="difficultyHearingRatingSomewhatDisagree">Somewhat Disagree</label></td>
+                <td><input asp-for="Input.difficultyHearingRating" type="radio" value="Strongly Disagree" id="difficultyHearingRatingStronglyDisagree"><label for="difficultyHearingRatingStronglyDisagree">Strongly Disagree</label></td>
+                <td><input asp-for="Input.difficultyHearingRating" type="radio" value="Prefer not to answer" id="difficultyHearingRatingNoAnswer"><label for="difficultyHearingRatingNoAnswer">Prefer not to answer</label></td>
+</tr>
+</tbody>
+</table>
+
+<div class="form-row">
+    <span style="color:red">*</span>
+    <div class="form-group col-md-8">
+        <div class="form-group">          
+            <fieldset>
+                  <legend>Does your speech change throughout the day?</legend>
+                 <input id="speechChangeYes" asp-for="Input.speechChange" type="radio" value="Yes" />
+            <label for="speechChangeYes">Yes</label>
+                    <input id="speechChangeNo" asp-for="Input.speechChange" type="radio" value="No" />
+            <label for="speechChangeNo">No</label>
+                    <input id="speechChangeUnsure" asp-for="Input.speechChange" type="radio" value="Unsure" />
+            <label for="speechChangeUnsure">Unsure</label>
+            <input id="speechChangeNoAnswer" asp-for="Input.speechChange" type="radio" value="Prefer not to answer" />
+            <label for="speechChangeNoAnswer">Prefer not to answer</label><br />
+           
+            </fieldset>
+                    <span asp-validation-for="Input.speechChange" class="text-danger"></span>
+
+                </div>
+
+                    <div id="speechChangeDiv" style="display:none">
+                           <label for="speechChangeDescription">Please describe how your speech changes throughout the day.</label>
+                        <textarea rows="4" maxlength="500" class="form-control" id="speechChangeDescription" asp-for="Input.speechChangeDescription"></textarea>
+                    </div>
+
+                
+            </div>
+</div>
+
+<button type="submit" class="btn btn-primary">Submit</button>
+</div>
+</form>

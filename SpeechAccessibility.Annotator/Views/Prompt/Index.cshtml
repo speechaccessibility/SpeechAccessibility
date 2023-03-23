@@ -1,0 +1,345 @@
+﻿@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration;
+@{
+    ViewData["Title"] = "Prompts";
+}
+@{
+    ViewBag.Title = "Prompts";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<h1>Prompts</h1>
+<div id="top" style="display: none"></div>
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+<br/>
+@Html.ActionLink("Add New Prompt", "AddUpdatePrompt", new { id = 0 }, new { @class = "addPrompt", title = "Add Prompt" }) 
+<br/>
+<table>
+    <tr>
+        <td><b>Prompt Status:</b></td>
+        <td>
+            <input type="radio" id="radActive" name="radStatus" value="Yes" checked>
+            <label for="radActive">Yes</label>
+            <input type="radio" id="radInActive" name="radStatus" value="No">
+            <label for="radActive">No</label>
+        </td>
+    </tr>
+</table>
+<table class="table table-striped table-bordered table-hover" id="PromptTable" cellspacing="0" align="center"></table>
+   
+
+<div id="addUpdatePrompt-dialog" style="display: none"></div>
+
+<div id="delete-dialog" style="display: none">
+    <p>
+        <span class="ui-icon ui-icon-alert" style="float: left; margin: 0 7px 20px 0;"></span>
+        <label id="lblDelete">Are you sure to delete this prompt?</label>
+    </p>
+</div>
+
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            //bind datatable for Prompts
+            var oPromptTable = $("#PromptTable").on('error.dt',
+                function(e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                "serverSide": true,
+                "processing": true,
+                "responsive": true,
+                "iDisplayLength": 100,
+                "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                    "<'row'<'col-sm-12'tr>>p", //'<"top"l>rift<"bottom"p><"clear">',
+                "ajax": ({
+                    "url": '@Url.Action("LoadPrompts", "Prompt")',
+                    "data": {  'status': $('input[name=radStatus]').val() },
+                    "type": "POST",
+                    "datatype": "json"
+                }),
+                "bAutoWidth": false,
+                "aaSorting": [[2, 'asc']],
+                "columns": [
+                    {
+                        "title": "ID",
+                        "data": "id",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": true,
+                        "name": "Id"
+                    },                   
+                    {
+                        "title": "Transcript",
+                        "data": "transcript",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": true,
+                        "name": "Transcript"
+                    },
+                    {
+                        "title": "Category",
+                        "data": "category.description",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": true,
+                        "name": "Category.Description"
+                    },
+                        {
+                            "title": "InUsed",
+                            "data": "inUsed",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "InUsed"
+                        },
+
+                    {
+                        "title": "Actions",
+                        "data": "id",
+                        //"targets": 0,
+                        "searchable": false,
+                        "orderable": false,
+                        "width": '200px',
+                        "classDescription": 'dt-body-center',
+                        "visible": true,
+                        "name": "Id",
+                        "render": function(data, type, row) {
+                               
+                                var link = "";
+                                if (row["active"]=="Yes"){
+                                    if (row["canNotDelete"] == false){
+                                        if (row["inUsed"] == false) {
+                                            link = '<a href="#" class="editPrompt" >Edit</a> | <a href="#" class="deletePrompt" >Delete</a>';
+                                            return link;
+                                        }
+                                        link = '<a href="#" class="editPrompt" >Edit</a> | <a href="#" class="archivePrompt" >Archive</a>';
+                                        return link;                                    
+                                    }
+                                    link = '<a href="#" class="editPrompt" >Edit</a>';
+                                    return link;
+                                }
+                                else
+                                {
+                                     link = '<a href="#" class="setActive" >Set Active</a>';
+                                    return link;
+                                }
+                                
+                              
+                        }
+                               
+                    }
+                    //,
+                    //    {
+                    //        "title": "Active",
+                    //        "data": "active",
+                    //        "searchable": true,
+                    //        "orderable": true,
+                    //        "visible": true,
+                    //        "name": "Active"
+                    //    }
+                ],
+                "ordering": true,
+                "paging": true,
+                "pageLength": 100,
+                "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+            });
+            
+             //edit the Prompt
+            $(".addPrompt").on("click", function (e) {
+                e.preventDefault();               
+               
+                var getUrl = "@Url.Action("AddUpdatePrompt", "Prompt")?promptId=0";
+                AddUpdatePrompt(getUrl,"addnew");
+               
+                $("#addUpdatePrompt-dialog").dialog('open');
+            });
+
+            //edit the Prompt
+            $('#PromptTable').on('click', 'a.editPrompt', function (e) {
+                e.preventDefault();               
+                var selectedRowData = oPromptTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+               
+                $("#hidPromptId").val(row.id);
+                $("#lblPromptId").text(row.id);
+                $("#Prompt_Transcript").val(row.transcript);
+                var getUrl = "@Url.Action("AddUpdatePrompt", "Prompt")?promptId=" + row.id;
+                AddUpdatePrompt(getUrl,"update");
+               
+                $("#addUpdatePrompt-dialog").dialog('open');
+            });
+            function AddUpdatePrompt(getUrl, action) {
+                $("#addUpdatePrompt-dialog").dialog({
+                    title: "Update Prompt",
+                    autoOpen: false,
+                    resizable: false,
+                    //height: 550,
+                    width: 700,
+                    show: { effect: 'drop', direction: "up" },
+                    modal: true,
+                    draggable: true,
+                    closeOnEscape: true,
+                    position: { my: "left top", at: "left+50 top+100", of: window },
+                    open: function() {
+                        $(this).load(getUrl);
+                        $('#addUpdatePrompt-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+                    },
+                    close: function () {
+                        $("#hidPromptId").val("");
+                        $("#lblPromptId").val("");
+                        $("#Prompt_Transcript").val("");
+                        $("#Prompt_CategoryId").val("");
+                        $("#Prompt_SubCategoryId").val("");
+                    },
+                    buttons: {
+                        "Save": function() {
+                            jsonObject = {
+                                "Id": $("#hidPromptId").val(),
+                                "Transcript": $("#Prompt_Transcript").val(),
+                                "CategoryId": $("#Prompt_CategoryId").val(),
+                                "SubCategoryId": $("#Prompt_SubCategoryId").val(),
+                                "QuestionType": $("#QuestionType").val()
+                            };
+                          
+                            $.ajax({
+                                url: '@Url.Action("AddUpdatePrompt", "Prompt")',
+                                type: "POST",
+                                data: { "promptIn": jsonObject, "action": action },
+                                success: function (response) {
+                                    if (response.success === true) {
+                                        $("#hidPromptId").val("");
+                                        $("#lblPromptId").val("");
+                                        $("#Prompt_Transcript").val("");
+                                        $("#Prompt_CategoryId").val("");
+                                        $("#Prompt_SubCategoryId").val("");
+                                        $('#addUpdatePrompt-dialog').dialog('close');
+                                        $("#lblMessage").text(response.message);
+                                        oPromptTable.draw();
+                                        $.scrollTo($("#top"), { offset: { top: -150, left: -100 } });
+                                    } else {
+                                        $("#lblAddUpdatePromptMessage").text(response.message);
+                                        $("#lblAddUpdatePromptMessage").addClass("errorMessage");
+                                    }
+                                },
+                                error: function() { alert('Error Update Transcript! It could be the timeout issue. Please try to reload your browser.'); }
+                            });
+                        },
+                        close: function () {
+                             $("#hidPromptId").val("");
+                            $("#lblPromptId").val("");
+                            $("#Prompt_Transcript").val("");
+                            $("#Prompt_CategoryId").val("");
+                            $("#Prompt_SubCategoryId").val("");
+                            $(this).dialog('close');
+                        }
+                    }
+                });
+            }
+            
+            //archive the prompt
+            $('#PromptTable').on('click',
+                'a.archivePrompt',
+                function(e) {
+                    e.preventDefault();                   
+                    var selectedRowData = oPromptTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();                   
+                    var promptId = row.id;                   
+                    var transcript = row.transcript;
+                   
+                    var postUrl = '@Url.Action("AddUpdatePrompt", "Prompt")';
+                    const message = `Are you sure you want to archive this prompt:  ${transcript}?`;
+                    archiveDeletePrompt(promptId,message, "archive", postUrl);
+                    
+            });
+
+
+            //delete the prompt
+            $('#PromptTable').on('click',
+                'a.deletePrompt',
+                function(e) {
+                    e.preventDefault();                   
+                    var selectedRowData = oPromptTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();                   
+                    var promptId = row.id;                   
+                    var transcript = row.transcript;
+                    var postUrl = '@Url.Action("AddUpdatePrompt", "Prompt")';
+                    const message =`Are you sure you want to delete this prompt:  ${transcript}?`;
+                    archiveDeletePrompt(promptId,message, "delete", postUrl);
+                    
+            });
+            
+             //set Active the prompt
+            $('#PromptTable').on('click',
+                'a.setActive',
+                function(e) {
+                    e.preventDefault();                   
+                    var selectedRowData = oPromptTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();                   
+                    var promptId = row.id;                   
+                    var transcript = row.transcript;
+                   
+                    var postUrl = '@Url.Action("AddUpdatePrompt", "Prompt")';
+                    const message = `Are you sure you want to set Active this prompt:  ${transcript}?`;
+                    archiveDeletePrompt(promptId,message, "setActive", postUrl);
+                    
+            });
+
+
+            function archiveDeletePrompt(promptId, message, action, postUrl) {
+                const sureDelete = confirm(message);
+                if (sureDelete === true) {
+                      jsonObject = {
+                        "Id": promptId
+                    };                         
+
+                    $.ajax({
+                        url: postUrl,
+                        type: "POST",
+                        data: { "promptIn": jsonObject, "action": action },
+                        success: function (response) {
+                            $('.spinner').css('display', 'none');
+                            if (response.success === true) {
+                                oPromptTable.draw();
+                                $.scrollTo($("#top"), { offset: { top: -150, left: -100 } });
+                                $("#lblMessage").text(response.message);
+                                $("#lblMessage").removeClass("alert-warning");
+                                $("#lblMessage").addClass("alert-success");
+                            } else {
+                                alert(response.message);
+                                $("#lblMessage").text(response.message);
+                                $("#lblMessage").addClass("alert-warning");
+                                $("#lblMessage").removeClass("alert-success");
+                            }
+                        },
+                        error: function () {
+                            alert("Error: Delete Prompt!");
+                        }
+                    });
+                }
+            }
+
+            $("input[name='radStatus']").change(function () {
+               
+                var statusVal = $(this).val();
+                //alert(statusVal);
+                oPromptTable.on('preXhr.dt', function (e, settings, data) {
+                    data.status = statusVal;
+                });
+                oPromptTable.draw();
+            });
+
+
+        });//End document ready
+
+    </script>
+}

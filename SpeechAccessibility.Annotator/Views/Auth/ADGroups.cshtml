@@ -1,0 +1,55 @@
+﻿@{
+    ViewData["Title"] = "TestingADGroups";
+}
+
+<h1>TestingADGroups</h1>
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+<br />
+<button name="ImportSystemAdmin">Import SystemAdmin to User Table</button>
+<br />
+<br />
+<div class="spinner" style="display:none">
+    <div class="center-div">
+        <div class="inner-div">
+            <div class="loader"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("button[name='ImportSystemAdmin']").click(function () {
+
+                var sureImport = confirm('Are you sure you want to import the System Admin again?');
+                if (sureImport === true) {
+                    $('.spinner').css('display', 'block');
+                    $.ajax({
+                        url: '@Url.Action("ImportSystemAdmin", "Auth")',
+                        type: "POST",
+                        success: function(response) {
+                            if (response.success === true) {
+                                alert(response.Message);
+                                $('.spinner').css('display', 'none');
+                            }
+                        },
+                        error: function() {
+                            alert("Error: Import System Admin!");
+                            $('.spinner').css('display', 'none');
+                        }
+                    });
+                } else {
+                    return false;
+                }
+
+                return false;
+
+            });
+
+
+        });//end document ready
+    </script>
+
+
+}
