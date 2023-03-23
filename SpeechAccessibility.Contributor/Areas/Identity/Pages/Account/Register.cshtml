@@ -9,17 +9,55 @@
 
 <form asp-route-returnUrl="@Model.ReturnUrl" method="post">
     <hr />
-    @{
-            foreach (string error in Model.resultErrorList)
-            {
-                <span class="text-danger">@error</span><br />
-            }
 
-    }
 
     <div asp-validation-summary="All" class="text-danger">
                     <h2>Register Errors:</h2>
                 </div>
+
+
+    <div class="form-row">
+        <span style="color:red">*</span>
+        <div class="form-group col-md-8">
+            <div class="form-group">
+                <fieldset>
+                    <legend>Have you been diagnosed with Parkinson's Disease (including PSP, CBD, MSA and post DBS)?</legend>
+                    <input id="parkinsonIndYes" asp-for="Input.parkinsonsInd" type="radio" value="Yes" />
+                    <label for="parkinsonIndYes">Yes</label>
+                    <input id="parkinsonIndNo" asp-for="Input.parkinsonsInd" type="radio" value="No" />
+                    <label for="parkinsonIndNo">No</label>
+                </fieldset>
+                <br /><span asp-validation-for="Input.parkinsonsInd" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+    <div class="form-row">
+        <span style="color:red">*</span>
+        <div class="form-group col-md-8">
+            <div class="form-group">
+                <fieldset>
+                    <legend>Are you 18 years of age or older?</legend>
+                    <input id="eighteenOrOlderYes" asp-for="Input.eighteenOrOlderInd" type="radio" value="Yes" />
+                    <label for="eighteenOrOlderYes">Yes</label>
+                    <input id="eighteenOrOlderNo" asp-for="Input.eighteenOrOlderInd" type="radio" value="No" />
+                    <label for="eighteenOrOlderNo">No</label>
+                </fieldset>
+                <br /><span asp-validation-for="Input.eighteenOrOlderInd" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+    <div class="form-row">
+        <span style="color:red">*</span>
+        <div class="form-group col-md-5">
+            <div class="form-group">
+                <label for="Input_state">What state do you live in?</label>
+                <select asp-for="Input.state" asp-items="@Model.stateList" data-dropup-auto="false">
+                    <option value="" selected>Please Select</option>
+                </select>
+                <br /><span asp-validation-for="Input.state" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
 
     <div class="form-row">
         <div class="form-group col-md-3">
@@ -140,7 +178,7 @@
             </div>
         </div>
 
-        <div class="form-row">
+        <div class="form-row" hidden>
             <div class="form-group col-md-6">
                 <fieldset>
                      <legend><span style="color:red">* </span>Do you wish us to contact you, or do you want to record some sentences, so we can evaluate your speech online?</legend>
@@ -155,11 +193,6 @@
         </div>
 
     }
-
-    <input hidden asp-for="Input.state" />
-    <input hidden asp-for="Input.understandSpeechInd" />
-    <input hidden asp-for="Input.parkinsonsInd"/>
-    <input hidden asp-for="Input.eighteenOrOlderInd" />
 
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>

@@ -53,7 +53,83 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         [BindProperty]
         public InputModel Input { get; set; }
 
-        public PersonalInformationModel.InputModel PersonalInformation { get; set; }
+        public List<String> unqualifiedStates = new List<String>
+        {
+            "IL",
+            "TX",
+            "WA",
+            "None"
+        };
+
+        public List<SelectListItem> stateList { get; } = new List<SelectListItem>
+         {
+                    new SelectListItem { Value = "AL", Text = "Alabama" },
+                    new SelectListItem { Value = "AK", Text = "Alaska" },
+                    new SelectListItem { Value = "AZ", Text = "Arizona" },
+                    new SelectListItem { Value = "AR", Text = "Arkansas" },
+                    new SelectListItem { Value = "CA", Text = "California" },
+                    new SelectListItem { Value = "CO", Text = "Colorado" },
+                    new SelectListItem { Value = "CT", Text = "Connecticut" },
+                    new SelectListItem { Value = "DE", Text = "Delaware" },
+                    new SelectListItem { Value = "FL", Text = "Florida" },
+                    new SelectListItem { Value = "GA", Text = "Georgia" },
+                    new SelectListItem { Value = "HI", Text = "Hawaii" },
+                    new SelectListItem { Value = "ID", Text = "Idaho" },
+                    new SelectListItem { Value = "IL", Text = "Illinois" },
+                    new SelectListItem { Value = "IN", Text = "Indiana" },
+                    new SelectListItem { Value = "IA", Text = "Iowa" },
+                    new SelectListItem { Value = "KS", Text = "Kansas" },
+                    new SelectListItem { Value = "KY", Text = "Kentucky" },
+                    new SelectListItem { Value = "LA", Text = "Louisiana" },
+                    new SelectListItem { Value = "ME", Text = "Maine" },
+                    new SelectListItem { Value = "MD", Text = "Maryland" },
+                    new SelectListItem { Value = "MA", Text = "Massachusetts" },
+                    new SelectListItem { Value = "MI", Text = "Michigan" },
+                    new SelectListItem { Value = "MN", Text = "Minnesota" },
+                    new SelectListItem { Value = "MS", Text = "Mississippi" },
+                    new SelectListItem { Value = "MO", Text = "Missouri" },
+                    new SelectListItem { Value = "MT", Text = "Montana" },
+                    new SelectListItem { Value = "NC", Text = "North Carolina" },
+                    new SelectListItem { Value = "ND", Text = "North Dakota" },
+                    new SelectListItem { Value = "NE", Text = "Nebraska" },
+                    new SelectListItem { Value = "NV", Text = "Nevada" },
+                    new SelectListItem { Value = "NH", Text = "New Hampshire" },
+                    new SelectListItem { Value = "NJ", Text = "New Jersey" },
+                    new SelectListItem { Value = "NM", Text = "New Mexico" },
+                    new SelectListItem { Value = "NY", Text = "New York" },
+                    new SelectListItem { Value = "OH", Text = "Ohio" },
+                    new SelectListItem { Value = "OK", Text = "Oklahoma" },
+                    new SelectListItem { Value = "OR", Text = "Oregon" },
+                    new SelectListItem { Value = "PA", Text = "Pennsylvania" },
+                    new SelectListItem { Value = "RI", Text = "Rhode Island" },
+                    new SelectListItem { Value = "SC", Text = "South Carolina" },
+                    new SelectListItem { Value = "SD", Text = "South Dakota" },
+                    new SelectListItem { Value = "TN", Text = "Tennessee" },
+                    new SelectListItem { Value = "TX", Text = "Texas" },
+                    new SelectListItem { Value = "UT", Text = "Utah" },
+                    new SelectListItem { Value = "VT", Text = "Vermont" },
+                    new SelectListItem { Value = "VA", Text = "Virginia" },
+                    new SelectListItem { Value = "WA", Text = "Washington" },
+                    new SelectListItem { Value = "WV", Text = "West Virginia" },
+                    new SelectListItem { Value = "WI", Text = "Wisconsin" },
+                    new SelectListItem { Value = "WY", Text = "Wyoming" },
+                    new SelectListItem {Value ="None", Text="None of the above"}
+                };
+
+        public List<SelectListItem> yearList { get; } = getYearList();
+
+        private static List<SelectListItem> getYearList()
+        {
+            List<SelectListItem> yearList = new List<SelectListItem>();
+            SelectListItem unknown = new SelectListItem { Value = "0", Text = "Unknown" };
+            yearList.Add(unknown);
+            for (int i = DateTime.Now.Year; i >= 1900; i--)
+            {
+                SelectListItem item = new SelectListItem { Value = i.ToString(), Text = i.ToString() };
+                yearList.Add(item);
+            }
+            return yearList;
+        }
 
         public List<String> resultErrorList = new List<String>();
 
@@ -63,10 +139,16 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
         public class InputModel
         {
-            public string state { get; set; }
-            public string understandSpeechInd { get; set; }
+            [Required]
+            [Display(Name = "Parkinson's Disease Indicator")]
             public string parkinsonsInd { get; set; }
+            [Required]
+            [Display(Name = "Eighteen Indicator")]
             public string eighteenOrOlderInd { get; set; }
+
+            [Required]
+            [Display(Name = "State")]
+            public string state { get; set; }
 
             [Required]
             [Display(Name = "First Name")]
@@ -120,23 +202,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             public bool ContactLSVT { get; set; }
         }
 
-        public async Task OnGetAsync(PersonalInformationModel.InputModel personalInformation,string returnUrl = null)
+        public void OnGet()
         {
-            // PersonalInformation = personalInformation;
-            if (Input == null)
-            {
-                Input = new InputModel
-                {
-                    understandSpeechInd = personalInformation.understandSpeechInd,
-                    parkinsonsInd = personalInformation.parkinsonsInd,
-                    state = personalInformation.state,
-                    eighteenOrOlderInd = personalInformation.eighteenOrOlderInd,
-                    ContactLSVT = true
-                };
-            }
-            
-            ReturnUrl = returnUrl;
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -162,6 +230,10 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             
             if (ModelState.IsValid)
             {
+                if (unqualifiedStates.Contains(Input.state) || "No".Equals(Input.eighteenOrOlderInd))
+                {
+                    return RedirectToPage("./Unqualified");
+                }
                 IdentityUser user = new IdentityUser();
                 user.UserName = Input.Email;
                 user.Email = Input.Email;
@@ -177,9 +249,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                     _logger.LogInformation("User created a new account with password.");
 
                     await _signInManager.SignInAsync(user, isPersistent: false);
-                    if (Input.ContactLSVT)
+                    if (Input.parkinsonsInd=="Yes")
                     {
-                        string message = "<div>Hello,</div><br/><div>A potential Speech Accessibility Project participant has requested an assessment. You may contact them at " + Input.Email + " or " + Input.phoneNumber + "</div><div><br/>The Speech Accessibility Project Team<br/>University of Illinois Urbana-Champaign</div>";
+                        string message = "<div>Hello,</div><br/><div>A potential Speech Accessibility Project participant, " + Input.firstName +  ", has requested an assessment. You may contact them at " + Input.Email + " or " + Input.phoneNumber + "</div><div><br/>The Speech Accessibility Project Team<br/>University of Illinois Urbana-Champaign</div>";
 
                         string to = _config["LSVTEmail"];
 
@@ -188,6 +260,8 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                         if (_config["DeveloperMode"].Equals("Yes") || !"Production".Equals(environment))
                         {
                             to = _config["TestEmail"];
+                            string testMessage = "<p><strong>This email was sent in testing mode.</strong></p>";
+                            message = testMessage + message;
                         }
 
                         await _emailSender.SendEmailAsync(to, "Assessment Request", message);
@@ -203,7 +277,10 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
                 }
                 foreach (var error in result.Errors)
-                {                   
+                {   if ( error.Code== "DuplicateUserName")
+                    {
+                        error.Description += " Please click the Login link above to log in to an existing account. If you’ve forgotten your password, you can click the 'Forgot your password' link on the Login page to reset it.";
+                    }
                     ModelState.AddModelError(string.Empty, error.Description);
                     resultErrorList.Add(error.Description);
 
@@ -223,8 +300,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             contributor.FirstName = Input.firstName;
             contributor.MiddleName = Input.middleName;
             contributor.LastName = Input.lastName;
-            contributor.StateResidence = Input.state;
-            contributor.UnderstandSpeechInd = Input.understandSpeechInd;
+            contributor.StateResidence = Input.state;    
             contributor.ParkinsonsInd = Input.parkinsonsInd;
             contributor.IdentityUser = user;
             contributor.EighteenOrOlderInd = Input.eighteenOrOlderInd;

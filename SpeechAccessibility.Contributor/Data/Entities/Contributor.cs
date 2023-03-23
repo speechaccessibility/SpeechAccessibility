@@ -16,8 +16,7 @@ namespace SpeechAccessibility.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id { get; set; }
 
-        [MaxLength(3)]
-        [Required]
+        [MaxLength(3)]      
         public string UnderstandSpeechInd { get; set; }
 
         [MaxLength(3)]

@@ -6,10 +6,11 @@
 
 <h1>@ViewData["Title"]</h1>
 
-<div class="container">
-    <div id="errorDiv" class="text-danger">
+<div id="errorDiv" class="text-danger"></div>
 
-    </div>
+<div class="container" id="container">
+
+    
     <div id="consentDiv"></div>
 
         <div id="messageDiv" class="text-danger">
@@ -206,6 +207,12 @@
     <div class="p-3" aria-live="polite">
         <span id="recordingStatus" class="sr-only"></span>
         <input hidden id="retryCount" asp-for="@Model.retryCount" value="@Model.retryCount" />
+        <div id="saveDiv" style="display:none;padding-bottom:10px">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Saving...</span>
+            </div>
+            <span>Saving...</span><br />
+       </div>    
         <form style="display: inline-block;" method="post">
             <input hidden id="contributorId" asp-for="@Model.contributorId" value="@Model.contributorId" />
             <input hidden id="promptId" asp-for="@Model.prompt.Id" value="@Model.prompt.Id" />
@@ -215,10 +222,10 @@
             <input hidden id="phonationPromptCount" asp-for="@Model.phonationPromptCount" value="@Model.phonationPromptCount" />
             <button hidden type="submit" class="btn btn-primary" id="nextButton" style="margin-right:10px">Next</button>
         </form>
-         <button id="recordButton" class="btn btn-primary">Record</button>
-        <button hidden id="playButton" class="btn btn-primary">Listen</button>
-        <span style="padding-left:10px" id="rerecordMessage"></span>
-    </div>
+            <button id="recordButton" class="btn btn-primary">Record</button>
+            <button hidden id="playButton" class="btn btn-primary">Listen</button>
+            <span style="padding-left:10px" id="rerecordMessage"></span>
+       </div>
 
 </div>
 

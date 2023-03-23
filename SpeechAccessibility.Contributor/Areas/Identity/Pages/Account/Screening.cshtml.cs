@@ -15,7 +15,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
         public IActionResult OnPost()
         {
-            return RedirectToPage("./PersonalInformation");
+            return RedirectToPage("./Register");
         }
     }
 }
