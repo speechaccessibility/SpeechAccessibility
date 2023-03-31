@@ -10,7 +10,7 @@
     <title>@ViewData["Title"] - SpeechAccessibility</title>
     <link href="~/lib/font-awesome/css/all.min.css" rel="stylesheet" />
      <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link href="~/css/site.css" rel="stylesheet" />
+    <link href="~/css/site.css" asp-append-version="true" rel="stylesheet" />
    
 </head>
 <body>
@@ -29,8 +29,20 @@
                 </a>
                 <a class="wordmark-site-title" href="https://beckman.illinois.edu" target="_blank">Beckman Institute</a>
            </div>
-            <div id="site-name-wrapper" class="col-sm-4">
-                <a id="site-name" asp-controller="Home" asp-action="Index">Speech Accessibility Project</a>
+            <div id="site-name-wrapper" class="col-sm-6">
+                    @{
+                        string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+                        if ("Production" == environment)
+                        {
+                            <a id="site-name" asp-controller="Home" asp-action="Index">Speech Accessibility Project</a>
+                        }
+                        else
+                        {
+                            <a id="site-name" asp-controller="Home" asp-action="Index" style="background-color:yellow;color:red">Speech Accessibility Project - @environment</a>
+                        }
+                    }
+                
                 </div>
         </div>
         </div>
@@ -101,7 +113,7 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/lib/font-awesome/js/all.min.js"></script>
     @RenderSection("Scripts", required: false)
 </body>

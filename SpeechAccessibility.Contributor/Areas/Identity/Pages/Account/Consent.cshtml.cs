@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
@@ -12,7 +13,7 @@ using SpeechAccessibility.Models;
 
 namespace SpeechAccessibility.Areas.Identity.Pages.Account
 {
-
+    [Authorize]
     public class ConsentModel : PageModel
     {
         private readonly IdentityContext _identityContext;
@@ -62,6 +63,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             _identityContext = identityContext;
             _config = config;
         }
+
 
         public void OnGet()
         {

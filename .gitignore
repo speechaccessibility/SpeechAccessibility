@@ -356,3 +356,5 @@ MigrationBackup/
 **/appsettings.*
 **/web.*.config
 **/web.config
+**/bin
+**/obj

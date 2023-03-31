@@ -180,7 +180,7 @@
     <div class="form-group col-md-8">
         <div class="form-group">
             <fieldset>
-                <legend>Did you regularly converse in a language other than English before your 12th birthday?</legend>
+             <legend>Do you consider U.S. English to be your first language?</legend>
             <input id="otherLanguageYes" asp-for="Input.converseInEnglish" type="radio" value="Yes" onclick="checkOtherLanguage()" />
             <label for="otherLanguageYes">Yes</label>
                     <input id="otherLanguageNo" asp-for="Input.converseInEnglish" type="radio" value="No" onclick="checkOtherLanguage()" />
@@ -194,26 +194,26 @@
                 @if (Model != null && Model.Input != null && "Yes".Equals(Model.Input.converseInEnglish))
                 {
                     <div id="otherLanguageDiv" style="display:inline-block">
-                          <label for="otherLanguage">What language(s) did you speak?</label>
+                          <label for="otherLanguage">What language(s) do you speak?</label>
                         <input id="otherLanguage" class="form-control"asp-for="Input.otherLanguage" type="text"/>
                         <br />
                          <span style="color:red">*</span>
                         <label for="converseInOtherLanguageAge">What age did you start speaking English?</label>
                         <select id="converseInOtherLanguageAge" asp-for="Input.converseInOtherLanguageAge" asp-items="@Model.otherLanguageAgeList" data-dropup-auto="false">
-                        </select><br />
+                        </select>
                     </div>
                 
                 }
                 else
                 {
                     <div id="otherLanguageDiv" style="display:none">
-                        <label for="otherLanguage">What language(s) did you speak?</label>
+                        <label for="otherLanguage">What language(s) do you speak?</label>
                         <input id="otherLanguage" class="form-control"asp-for="Input.otherLanguage" type="text"/>
                         <br/>
                         <span style="color:red">*</span>
                         <label for="converseInOtherLanguageAge">What age did you start speaking English?</label>
                         <select id="converseInOtherLanguageAge" asp-for="Input.converseInOtherLanguageAge" asp-items="@Model.otherLanguageAgeList" data-dropup-auto="false">
-                        </select><br />
+                        </select>
                     </div>
 
                 }

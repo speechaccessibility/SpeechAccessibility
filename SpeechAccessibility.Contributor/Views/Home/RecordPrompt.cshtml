@@ -4,7 +4,7 @@
 }
 <link href="~/lib/font-awesome/css/all.min.css" rel="stylesheet" />
 
-<h1>@ViewData["Title"]</h1>
+<h1 class="sr-only">@ViewData["Title"]</h1>
 
 <div id="errorDiv" class="text-danger"></div>
 
@@ -14,12 +14,20 @@
     <div id="consentDiv"></div>
 
         <div id="messageDiv" class="text-danger">
-        <strong>Note: Please do not mention your personal information in your recording. The recording will automatically stop after two minutes.</strong>
+        <strong>Please do not mention your personal information in your recording. The recording will stop after two minutes.</strong>
     </div>
 
     <dialog id="maxTimeDialog">
         <h1>Time limit met.</h1>
         <p>Recording has met the max time limit. You may proceed to the next prompt.</p>
+        <form method="dialog">
+            <button>OK</button>
+        </form>
+    </dialog>
+
+    <dialog id="saveRecordingError">
+        <h1>Audio not captured.</h1>
+        <p id="saveRecordingText"></p>
         <form method="dialog">
             <button>OK</button>
         </form>
@@ -34,10 +42,11 @@
         if (percentComplete != 0)
         {
             <div class="progress" style="height: 35px;" data-label="@percentComplete">
-                <div class="progress-bar" role="progressbar" aria-valuenow="@percentComplete" style="width:@percentComplete%;">                   
+                <div class="progress-bar" role="progressbar" aria-valuenow="@percentComplete" style="width:@percentComplete%;">
+                    <span style="font-size:large"><strong>@percentComplete%</strong></span>
                 </div>
             </div>
-            <span style="font-size:large"><strong>@percentComplete%</strong></span>
+           
         }
 
     }
@@ -71,7 +80,7 @@
                 <h1>You have completed Section 2 of Block @Model.totalBlockCount!</h1>
                 <p>
                     The next section will contain open-ended questions.<br />
-                    Please answer each question using one or more sentences.<br />
+                    Please answer each question using several sentences.<br />
                     Don’t read the question out loud – just speak your answer!
                 </p>
 
@@ -81,7 +90,7 @@
             </dialog>
         }
 
-        if (Model.totalBlockCount != 0 && percentComplete == 0)
+        if (Model.totalBlockCount != 0 && percentComplete == 0 && Model.retryCount==0)
         {
             <div class="alert alert-success alert-dismissible" role="alert">
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -96,6 +105,11 @@
                     The next section will contain digital command prompts and novel sentences.<br/>
                     Please record yourself speaking the prompts.
                 </p>
+                    @if (Model.totalBlockCount == 9)
+                    {
+                    <p>The prompts in this next section may seem familiar to you. They’re designed to be the same as the first ones you encountered.</p>
+                    }
+               
                 <form method="dialog">
                     <button>OK</button>
                 </form>
@@ -107,11 +121,9 @@
             <div class="progress" style="height: 35px;">
                 <div class="progress-bar" role="progressbar"
              aria-valuenow="@percentComplete" style="width:@percentComplete%;">
-                </div>
+                    <span class="progressText"><strong>Block @Model.totalBlockCount Progress: @percentComplete%</strong></span>
+         </div>
             </div>
-            <span style="font-size:large"><strong>Block @Model.totalBlockCount Progress: @percentComplete%</strong></span>
-
-            <br />
         }
 
     }
@@ -128,7 +140,8 @@
         }
         else if (Model.prompt.SubCategory.Id==2)
         {
-            <p>In this section, you will be explaining the steps to completing specific activities. Do not worry if you have not done the activity before. There are no right or wrong answers. Just try your best. Imagine you are teaching something to someone who has never done this activity before.</p><br />
+            <p>In this section, you will be explaining the steps to complete some tasks. Don’t worry if you haven’t actually done the task before. Imagine that you are teaching someone how to do the task.</p>
+
         }
         else if(Model.prompt.SubCategory.Id==4)
         {
@@ -154,7 +167,7 @@
                             <h1>You have completed section 2!</h1>
                 <p>
                     In the next section you will select an open-ended question to answer.<br />
-                    Please answer the question using one or more sentences.<br />
+                    Please answer the question using several sentences.<br />
                     Don’t read the question out loud – just speak your answer!
                 </p>
                 <form method="dialog">
@@ -212,7 +225,13 @@
                 <span class="sr-only">Saving...</span>
             </div>
             <span>Saving...</span><br />
-       </div>    
+       </div>
+        <div id="recordingStartedDiv" style="display:none;padding-bottom:10px">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Recording Started...</span>
+            </div>
+            <span>Recording Started...</span><br />
+        </div>
         <form style="display: inline-block;" method="post">
             <input hidden id="contributorId" asp-for="@Model.contributorId" value="@Model.contributorId" />
             <input hidden id="promptId" asp-for="@Model.prompt.Id" value="@Model.prompt.Id" />
@@ -232,9 +251,14 @@
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script>
     Cookies = 'existent global'
+
+    $(document).ready(function () {
+        var anchor = document.getElementById("main");
+        anchor.scrollIntoView(true);
+    });
 </script>
 <script src="~/lib/font-awesome/js/all.min.js"></script>
 <script src="~/lib/js-cookie/dist/js.cookie.js"></script>
 <script src="~/lib/js-cookie/dist/js.cookie.min.js"></script>
-<script src="~/js/Recorder.js" type="module"></script>
-<script src="~/js/site.js"></script>
+<script src="~/js/Recorder.js" asp-append-version="true" type="module"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>

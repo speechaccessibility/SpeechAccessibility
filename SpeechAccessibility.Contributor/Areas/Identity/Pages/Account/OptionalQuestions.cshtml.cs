@@ -13,9 +13,11 @@ using Microsoft.Extensions.Logging;
 using SpeechAccessibility.Data;
 using SpeechAccessibility.Models;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SpeechAccessibility.Areas.Identity.Pages.Account
 {
+    [Authorize]
     public class OptionalQuestionsModel : PageModel
     {
 

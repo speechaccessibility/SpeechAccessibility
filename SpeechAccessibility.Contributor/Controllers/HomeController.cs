@@ -99,7 +99,7 @@ namespace SpeechAccessibility.Controllers
                     writer.WriteLine(error);
                     writer.Close();
                 }
-              
+                throw;
             }
         }
 
@@ -205,15 +205,14 @@ namespace SpeechAccessibility.Controllers
 
                 string rawFullPath = Path.Combine(rawFileLocation, file.FileName);
 
-
                 using (Stream fileStream = new FileStream(rawFullPath, FileMode.OpenOrCreate, FileAccess.ReadWrite))
                 {
-                      file.CopyTo(fileStream);
+                    file.CopyTo(fileStream);
 
                     fileStream.Close();
 
                 }
-                  CopyFile(file, blockDirectory, rawFullPath);
+                CopyFile(file, blockDirectory, rawFullPath);
 
             }
             catch {
@@ -653,6 +652,7 @@ namespace SpeechAccessibility.Controllers
              _recordingContext.SaveChanges();
         }
 
+        [Authorize]
         public IActionResult CompleteConfirmation()
         {
             Contributor contributor = getCurrentContributor();

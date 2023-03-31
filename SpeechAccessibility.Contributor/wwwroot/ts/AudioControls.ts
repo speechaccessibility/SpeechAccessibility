@@ -139,7 +139,7 @@ export class AudioControls {
 		waveformCanvasId: string | undefined = undefined,
 		waveformBackgroundCSS: string = "black",
 		waveformForegroundCSS: string = "white",
-		maxRecordingTimeMsec: number = 120000,
+		maxRecordingTimeMsec: number = 60000,
 		recordingSampleRateMsec: number = 100,
 		audio_display_threshold: number = 0.005,
 		audio_display_value_length: number = 1024 * 16) {

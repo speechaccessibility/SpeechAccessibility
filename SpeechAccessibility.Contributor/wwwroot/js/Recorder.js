@@ -23,7 +23,7 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
-import { AudioControls } from "./AudioControls.js";
+import { AudioControls } from "./AudioControls.js?v=2";
 
 const base = $('#consentDiv');
 
@@ -66,6 +66,7 @@ function recording_interface() {
                     let button = $('#recordButton')
                     let nextButton = $('#nextButton');
                     let recordingStatus = document.getElementById('recordingStatus')
+                    
                     nextButton.attr('hidden', true)
                     let text = button.text()
                     if (button.text() === 'Stop Recording') {
@@ -74,8 +75,13 @@ function recording_interface() {
                     event.stopPropagation()
                     event.preventDefault()
                     recordingStatus.innerHTML = "Recording started";
-                    button.text('Stop Recording')
-
+                    button.text('Stop Recording')  
+                    button.attr('hidden', true)
+                    var recordingStartedDiv = document.getElementById('recordingStartedDiv');
+                    recordingStartedDiv.style.display = "block";
+                    delay(1000).then(() => 
+                        button.removeAttr('hidden')).then(()=> recordingStartedDiv.style.display="none").finally(() => button.focus())
+                  
             }
         )
         recordButton.addEventListener(
@@ -150,7 +156,7 @@ function recording_interface() {
                 myAudioControls = new AudioControls(codec,
                     'recordButton',
                     undefined,
-                    'waveform');
+                    'waveform', "black", "white", 120000);
 
             }
         )     
@@ -179,7 +185,7 @@ function recording_interface() {
         let myAudioControls = new AudioControls(codec,
             'recordButton',
             undefined,
-            'waveform');
+            'waveform', "black", "white", 120000);
 
 
 
@@ -189,31 +195,47 @@ function recording_interface() {
     }
 }
 
+function delay(time) {
+    return new Promise(resolve => setTimeout(resolve, time));
+}
+
 async function processRecording(my_url, myData, retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton) {
 
     var saveDiv = document.getElementById('saveDiv');
     saveDiv.style.display = "block";
     button.attr('hidden', true)
     nextButton.attr('hidden', true)
-    await postRecording(my_url, myData);
+    await postRecording(my_url, myData,retryCount,categoryId);
 
     updateButtons(retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton,saveDiv);
 }
 
-   function postRecording(my_url,myData) {
+   async function postRecording(my_url,myData,retryCount,categoryId) {
     let result;
 
     try {
-        result = $.ajax({
+        result = await $.ajax({
             url: my_url,
             type: 'POST',
             cache: false,
             contentType: false,
             processData: false,
-            data: myData
-        })
+            data: myData,
+        }).fail(function () {
+            var dialog = document.getElementById("saveRecordingError");
+            var errorText = document.getElementById("saveRecordingText")
+            if (retryCount < 3 && categoryId != 1) {
+                errorText.innerHTML="Please try to rerecord. If this error persists, please contact speechaccessibility@beckman.illinois.edu."
+            }
+            else {
+                errorText.innerHTML= "If this error persists, please contact speechaccessibility@beckman.illinois.edu."
+            }
+            dialog.showModal()
+
+        }).done(function () { return result; })
 
         return result;
+
     } catch (error) {
         console.error(error);
     }

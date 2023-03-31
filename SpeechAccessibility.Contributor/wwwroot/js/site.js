@@ -151,7 +151,7 @@ function clearOtherRaces()
 }
 
 function checkOtherLanguage() {
-    if (document.getElementById("otherLanguageYes").checked) {
+    if (document.getElementById("otherLanguageNo").checked) {
         document.getElementById("otherLanguageDiv").style.display = "inline-block"
     }
     else {

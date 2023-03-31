@@ -3,6 +3,11 @@
 @{
      ViewData["Title"] = "Consent";
 }
+
+@*If any changes are made to this page,
+make sure to increment the ConsentVersion in appsettings*@
+
+
 <h1>@ViewData["Title"]</h1>
 
 @if (@Model.ModelState.IsValid == false)
@@ -82,6 +87,8 @@ LSVT Global, two organizations that advocate for people with Parkinson's.
     <p>&nbsp;</p>
     <p>You may take up to three months to finish recording the 600 speech samples. If you will need more than three months, please contact the research team at UIUC at&nbsp;<a href="mailto:speechaccessibility@beckman.illinois.edu">speechaccessibility@beckman.illinois.edu</a>.&nbsp;</p>
         <p>&nbsp;</p>
+    <p>We will ask you whether you consider U.S. English to be your first language. People who speak English as a second language are sometimes better recognized by devices that also know multiple languages. If you provide this information, it will be shared with researchers using the data.</p>
+    <p>&nbsp;</p>
     <p>We will also ask you to provide optional data about yourself, such as your age, racial and ethnic identity, and questions about how your speech ability may have impacted your everyday life. You are not required to answer any of these questions. This information will only be used to confirm diverse representation in this data collection, and, if provided, will not be shared outside of the UIUC research team.</p>
     <p>&nbsp;</p>
     <p>The UIUC research team will review all of your speech samples, and we will edit them to protect your privacy by removing any references to personally identifiable information about you or others that you might have said in your answers to our question prompts. We will also annotate your samples with “tags” that refer to technical aspects of the acoustic signals in your samples. We will not attach your name or email address to these samples; instead, we will assign a unique participant identification code to you and will annotate your samples with that code. Only the UIUC research team will know the “identity key” that relates your email address to your participant identification code.</p>
