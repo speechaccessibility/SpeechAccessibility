@@ -1,0 +1,9 @@
+Trying to add new property 'svn:global-ignores'
+but the property already exists.
+<<<<<<< (local property value)
+obj
+||||||| (incoming 'changed from' value)
+=======
+bin
+obj
+>>>>>>> (incoming 'changed to' value)

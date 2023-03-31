@@ -1,0 +1,100 @@
+﻿@{
+    ViewData["Title"] = "View Contributors Recording Progress";
+}
+@{
+    ViewBag.Title = "Contributors Recording Progress";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h1>View Contributors Recording Progress</h1>
+<table>
+    <tr>
+        <td><b style="color:black;">Select a date range: </b></td>
+    </tr>
+    <tr>
+        <td style="color:black;">Start Date:<input class="form-control" id="startdt" name="startdt" type="date" /></td>
+        <td style="color:black;">End Date:<input class="form-control" id="enddt" name="enddt" type="date" />
+        <td>
+            <input type="button" id="submitdate" name="submitdate" value="Submit" style="margin-top:21px; margin-left:25px;" />
+        </td>
+    </tr>
+</table>
+
+<br />
+<table id="ConntributorsProgressTable" class="table table-sm table-bordered">
+    @* <tbody>*@
+    <thead>
+        <tr><th>Contributor ID</th><th>Last Recording Time</th><th>Last Recorded Prompt</th></tr>
+    </thead>
+    @* </tbody>*@
+    <tbody id="tableBody">
+    </tbody>
+
+</table>
+
+@section scripts {
+
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $('input:button[name="submitdate"]').click(function () {
+                //debugger;
+                var sdate = $("#startdt").val();
+                var edate = $("#enddt").val();
+                getContributorsProgress(sdate, edate);
+                //return false;
+            });
+
+            function getContributorsProgress(sdate, edate) {
+                $.ajax({
+                    url: '@Url.Action("GetContributorsRecordingProgressforSelectedDates", "Report")',
+                    type: "POST",
+                    data: { "startdate": sdate, "enddate": edate },
+                    success: function (response) {
+                        //debugger;
+                        if (response.counter > 0) {
+                            $('#ConntributorsProgressTable tbody').empty();
+
+                            for (var i = 0; i < response.contributorsProgresslist.length; i++) {
+                                var contributor = response.contributorsProgresslist[i];
+
+                                var date = new Date(contributor.createTS);
+                                const options = { hour: "2-digit", minute: "2-digit", hour12: false };
+                                var formattedTime = date.toLocaleTimeString([], options);
+                                var formattedDate = `${date.toLocaleDateString()}` + ' ' + formattedTime
+
+                                var row = "<tr><td>" + contributor.contributorId + "</td><td>" + formattedDate + "</td><td>" + 'b' + contributor.blockId + '-' + contributor.originalPromptId + "</td><tr>";
+                                $("#ConntributorsProgressTable > tbody:last").append(row);
+                            }
+
+
+                        } else {
+                            $('#ConntributorsProgressTable tbody').empty();
+                        }
+
+                    },
+                    error: function () {
+                        alert("Error: Validate NetID!");
+                        $('.spinner').css('display', 'none');
+                    }
+                });
+            }
+
+
+
+        });
+
+    </script>
+}
+<style>
+    
+    th {
+        text-align: center;
+        color: white;
+        background-color: #13294B
+    }
+
+    td {
+        text-align: center;
+    }
+</style>

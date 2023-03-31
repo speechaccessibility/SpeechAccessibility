@@ -80,7 +80,7 @@ export class AudioControls {
      *                  audio_display_value_length amount of data per render
      *                  cycle.
      */
-    constructor(codec, recordStartButtonId, recordStopButtonId = undefined, waveformCanvasId = undefined, waveformBackgroundCSS = "black", waveformForegroundCSS = "white", maxRecordingTimeMsec = 120000, recordingSampleRateMsec = 100, audio_display_threshold = 0.005, audio_display_value_length = 1024 * 16) {
+    constructor(codec, recordStartButtonId, recordStopButtonId = undefined, waveformCanvasId = undefined, waveformBackgroundCSS = "black", waveformForegroundCSS = "white", maxRecordingTimeMsec = 60000, recordingSampleRateMsec = 100, audio_display_threshold = 0.005, audio_display_value_length = 1024 * 16) {
         this._chunks = [];
         // constructor params
         this._codec = undefined;

@@ -240,6 +240,7 @@ video {
 
 a {
     color: #1D58A7;
+    text-decoration:none;
 }
 
 
@@ -732,5 +733,27 @@ option
 
 .text-danger {
     color: #ab0313 !important;
+}
+
+.progress {
+    background-color: #000000;
+}
+
+.progress-bar {
+    background-color: #1100cc;
+    padding: 15px;
+}
+
+.progressText {
+    color: #fff;
+}
+
+#messageDiv{
+    font-size:20px;
+}
+
+#waveform{
+    width: 500px;
+    height:50px;
 }
 
