@@ -71,12 +71,12 @@
                         }
 
 
-                        @if (userRole is "TextAnnotator" or "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "SystemAdmin") //Heejin group
+                        @if (userRole is "TextAnnotator" or "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "LSVT" or "SystemAdmin") //Heejin group
                         {  
                             <li class="nav-item dropdown">
                                <a class="nav-link dropdown-toggle" href="#" id="order" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Contributor</a>
                                 <div class="dropdown-menu" aria-labelledby="order">
-                                    @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "SystemAdmin")
+                                    @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "LSVT" or "SystemAdmin")
                                     {
                                         <a class="dropdown-item" href="@Url.Action("ContributorsWaitingForApproval", "Contributor")">Contributors Waiting For Approval</a>
 
@@ -103,8 +103,8 @@
                                 <a class="nav-link dropdown-toggle" href="#" id="order" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Report</a>
                                 <div class="dropdown-menu" aria-labelledby="order">
                                     <a class="dropdown-item" href="@Url.Action("ViewAnnotatorAssignedContributors", "Report")">View Annotator Assigned Contributors</a>
-                                    <a class="dropdown-item" href="@Url.Action("ViewContributorsRecordingProgress", "Report")">View Contributors Recording Progress</a>
-
+                                 @*   <a class="dropdown-item" href="@Url.Action("ViewContributorsRecordingProgress", "Report")">View Contributors Recording Progress</a>
+                                    <a class="dropdown-item" href="@Url.Action("ViewDailyContributorSpeechFiles", "Report")">View Daily Contributor Speech Files</a>*@
                                 </div>
                             </li>
                             <li class="nav-item">

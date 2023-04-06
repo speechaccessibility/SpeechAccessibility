@@ -10,7 +10,7 @@
     <tr role="row">
         <th aria-label="Transcript">RecordingID</th>
         <th aria-label="Transcript">Transcript</th>
-        <th aria-label="Recording Date" style="width: 100px;">Recording Date</th>
+        <th aria-label="Recording Date" style="width: 150px;">Recording Date</th>
         <th aria-label="Comment">Comment</th>
         <th aria-label="Actions" style="width: 150px">Actions</th>
     </tr>
@@ -19,7 +19,7 @@
         <tr>
             <td>@recording.Id</td>
             <td aria-label="Transcript">@recording.ModifiedTranscript</td>
-            <td aria-label="Recording Date">@recording.CreateTS.ToShortDateString()</td>
+            <td aria-label="Recording Date">@recording.CreateTS.ToString("MM/dd/yyyy HH:mm")</td>
             <td aria-label="Comment">@recording.Comment</td>
             <td aria-label="Actions">
                

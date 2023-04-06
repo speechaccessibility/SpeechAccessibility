@@ -3,3 +3,71 @@
 *@
 @{
 }
+<br/>
+<p>For testing: \\bi-isilon-smb.beckman.illinois.edu\NovaH\Dev\Bic\test3.wav</p>
+@*<p>For testing: \\bi-isilon-smb.beckman.illinois.edu\NovaH\Dev\2689df3d-a008-43d9-72f4-08db031f343f\1\modified\2689df3d-a008-43d9-72f4-08db031f343f_306_1.wav</p>*@
+
+<table style="border-collapse: collapse !important;border: none !important;">
+    <tr>
+        <td style="border: none !important;">
+            <label>File Path</label>
+        </td>
+        <td style="border: none !important;">
+            <input id="file" name="file" type="text" value="\\bi-isilon-smb.beckman.illinois.edu\NovaH\Dev\Bic\test3.wav">
+            <input type="button" id="btnGetFileInfo" name="btnGetFileInfo" value="Get Info" class="btn btn-primary btn-sm" />
+           
+        </td>
+    </tr>
+</table>
+
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+<div class="spinner" style="display:none">
+    <div class="center-div">
+        <div class="inner-div">
+            <div class="loader"></div>
+        </div>
+    </div>
+</div>
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function() {
+         
+
+
+            //get file info
+            $('input:button[name="btnGetFileInfo"]').click(function () {
+                $('.spinner').css('display', 'block');
+                $("#lblMessage").removeClass("alert-warning");
+                $("#lblMessage").removeClass("alert-success");
+                $("#lblMessage").text("");
+                getFileInformation($("#file").val());
+                //return false;
+            });
+
+           
+
+           
+
+            function getFileInformation(filePath) {
+                $.ajax({
+                    url: '@Url.Action("FileInformation", "Extension")',
+                    type: "POST",
+                    data: { "filePath": filePath },
+                    success: function(response) {
+                        $('.spinner').css('display', 'none');
+                        $("#lblMessage").text(response.message);
+                        
+                    },
+                    error: function() {
+                        alert("Error: geting file information!");
+                        $('.spinner').css('display', 'none');
+                    }
+                });
+            }
+
+
+        });
+
+    </script>
+}
+

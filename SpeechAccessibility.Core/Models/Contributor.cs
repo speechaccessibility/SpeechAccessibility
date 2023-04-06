@@ -14,7 +14,7 @@ namespace SpeechAccessibility.Core.Models
 
         public Guid Id { get; set; }
         //public string UnderstandSpeechInd { get; set; }
-        //public string ParkinsonsInd { get; set; }
+        public string ParkinsonsInd { get; set; }
         //public string EighteenOrOlderInd { get; set; }
         public string FirstName { get; set; }
         public string MiddleName { get; set; }
@@ -26,14 +26,17 @@ namespace SpeechAccessibility.Core.Models
         //public string StateResidence { get; set; }
         //public string IdentityUserId { get; set; }
         public int StatusId { get; set; }
-        //public DateTime CreateTS { get; set; }
-        //public DateTime UpdateTS { get; set; }
+        public DateTime CreateTS { get; set; }
+        public DateTime UpdateTS { get; set; }
+        public DateTime? ApproveTS { get; set; }
         public string Comments { get; set; }
         public bool? ChangePassword { get; set; }
         //public bool? ContactLSVT { get; set; }
         //public string PhoneNumber { get; set; }
 
-     
+        public  string ApproveDenyBy {get; set; }
+
+
         public ContributorStatus ContributorStatus { get; set; }
         public  ICollection<Consent> Consent { get; set; }
         public  ICollection<ContributorDetails> ContributorDetails { get; set; }

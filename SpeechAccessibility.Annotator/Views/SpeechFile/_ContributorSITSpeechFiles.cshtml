@@ -15,7 +15,7 @@
     <tr role="row">
         <th aria-label="Transcript">RecordingID</th>
         <th aria-label="Transcript">Transcript</th>
-        <th aria-label="Recording Date" style="width: 80px;">Recording Date</th>
+        <th aria-label="Recording Date" style="width: 150px;">Recording Date</th>
         <th aria-label="RetryCount">RetryCount</th>
         <th aria-label="Comment">Comment</th>
         <th aria-label="Actions" style="width: 150px">Actions</th>
@@ -25,23 +25,25 @@
         <tr>
             <td>@recording.Id</td>
             <td aria-label="Transcript">@recording.OriginalPrompt.Transcript</td>
-            <td aria-label="Recording Date">@recording.CreateTS.ToShortDateString()</td>
+            <td aria-label="Recording Date">@recording.CreateTS.ToString("MM/dd/yyyy HH:mm")</td>
             <td aria-label="RetryCount">@recording.RetryCount</td>
             <td aria-label="Comment">@recording.Comment</td>
             <td aria-label="Actions">
-                <input type="hidden" id="FilePath" name="FilePath" value="@recording.SpeechFilePath" />
-               @* <a href="#" class="listen">Listen</a>*@
+                <input type="hidden" id="FilePath" name="FilePath" value="@recording.SpeechFilePath"/>
+
+                @* <a href="#" class="listen">Listen</a>*@
                 @{
                     var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 
                     if (userRole is "SLPAnnotator" or "SLPAnnotatorAdmin" or "SystemAdmin")
                     {
                         //give SLP option to listen and rate the recordings after the contributor is already approved
-                        //if (recording.IsContributorApproved == false)
-                        //{
-                            <text>  <a href="#" class="rate" >Listen & Rate</a></text>
-                        //}
-
+                        <text> <a href="#" class="rate">Listen & Rate</a></text>
+                    }
+                    else if (userRole is "LSVT")
+                    {
+                        //LSVT can only listen
+                        <text> <a href="#" class="listen">Listen</a></text>
                     }
                 }
 
@@ -53,31 +55,39 @@
 <script language="javascript" type="text/javascript">
    
     $(document).ready(function () {
-        // view the recordings
-        //$("#SITRecording-table").on("click", "a.rate", function (e) {
-        //    e.preventDefault();
-        //    //var recordingId = $(this).closest('tr').find('td:eq(0)').text();
-        //    //var getUrl = "@Url.Action("RateSpeechFiles", "SpeechFile")?recordingId=" + recordingId;
-            
-        //    ////location.href = getUrl;
-        //    //window.open(getUrl);
-        //       $("#lblListenContributorId").text($("#hidContributorId").val());
-        //    $("#lblListenTranscript").text($(this).closest('tr').find('td:eq(1)').text());
-
-        //    var filePath = $('input[type=hidden]', $(this).closest("td")).val();
-        //    var audio = document.getElementById('listenRecording');
-
-        //    audio.setAttribute("src", filePath);
-        //        audio.load();
-        //        var dialog = $("#listen-dialog");
-        //        listenRecording(audio, dialog);
+          //combin listen and rate buttons into one dialog
+            //listen the recording
+        $('#SITRecording-table').on('click', 'a.listen', function (e) {
+                e.preventDefault();
+                //DownloadSpeechFile
                
-        //        $("#listen-dialog").dialog('open');
-        //        return false;
+            var filePath = $('input[type=hidden]', $(this).closest("td")).val();           
+             $("#lblListenContributorId").text($("#hidContributorId").val());
+                $("#lblListenTranscript").text($(this).closest('tr').find('td:eq(1)').text());
+                var audio = document.getElementById('listenRecording');
+                audio.setAttribute("src", filePath);
+                audio.load();
+                var dialog = $("#listen-dialog");
+                listenRecording(audio, dialog);
+                $("#listen-dialog").dialog('open');
+                return false;
 
-        //});
-        
-        //combin listen and rate buttons into one dialog
+
+                //var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+                //var row = selectedRowData.data();
+                // $("#lblListenContributorId").text(row.contributorId);
+                //$("#lblListenTranscript").text(row.modifiedTranscript);
+                //$("#hidFileName").val(row.speechFilePath);
+                //var audio = document.getElementById('listenRecording');
+                //audio.setAttribute("src", row.speechFilePath);
+                //audio.load();
+                //var dialog = $("#listen-dialog");
+                //listenRecording(audio, dialog);
+                //$("#listen-dialog").dialog('open');
+                //return false;
+            });
+
+
       
         $('#SITRecording-table').on('click', 'a.rate', function (e) {
                 e.preventDefault();

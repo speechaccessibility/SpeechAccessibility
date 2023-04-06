@@ -64,18 +64,23 @@
 
 <div id="listen-dialog" style="display: none">
     <p>
-       @* <b>ContributorID:</b><label id="lblListenContributorId" name="lblListenContributorId"></label>
+        <b>ContributorID:</b><label id="lblListenContributorId" name="lblListenContributorId"></label>
         <br/>
         <b>Transcript:</b><label id="lblListenTranscript" name="lblListenTranscript"></label>
         <br/>
-        <input type="hidden" id="hidFileName" />
-         <audio id="listenRecording" controls preload="none">
-            <source src="" />
-        </audio>*@
-        
-       
+        <input type="hidden" id="hidFileName"/>
+        <audio id="listenRecording" controls>
+            <source src="">
+        </audio>
 
     </p>
+</div>
+<div class="spinner" style="display:none">
+    <div class="center-div">
+        <div class="inner-div">
+            <div class="loader"></div>
+        </div>
+    </div>
 </div>
 
 @section scripts {
@@ -151,11 +156,11 @@
                             "visible": true,
                             "name": "Id",
                             "render": function (data, type, row) {
-                                if ($("#UserRole").val() === "SLPAnnotator" || $("#UserRole").val() === "SLPAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
+                                if ($("#UserRole").val() === "SLPAnnotator" || $("#UserRole").val() === "SLPAnnotatorAdmin" || $("#UserRole").val() === "LSVT" || $("#UserRole").val() === "SystemAdmin") {
                                     var link = '<a href="#" class="approve" >Approve</a>  | <a href="#" class="deny">Deny</a> | <a href="#" class="viewRating">View Rating</a> ';
                                     return link;
                                 }
-                                else if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin") {
+                                else if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin" ) {
                                     var link = '<a href="#" class="viewRating"> View Rating </a>';
                                     return link;
                                 }
@@ -363,6 +368,7 @@
                     },
                     buttons: {
                         "Deny": function () {
+                            $('.spinner').css('display', 'block');
                             var contributorId = $("#hidDenyContributorId").val();
                             var denyComment = $("#txtDenyComment").val();
                             $.ajax({
@@ -372,6 +378,7 @@
                                      "contributorId": contributorId,"comment": denyComment, "action": 3 //3 for deny, 2 for approve
                                 },
                                 success: function (response) {
+                                    $('.spinner').css('display', 'none');
                                     if (response.success === true) {
                                         clearDenyDialog();
                                         $('#deny-dialog').dialog('close');

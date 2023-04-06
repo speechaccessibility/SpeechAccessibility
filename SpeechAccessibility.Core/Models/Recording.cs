@@ -25,6 +25,8 @@ namespace SpeechAccessibility.Core.Models
         public DateTime CreateTS { get; set; }
         public DateTime UpdateTS { get; set; }
         public string LastUpdateBy { get; set; }
+        public string StartTime { get; set; }
+        public string EndTime { get; set; }
 
         public  Block Block { get; set; }
         public  Prompt OriginalPrompt { get; set; }

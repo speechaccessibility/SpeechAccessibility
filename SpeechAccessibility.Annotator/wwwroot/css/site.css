@@ -367,3 +367,14 @@ tr.shown td.details-control {
 }
 
 /****************End For Spinner*/
+
+/********************************************/
+/*** For report*/
+#DailyReportNewContributorRecordings, DailyReportExistingContributorRecordings th, td {
+    border: 1px solid white;
+    border-collapse: collapse;
+}
+
+#DailyReportNewContributorRecordings, DailyReportExistingContributorRecordings tr:nth-child(even) {
+    background-color: #f2f2f2;
+}

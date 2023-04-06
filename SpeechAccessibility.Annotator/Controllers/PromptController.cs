@@ -143,20 +143,21 @@ namespace SpeechAccessibility.Annotator.Controllers
         [HttpPost]
         public ActionResult AddUpdatePrompt(Prompt promptIn, string action)
         {
-            
+            //check to make sure the transcript is not in the database to avoid duplicates
+            var existingPrompt = _promptRepository.Find(p => p.Transcript.Equals(promptIn.Transcript))
+                .FirstOrDefault();
+            if (existingPrompt != null)
+            {
+                return Json(new { Success = false, Message = "The transcript already exists in the database." });
+            }
+
+
             if (action == "addnew")
             {
                 if (promptIn.SubCategoryId == 0)
                 {
                     promptIn.SubCategoryId = null;
 
-                }
-                //check to make sure the transcript is not in the database to avoid duplicates
-                var existingPrompt = _promptRepository.Find(p => p.Transcript.Equals(promptIn.Transcript))
-                    .FirstOrDefault();
-                if (existingPrompt != null)
-                {
-                    return Json(new { Success = false, Message = "Prompt already exists in the database." });
                 }
 
                 if (promptIn.CategoryId > 1) //not the Dysarthria Assessment Sentences
