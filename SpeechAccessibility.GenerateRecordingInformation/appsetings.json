@@ -1,0 +1,11 @@
+{
+  "ConnectionStrings": {
+    "Default": ""
+  },
+  "AppSettings": {
+        "UploadFileFolder": ""
+      }
+
+  }
+  
+

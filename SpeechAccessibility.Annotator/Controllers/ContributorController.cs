@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Drawing.Printing;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +18,7 @@ using SpeechAccessibility.Core.Models;
 
 namespace SpeechAccessibility.Annotator.Controllers
 {
-    [Authorize(Policy = "AllAnnotator")]
+    [Authorize(Policy = "AllAnnotatorAndLSVT")]
     public class ContributorController : Controller
     {
         private readonly IContributorRepository _contributorRepository;
@@ -237,7 +234,7 @@ namespace SpeechAccessibility.Annotator.Controllers
         }
 
 
-        [Authorize(Policy = "SLPAnnotator")]
+        [Authorize(Policy = "SLPAnnotatorAndLSVT")]
         [HttpPost]
         public async Task<ActionResult> ApproveDenyContributor(Guid contributorId, string comment,string passwordChange, int action)
         {
@@ -247,6 +244,12 @@ namespace SpeechAccessibility.Annotator.Controllers
                 contributor.ChangePassword = passwordChange == "Yes";
                 contributor.StatusId = action;
                 contributor.Comments = comment;
+                if (action == 2)
+                    contributor.ApproveTS = DateTime.Now;
+                else
+                    contributor.UpdateTS = DateTime.Now;
+
+                contributor.ApproveDenyBy = User.Identity.Name;
                 _contributorRepository.Update(contributor);
             }
            
@@ -254,25 +257,37 @@ namespace SpeechAccessibility.Annotator.Controllers
             var emailSubject = "";
             if (action == 2) //approve
             {
+                //check for LSVT 
+                //if ParkinsonsInd="Yes", this contributor was routed to LSVT Group
                 message.Append("Dear " + contributor.FirstName);
                 message.Append("<br>Thank you so much for your interest in participating in the Speech Accessibility Project.");
                 message.Append("<br>We are delighted to share that you’ve been accepted to participate. ");
-                message.Append("Please watch for an email with more information from your LSVT Global mentor to guide you through the participation process.");
+                if (contributor.ParkinsonsInd == "Yes")
+                {
+                    message.Append("Please watch for an email with more information from your LSVT Global mentor to guide you through the participation process.");
+                }
+                else
+                {
+                    message.Append("Please visit the Speech Accessibility App at " + _configuration["AppSettings:ContributorWebLink"] + ". ");
+                    message.Append("Log in and click 'Record Prompt.' You should automatically see our informed consent form. Once you consent, you will be prompted to begin recording.");
+                  
+                }
+
+
                 if (passwordChange == "Yes")
                 {
                     message.Append("<br>");
                     message.Append("You are required to change your password when you login in.");
                 }
 
-                message.Append("Thank you for sharing your voice!");
-
-                message.Append("<br>If you have any questions, please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] +  ".");
-                message.Append("<br>Sincerely,");
+                message.Append("<br>Thank you for sharing your voice! ");
+                message.Append("If you have any questions, please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] +  ".");
+                message.Append("<br><br>Sincerely,");
                 message.Append("<br>The Speech Accessibility Project Team");
                 message.Append("<br>University of Illinois Urbana - Champaign");
-
-               
+                
                 emailSubject = "Your registration has been approved.";
+
 
             }
             else if (action == 3)//deny

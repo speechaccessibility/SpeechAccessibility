@@ -76,6 +76,8 @@ namespace SpeechAccessibility.Infrastructure.Data
             //entity.Property(e => e.UpdateTS)
             //    .HasDefaultValueSql("(getdate())");
 
+
+
             entity.HasOne(d => d.ContributorStatus)
                 .WithMany(p => p.Contributor)
                 .HasForeignKey(d => d.StatusId)

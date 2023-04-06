@@ -14,7 +14,7 @@
     <tr role="row">
       
         <th aria-label="Transcript">Transcript</th>
-        <th aria-label="Recording Date">Recording Date</th>
+        <th aria-label="Recording Date" style="width: 150px;">Recording Date</th>
         <th aria-label="Category">Category</th>
         <th aria-label="RetryCount">RetryCount</th>
         <th aria-label="Comment">Comment</th>
@@ -25,7 +25,7 @@
         <tr>
           
             <td aria-label="Transcript">@recording.OriginalPrompt.Transcript</td>
-            <td aria-label="Recording Date">@recording.CreateTS.ToShortDateString()</td>
+            <td aria-label="Recording Date">@recording.CreateTS.ToString("MM/dd/yyyy HH:mm")</td>
             <td aria-label="Category">@recording.OriginalPrompt.Category.Description</td>
             <td aria-label="RetryCount">@recording.RetryCount</td>
             <td aria-label="Comment">@recording.Comment</td>

@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace SpeechAccessibility.Annotator.Controllers
 {
-    [Authorize(Policy = "AllAnnotator")]
+    [Authorize(Policy = "AllAnnotatorAndLSVT")]
     public class SpeechFileController : Controller
     {
 
@@ -66,7 +66,8 @@ namespace SpeechAccessibility.Annotator.Controllers
         {
             var recordingList = new List<Recording>();
             var recordings = _recordingRepository
-                .Find(r => r.ContributorId == contributorId && r.OriginalPrompt.CategoryId != 1).Include(r => r.OriginalPrompt).ThenInclude(c=>c.Category).ThenInclude(c=>c.SubCategory).ToList();
+                .Find(r => r.ContributorId == contributorId && r.OriginalPrompt.CategoryId != 1).Include(r => r.OriginalPrompt)
+                .ThenInclude(c=>c.Category).ThenInclude(c=>c.SubCategory).OrderByDescending(c=>c.CreateTS).ToList();
 
             var appName = _configuration["AppSettings:Environment"] switch
             {
@@ -100,11 +101,9 @@ namespace SpeechAccessibility.Annotator.Controllers
             //if this contributor is not assigned to current Annotator, return null
             var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
             var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-
-       
-
+            
             var assignedBlocks = new List<ContributorAssignedBlock>();
-            if (userRole == "TextAnnotator") //todo: may need to add SLP annotator here 
+            if (userRole == "TextAnnotator") 
             {
                 var isAssigned = _contributorAssignedAnnotatorRepository
                     .Find(c => c.ContributorId == contributorId && c.UserId == currentUser.Id).FirstOrDefault();
@@ -197,7 +196,9 @@ namespace SpeechAccessibility.Annotator.Controllers
                 ContributorId = r.ContributorId,
                 BlockId = r.BlockId,
                 OriginalPromptId = r.OriginalPromptId,
-                SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName
+                SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName,
+                StartTime = r.StartTime,
+                EndTime = r.EndTime
 
             });
 
@@ -269,7 +270,9 @@ namespace SpeechAccessibility.Annotator.Controllers
                 ModifiedTranscript = string.IsNullOrEmpty(r.ModifiedTranscript) ? r.OriginalPrompt.Transcript : r.ModifiedTranscript,
                 FileName = r.FileName,
                 BlockId=r.BlockId,
-                SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId +  "/modified/" + r.FileName
+                SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId +  "/modified/" + r.FileName,
+                StartTime = r.StartTime,
+                EndTime = r.EndTime
             });
 
             //recordingList = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordingList, Request.Form);
@@ -294,7 +297,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             return Json(new { Success = false, Message = "Error adding comments." });
         }
 
-        [Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdmin")]
+        [Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdminAndLSVT")]
         [HttpPost]
         public PartialViewResult LoadContributorSITRecordings(Guid contributorId)
         {
@@ -335,7 +338,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         [Authorize(Policy = "TextAnnotator")]
         [HttpPost]
-        public ActionResult UpdateRecordingTranscript(int recordingId, string transcript)
+        public ActionResult UpdateRecordingTranscript(int recordingId, string transcript, string startTime, string endTime)
         {
             var recording = _recordingRepository.Find(p => p.Id == recordingId).FirstOrDefault();
             if (recording == null)
@@ -345,6 +348,8 @@ namespace SpeechAccessibility.Annotator.Controllers
 
 
             recording.ModifiedTranscript = transcript;
+            recording.StartTime = startTime;
+            recording.EndTime = endTime;
 
             recording.UpdateTS = DateTime.Now;
             recording.LastUpdateBy = User.Identity.Name;
@@ -413,8 +418,16 @@ namespace SpeechAccessibility.Annotator.Controllers
                 return Json(new { Success = true, Message = "Speech File is published." });
 
             }
-            
 
+            if (action == "editComments")
+            {
+                recording.Comment = comment;
+                recording.UpdateTS = DateTime.Now;
+                recording.LastUpdateBy = User.Identity.Name;
+                _recordingRepository.Update(recording);
+                return Json(new { Success = true, Message = "Comments are updated." });
+
+            }
             return Json(new { Success = false, Message = "" });
 
         }
@@ -591,7 +604,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         }
 
-        [Authorize(Policy = "SLPAnnotator")] //clarion group
+        [Authorize(Policy = "SLPAnnotatorAndLSVT")] //clarion group and LSVT (listen only)
         public ActionResult RateSpeechFiles(int recordingId)
         {
             //ViewBag.CameFrom = from;

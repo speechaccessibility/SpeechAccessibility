@@ -1,11 +1,14 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using SpeechAccessibility.Annotator.Models;
 using SpeechAccessibility.Core.Interfaces;
+using SpeechAccessibility.Infrastructure.Data;
 
 namespace SpeechAccessibility.Annotator.Controllers
 {
@@ -85,5 +88,43 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             return contributorsProgress.Any() ? Json(new { Counter = contributorsProgress.Count, ContributorsProgresslist = result}) : Json(new { Counter = 0});
         }
+
+        public ActionResult ViewDailyContributorSpeechFiles()
+        {
+
+            var dailyReport = new DailyContributorSpeechFileReportViewModel();
+            dailyReport.TodayDate = DateTime.Now;
+            var yesterdayDate = DateTime.Today.AddDays(-1);
+            var newContributorIDs = _contributorRepository.Find(c=>c.ApproveTS>=yesterdayDate).Select(c=>c.Id).ToList();
+            var newContributorsRecordings = new List<Tuple<Guid, int>>();
+           
+            foreach (var id in newContributorIDs)
+            {
+                var recordings = _recordingRepository.Find(r => r.ContributorId == id && r.CreateTS>= yesterdayDate).ToList();
+                if (recordings.Any())
+                {
+                    newContributorsRecordings.Add(new Tuple<Guid, int>(id, recordings.Count));
+                }
+                else
+                {
+                    newContributorsRecordings.Add(new Tuple<Guid, int>(id,0));
+                }
+            }
+
+            var existingContributorsNewRecordings = new List<Tuple<Guid, int>>();
+
+
+            var newRecordings = _recordingRepository.Find(c =>
+                    !newContributorIDs.Contains(c.ContributorId) && c.CreateTS >= yesterdayDate)
+                .GroupBy(c => c.ContributorId)
+                .Select(c =>  new Tuple<Guid, int>(c.Key, c.Count()) ).ToList();
+
+
+            dailyReport.NewContributorIDs = newContributorIDs;
+            dailyReport.NewContributorWithNumberRecording = newContributorsRecordings;
+            dailyReport.ExistingContributorsNewRecordings = newRecordings;
+            return View(dailyReport);
+        }
+
     }
 }

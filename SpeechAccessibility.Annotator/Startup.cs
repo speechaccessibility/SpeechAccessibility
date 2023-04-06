@@ -49,13 +49,16 @@ namespace SpeechAccessibility.Annotator
                 options.AddPolicy("SLPAnnotatorAdmin", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotatorAdmin", "SystemAdmin"));
                 options.AddPolicy("TextAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "TextAnnotator", "TextAnnotatorAdmin", "SystemAdmin"));
                 options.AddPolicy("SLPAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "SystemAdmin"));
+                options.AddPolicy("SLPAnnotatorAndLSVT", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin","LSVT", "SystemAdmin"));
                 options.AddPolicy("SLPAnnotatorAndTextAnnotatorAdmin", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "TextAnnotatorAdmin", "SystemAdmin"));
-                //options.AddPolicy("AllAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "TextAnnotator", "SLPAnnotator", "SystemAdmin", "TextAnnotatorAdmin", "SLPAnnotatorAdmin"));
-
-
+                options.AddPolicy("SLPAnnotatorAndTextAnnotatorAdminAndLSVT", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "TextAnnotatorAdmin","LSVT", "SystemAdmin"));
 
                 options.AddPolicy("AllAnnotator",
                     policy => policy.RequireClaim(ClaimTypes.Role, "TextAnnotator", "SLPAnnotator", "SystemAdmin", "TextAnnotatorAdmin", "SLPAnnotatorAdmin"));
+                options.AddPolicy("LSVT", policy => policy.RequireClaim(ClaimTypes.Role, "LSVT", "SystemAdmin"));
+                options.AddPolicy("AllAnnotatorAndLSVT", policy => policy.RequireClaim(ClaimTypes.Role, "TextAnnotator", "SLPAnnotator", "TextAnnotatorAdmin", "SLPAnnotatorAdmin","LSVT", "SystemAdmin"));
+
+
             });
 
             services.AddMemoryCache();
