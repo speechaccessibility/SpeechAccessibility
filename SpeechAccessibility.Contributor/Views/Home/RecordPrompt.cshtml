@@ -81,7 +81,7 @@
                 <p>
                     The next section will contain open-ended questions.<br />
                     Please answer each question using several sentences.<br />
-                    Don’t read the question out loud – just speak your answer!
+                    Do not simply read the question out loud, but say your response.
                 </p>
 
                 <form method="dialog">
@@ -136,7 +136,7 @@
         }
         else if (Model.prompt.SubCategory.Id==1)
         {
-            <p>Please speak <i>your response</i> to the prompt below: </p>
+            <p>Please speak your response to the prompt below. <strong>Do not simply read the question out loud, but say your response.</strong></p>
         }
         else if (Model.prompt.SubCategory.Id==2)
         {
@@ -155,7 +155,7 @@
                     <button>OK</button>
                 </form>
             </dialog>
-            <p id="prompt">@Model.prompt.Transcript</p>
+            <p style="font-size:xx-large">@Model.prompt.Transcript</p>
         }
         else if (Model.prompt.SubCategory.Id==5)
         {            
@@ -174,7 +174,7 @@
                     <button>OK</button>
                 </form>
             </dialog>
-            <fieldset id="prompt">
+            <fieldset style="font-size:xx-large">
                 @{
                     foreach (Prompt prompt in Model.spontaneousSpeechList)
                     {
@@ -210,7 +210,16 @@
 
         @if((Model.prompt.SubCategory.Id!=4 && Model.prompt.SubCategory.Id!=5))
         {
-        <p id="prompt">@Model.prompt.Transcript</p>
+            if (Model.prompt.SubCategory.Id == 1 || Model.prompt.SubCategory.Id == 2)
+        {
+             <p style="font-size:xx-large">@Model.prompt.Transcript</p>            
+        }
+        else
+            {
+                 <p id="prompt">@Model.prompt.Transcript</p>
+                        
+    }
+           
         }
 
     </div>
@@ -232,7 +241,7 @@
             </div>
             <span>Recording Started...</span><br />
         </div>
-        <form style="display: inline-block;" method="post">
+        <form style="display: inline-block;" method="post" id="recordForm">
             <input hidden id="contributorId" asp-for="@Model.contributorId" value="@Model.contributorId" />
             <input hidden id="promptId" asp-for="@Model.prompt.Id" value="@Model.prompt.Id" />
             <input hidden id="categoryId" asp-for="@Model.prompt.Category.Id" value="@Model.prompt.Category.Id" />
@@ -255,6 +264,15 @@
     $(document).ready(function () {
         var anchor = document.getElementById("main");
         anchor.scrollIntoView(true);
+
+          $("#recordForm").submit(function (e) {
+
+            //disable the submit button
+            $("#nextButton").attr("disabled", true);
+
+            return true;
+
+    });
     });
 </script>
 <script src="~/lib/font-awesome/js/all.min.js"></script>

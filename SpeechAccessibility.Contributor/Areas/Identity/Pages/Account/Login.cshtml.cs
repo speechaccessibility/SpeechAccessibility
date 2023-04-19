@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using SpeechAccessibility.Data;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using UAParser;
 
 namespace SpeechAccessibility.Areas.Identity.Pages.Account
 {
@@ -126,7 +127,10 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                         return RedirectToPage("./ResetPassword", new { code = code, Email = Input.Email, LoggedIn=true});
                     }
                     _logger.LogInformation("User logged in.");
-                    return LocalRedirect(returnUrl);
+
+                    InsertLoginSession(id);
+
+                    return RedirectToAction("RecordPrompt");
                 }
                 if (result.RequiresTwoFactor)
                 {
@@ -146,6 +150,51 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             // If we got this far, something failed, redisplay form
             return Page();
+        }
+
+        private void InsertLoginSession(string id)
+        {
+            Contributor contributor = _identityContext.Contributor
+               .Where(o => o.IdentityUser.Id == id)
+               .FirstOrDefault();
+
+            string userAgent = Request.Headers["User-Agent"].ToString();
+
+            var uaParser = Parser.GetDefault();
+
+            ClientInfo c = uaParser.Parse(userAgent);
+
+            string osVersion = c.OS.Major;
+            if (c.OS.Minor != null)
+            {
+                osVersion += "." + c.OS.Minor;
+            }
+
+            string browserVersion = c.UA.Major;
+            if (c.UA.Major != null)
+            {
+                browserVersion += "." + c.UA.Minor;
+            }
+
+
+            LoginSession session = new LoginSession
+            {
+                DeviceFamily = c.Device.Family,
+                DeviceModel = c.Device.Model,
+                OperatingSystem = c.OS.Family,
+                OperatingSystemVersion = osVersion,
+                OperatingSystemPatch = c.OS.Patch,
+                Browser = c.UA.Family,
+                BrowserVersion = browserVersion,
+                BrowserPatch = c.UA.Patch,
+                LoginTS = DateTime.Now,
+                Contributor = contributor
+
+            };
+
+            _identityContext.LoginSession.Add(session);
+            _identityContext.SaveChanges();
+
         }
     }
 }

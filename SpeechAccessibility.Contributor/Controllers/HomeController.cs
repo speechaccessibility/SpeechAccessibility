@@ -717,9 +717,11 @@ namespace SpeechAccessibility.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    string userId = TempData["contributorId"].ToString();
+                    Guid userId = (Guid)TempData["contributorId"];
 
-                    string message = "<div>Message from contributor ID,  " + userId + ":</div><br/><p>" + model.Message + "<p>";
+                    string emailAddress = _identityContext.Contributor.Where(c => c.Id == userId).Select(c => c.EmailAddress).First();
+
+                    string message = "<div>Message from  " + emailAddress + ":</div><br/><p>" + model.Message + "<p>";
 
                     string to = _config["AdminEmail"];
 

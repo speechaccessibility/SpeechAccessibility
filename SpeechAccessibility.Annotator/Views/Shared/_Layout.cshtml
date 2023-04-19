@@ -89,7 +89,6 @@
                            </li>
 
                         }
-
                         @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotatorAdmin" or "SystemAdmin")
                         {
                             <li class="nav-item">
@@ -99,29 +98,36 @@
                                 <a class="nav-link" href="@Url.Action("Index", "Block")">Blocks</a>
                             </li>
 
+                        }
+                        @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotatorAdmin" or "Compensator" or "SystemAdmin")
+                        {
+                            
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="order" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Report</a>
                                 <div class="dropdown-menu" aria-labelledby="order">
-                                    <a class="dropdown-item" href="@Url.Action("ViewAnnotatorAssignedContributors", "Report")">View Annotator Assigned Contributors</a>
-                                    <a class="dropdown-item" href="@Url.Action("ViewContributorsRecordingProgress", "Report")">View Contributors Recording Progress</a>
-                                    <a class="dropdown-item" href="@Url.Action("ViewDailyContributorSpeechFiles", "Report")">View Daily Contributor Speech Files</a>
+                                    @if (userRole != "Compensator")
+                                    {
+                                        <a class="dropdown-item" href="@Url.Action("ViewAnnotatorAssignedContributors", "Report")">View Annotator Assigned Contributors</a>
+                                       @* <a class="dropdown-item" href="@Url.Action("ViewContributorsRecordingProgress", "Report")">View Contributors Recording Progress</a>*@
+                                        <a class="dropdown-item" href="@Url.Action("ViewDailyContributorSpeechFiles", "Report")">View Daily Contributor Speech Files</a>
+                                    }
+                                    <a class="dropdown-item" href="@Url.Action("ViewContributorsCompensation", "Report")">View Contributors Compensation</a>
+                                    <a class="dropdown-item" href="@Url.Action("ViewContributorsCompensationHistory", "Report")">View Contributors Compensation History</a>
                                 </div>
                             </li>
+                           
+                        }
+                        @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotatorAdmin" or "SystemAdmin")
+                        {
                             <li class="nav-item">
                                 <a class="nav-link" href="@Url.Action("ManageUsers", "Admin")">Manage Users</a>
 
                             </li>
                         }
-
-                        @if (userRole == "SystemAdmin")
-                        {
-                           
-                        }
-
+                        
                         <li class="nav-item">
                             <a class="nav-link" href="@Url.Action("Logout", "Auth")">Logout</a>
                         </li>
-
 
                     </ul>
 
@@ -137,7 +143,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2022 - SpeechAccessibility.Annotator - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2023 - SpeechAccessibility.Annotator - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

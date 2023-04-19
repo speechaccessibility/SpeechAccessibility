@@ -8,6 +8,7 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using SpeechAccessibility.Core.Interfaces;
 using SpeechAccessibility.Infrastructure.Data;
+using SpeechAccessibility.Annotator.Extensions;
 
 namespace SpeechAccessibility.Annotator
 {
@@ -57,6 +58,8 @@ namespace SpeechAccessibility.Annotator
                     policy => policy.RequireClaim(ClaimTypes.Role, "TextAnnotator", "SLPAnnotator", "SystemAdmin", "TextAnnotatorAdmin", "SLPAnnotatorAdmin"));
                 options.AddPolicy("LSVT", policy => policy.RequireClaim(ClaimTypes.Role, "LSVT", "SystemAdmin"));
                 options.AddPolicy("AllAnnotatorAndLSVT", policy => policy.RequireClaim(ClaimTypes.Role, "TextAnnotator", "SLPAnnotator", "TextAnnotatorAdmin", "SLPAnnotatorAdmin","LSVT", "SystemAdmin"));
+                options.AddPolicy("Compensator", policy => policy.RequireClaim(ClaimTypes.Role, "Compensator", "SystemAdmin"));
+                options.AddPolicy("CompensatorAndAnnotatorAdmin", policy => policy.RequireClaim(ClaimTypes.Role, "Compensator", "TextAnnotatorAdmin", "SLPAnnotatorAdmin", "SystemAdmin"));
 
 
             });
@@ -93,6 +96,7 @@ namespace SpeechAccessibility.Annotator
             services.AddScoped<IContributorRepository, ContributorRepository>();
             services.AddScoped<IContributorAssignedAnnotatorRepository, ContributorAssignedAnnotatorRepository>();
             services.AddScoped<IContributorAssignedBlockRepository, ContributorAssignedBlockRepository>();
+            services.AddScoped<IContributorCompensationRepository, ContributorCompensationRepository>();
             services.AddScoped<IPromptRepository, PromptRepository>();
             services.AddScoped<IRecordingRepository, RecordingRepository>();
             services.AddScoped<IRecordingRatingRepository, RecordingRatingRepository>();
@@ -103,6 +107,7 @@ namespace SpeechAccessibility.Annotator
             services.AddScoped<IDimensionCategoryRepository, DimensionCategoryRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
+            services.AddScoped<DeleteFileAttribute>();
 
             services.AddControllersWithViews()
                 .AddJsonOptions(opts => opts.JsonSerializerOptions.PropertyNamingPolicy = null);

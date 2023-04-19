@@ -287,7 +287,7 @@ div.small {
 
 
 /*/*format for datatable*/
-#UserTable th, #PromptTable th, #SpeechFileTable th, #BlockTable th, #ContributorTable th, #ContributorAssignedBlocksTable th, #ContributorRecordingsTable th, #view-recording-rating-table th, #WaitingForApprovalContributorTable th, #contributor-assigned-prompts-table th, #DigitalAssistantCommandsTable th, #NovelSentencesTable th, #SpontaneousSpeechPromptsTable th, #contributor-assigned-annotators-table th, #ContributorRecordingsForBlock-table th, #AssignedConntributorTable th, #ContributorsProgressTable th {
+#UserTable th, #PromptTable th, #SpeechFileTable th, #BlockTable th, #ContributorTable th, #ContributorAssignedBlocksTable th, #ContributorRecordingsTable th, #view-recording-rating-table th, #WaitingForApprovalContributorTable th, #contributor-assigned-prompts-table th, #DigitalAssistantCommandsTable th, #NovelSentencesTable th, #SpontaneousSpeechPromptsTable th, #contributor-assigned-annotators-table th, #ContributorRecordingsForBlock-table th, #AssignedConntributorTable th, #CompensationHistoryTable th, #ContributorsProgressTable th {
     background-color: #13294B !important;
     color: white;
     text-align: center;
@@ -298,7 +298,7 @@ div.small {
     background-color: #2da5fa !important;
 }
 
-#UserTable, #PromptTable, #SpeechFileTable, #BlockTable, #ContributorTable, #ContributorAssignedBlocksTable, #ContributorRecordingsTable, #view-recording-rating-table, #WaitingForApprovalContributorTable, #contributor-assigned-prompts-table, #DigitalAssistantCommandsTable, #NovelSentencesTable, #SpontaneousSpeechPromptsTable, #contributor-assigned-annotators-table, #ContributorRecordingsForBlock-table, #AssignedConntributorTable, #ContributorsProgressTable {
+#UserTable, #PromptTable, #SpeechFileTable, #BlockTable, #ContributorTable, #ContributorAssignedBlocksTable, #ContributorRecordingsTable, #view-recording-rating-table, #WaitingForApprovalContributorTable, #contributor-assigned-prompts-table, #DigitalAssistantCommandsTable, #NovelSentencesTable, #SpontaneousSpeechPromptsTable, #contributor-assigned-annotators-table, #ContributorRecordingsForBlock-table, #AssignedConntributorTable, #CompensationHistoryTable, #ContributorsProgressTable {
     font-size: small;
 }
 
@@ -370,11 +370,21 @@ tr.shown td.details-control {
 
 /********************************************/
 /*** For report*/
-#DailyReportNewContributorRecordings, DailyReportExistingContributorRecordings th, td {
+#DailyContributorRecordingReport th, td {
     border: 1px solid white;
     border-collapse: collapse;
 }
 
-#DailyReportNewContributorRecordings, DailyReportExistingContributorRecordings tr:nth-child(even) {
+#DailyContributorRecordingReport tr:nth-child(even) {
     background-color: #f2f2f2;
 }
+
+#ContributorsForFirstGiftCard tr:nth-child(even), #ContributorsForSecondGiftCard tr:nth-child(even), #ContributorsForThirdGiftCard tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+#ContributorsForFirstGiftCard th, #ContributorsForSecondGiftCard th, #ContributorsForThirdGiftCard th, #DailyContributorRecordingReport th {
+    background-color: #13294B !important;
+    color: white;
+    padding: 0 10px 10px 10px;
+}
+

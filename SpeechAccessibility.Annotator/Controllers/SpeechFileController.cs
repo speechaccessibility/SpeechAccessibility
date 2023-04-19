@@ -162,14 +162,16 @@ namespace SpeechAccessibility.Annotator.Controllers
                 recordings = _recordingRepository
                     .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId)
                                && annotatorAssignedContributorIdList.Contains(r.ContributorId))
-                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.OriginalPrompt.Category.Description.Contains(searchValue))
+                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
+                        || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Comment.Contains(searchValue))
                     .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
             }
             else
             {
                  recordings = _recordingRepository
                     .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId))
-                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.OriginalPrompt.Category.Description.Contains(searchValue))
+                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
+                        || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Comment.Contains(searchValue))
                     .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
             }
 

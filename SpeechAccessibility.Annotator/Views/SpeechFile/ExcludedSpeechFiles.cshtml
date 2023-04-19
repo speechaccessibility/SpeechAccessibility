@@ -196,6 +196,14 @@
                 e.preventDefault();
                 var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
+                  //set selected row
+                if ($(selectedRowData).hasClass('selected')) {
+                    $(selectedRowData).removeClass('selected');
+                } else {
+                    oSpeechFileTable.$('tr.selected').removeClass('selected');
+                    $(selectedRowData).addClass('selected');
+                }
+
                 clearExcludedInputFields();
                 $("#hidExcludeRecordingId").val(row.id);
                 $("#lblExcludeTranscript").text(row.modifiedTranscript);

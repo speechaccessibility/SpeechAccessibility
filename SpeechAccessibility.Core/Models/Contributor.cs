@@ -20,9 +20,10 @@ namespace SpeechAccessibility.Core.Models
         public string MiddleName { get; set; }
         public string LastName { get; set; }
         public string EmailAddress { get; set; }
-        //public string HelperEmail { get; set; }
-        //public string HelperFirstName { get; set; }
-        //public string HelperLastName { get; set; }
+        public string HelperInd { get; set; }
+        public string HelperEmail { get; set; }
+        public string HelperFirstName { get; set; }
+        public string HelperLastName { get; set; }
         //public string StateResidence { get; set; }
         //public string IdentityUserId { get; set; }
         public int StatusId { get; set; }

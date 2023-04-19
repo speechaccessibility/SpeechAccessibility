@@ -25,7 +25,7 @@ make sure to increment the ConsentVersion in appsettings*@
         <h3>Online Consent Form</h3>
     </div>
 
-    <div class="container" style="font-size:x-large">       
+    <div class="container" id="container" style="font-size:x-large">       
     <br />
     <p><strong>Speech Accessibility Project: Individuals with disabilities helping researchers to improve technology</strong></p>
     <p>
@@ -167,55 +167,85 @@ LSVT Global, two organizations that advocate for people with Parkinson's.
     <p><br> <strong>Please read each item carefully and check each box to indicate your agreement.</strong></p>
     <p>&nbsp;</p>
        
-    <form method="post">      
+    <form method="post" id="consentForm">      
        
-        <p><input type="checkbox" id="readAndUnderstandConsent" asp-for="readAndUnderstandConsent" value=true>
+        <p><input  type="checkbox" id="readAndUnderstandConsent" asp-for="readAndUnderstandConsent" value=true>
             <label style="display:inline" for="readAndUnderstandConsent"> I have read and understand the above consent form.</label><br /><span class="text-danger">@Html.ValidationMessage("readAndUnderstandValidation")</span></p>
     <p>&nbsp;</p>
-        <p><input type="checkbox" id="legalAgreementConsent" asp-for="legalAgreementConsent">
+        <p><input  type="checkbox" id="legalAgreementConsent" asp-for="legalAgreementConsent">
             <label style="display:inline" for="legalAgreementConsent"> I understand that my speech samples are collected for the purpose of improving speech recognition technology and are protected by a legal agreement between UIUC and the current members of the Speech Accessibility Project coalition, and that future members of the data coalition and any future data licensees will also be bound by similar legal agreements.</label><br /><span class="text-danger">@Html.ValidationMessage("legalAgreementValidation")</span>
         </p>
     <p>&nbsp;</p>
-        <p><input type="checkbox" id="eighteenConsent" asp-for="eighteenConsent">
+        <p>
+            <input  type="checkbox" id="eighteenConsent" asp-for="eighteenConsent">
             <label style="display:inline" for="eighteenConsent"> I certify that I am 18 years old or older.</label><br /><span class="text-danger">@Html.ValidationMessage("eighteenValidation")</span>
         </p>
     <p>&nbsp;</p>
-        <p><input type="checkbox" id="validEmailConsent" asp-for="validEmailConsent">
+        <p>
+            <input  type="checkbox" id="validEmailConsent" asp-for="validEmailConsent">
             <label style="display:inline" for="validEmailConsent"> I understand that I must maintain a valid email address in order to participate in this study and to be paid for my participation.</label><br /><span class="text-danger">@Html.ValidationMessage("emailValidation")</span>
         </p>
     <p>&nbsp;</p>
-        <p><input type="checkbox" id="loginConsent" asp-for="loginConsent">
+        <p>
+            <input  type="checkbox" id="loginConsent" asp-for="loginConsent">
             <label style="display:inline" for="loginConsent">I certify that I and I alone will use my login to record speech samples. I will not allow other people to record speech samples on my behalf.</label><br /><span class="text-danger">@Html.ValidationMessage("loginValidation")</span>
         </p>
     <p>&nbsp;</p>
-        <p><input type="checkbox" id="financialCompensationConsent" asp-for="financialCompensationConsent">
+        <p>
+            <input  type="checkbox" id="financialCompensationConsent" asp-for="financialCompensationConsent">
             <label style="display:inline" for="financialCompensationConsent">I understand that the only financial compensation that I will receive for participating in this study is the payment for contributing speech samples, which will be $60 for every batch of 200 samples I provide.</label><br /><span class="text-danger">@Html.ValidationMessage("financialCompensationValidation")</span>
         </p>
     <p>&nbsp;</p>
-        <p><input type="checkbox" id="maxPaymentConsent" asp-for="maxPaymentConsent">
+        <p>
+            <input  type="checkbox" id="maxPaymentConsent" asp-for="maxPaymentConsent">
             <label style="display:inline" for="maxPaymentConsent"> I understand that my goal is to provide 600 samples total, and that therefore my maximum payment will be $180.</label><br /><span class="text-danger">@Html.ValidationMessage("maxPaymentValidation")</span>
         </p>
     <p>&nbsp;</p>
-    <p><input type="checkbox" id="caregiverConsent" asp-for="caregiverConsent">
+        <p>
+            <input  type="checkbox" id="caregiverConsent" asp-for="caregiverConsent">
             <label style="display:inline" for="caregiverConsent">I understand that if I need the help of a caregiver to contribute speech samples, that I must notify the UIUC team and have my caregiver approved to be paid in addition to myself.</label><br /><span class="text-danger">@Html.ValidationMessage("caregiverValidation")</span>
         </p>
     <p>&nbsp;</p>
-    <p><input type="checkbox" id="withdrawalConsent" asp-for="withdrawalConsent">
+    <p><input  type="checkbox" id="withdrawalConsent" asp-for="withdrawalConsent">
             <label style="display:inline" for="withdrawalConsent">I understand that at any time, I can end my participation and withdraw my consent. &nbsp;When I do so, the UIUC research team will remove all of my speech samples from the UIUC secure system. I also understand that it is UIUC&rsquo;s responsibility to ask all sponsors and partners to remove any copies of my speech samples from their own databases as well.</label><br /><span class="text-danger">@Html.ValidationMessage("withdrawalValidation")</span>
         </p>
     <p>&nbsp;</p>
     <p><strong><em>Optional checkbox</em></strong><em>: By checking the box below, you may also specifically grant your consent for the research team to play or provide audio files of your voice in a public research setting or publication.&nbsp;</em></p>
-        <p><input type="checkbox" id="shareSamplesConsent" asp-for="shareSamplesConsent">
+        <p>
+            <input  type="checkbox" id="shareSamplesConsent" asp-for="shareSamplesConsent">
             <label style="display:inline" for="shareSamplesConsent">I consent to have my voice samples shared in public at research conferences and similar professional meetings, and to have digital audio files of my voice be shared as part of professional research publications.</label>
         </p>
     <p>&nbsp;</p>
     <p><strong><em>Optional checkbox</em></strong><em>: By checking the box below, you may also specifically grant your consent to share your contact information with other research teams, so that they may contact you to be a potential participant in their own research studies.</em></p>
-        <p><input type="checkbox" id="shareContactInfoConsent" asp-for="shareContactInfoConsent">
+        <p><input  type="checkbox" id="shareContactInfoConsent" asp-for="shareContactInfoConsent">
             <label style="display:inline" for="shareContactInfoConsent">I consent to have my email address and phone number be shared with other research teams, who may contact me to participate in their studies.</label>
         </p>
     <p>&nbsp;</p>
     <p>By clicking the &ldquo;I CONSENT&rdquo; button below, I indicate my willingness to voluntarily take part in this study.</p>
     <p>&nbsp;</p>
-    <button type="submit" class="btn btn-primary">I CONSENT</button>
+    <button class="btn btn-primary" id="consentButton">I CONSENT</button>
     </form>
 </div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+
+        $("#consentForm").submit(function () {
+
+            //disable the submit button
+            $("#consentButton").attr("disabled", true);
+            return true;
+        });
+    });
+
+    function enableSubmit() {
+        $("#consentButton").attr("disabled", false);
+    }
+
+    const form = document.querySelector('form');
+    form.addEventListener('change', function () {
+        enableSubmit();
+    });
+
+</script>

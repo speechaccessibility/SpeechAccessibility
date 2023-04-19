@@ -197,7 +197,7 @@
 
                     });
 
-
+           
            //listen the recording
             $('#SpeechFileTable').on('click', 'a.listen', function (e) {
                 e.preventDefault();
@@ -224,7 +224,13 @@
                 clearInputFields();
                 var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
-
+                  //set selected row
+                if ($(selectedRowData).hasClass('selected')) {
+                    $(selectedRowData).removeClass('selected');
+                } else {
+                    oSpeechFileTable.$('tr.selected').removeClass('selected');
+                    $(selectedRowData).addClass('selected');
+                }
                 $("#hidExcludeRecordingId").val(row.id);
                 $("#lblExcludeTranscript").text(row.modifiedTranscript);
                 $("#lblExcludeContributorId").text(row.contributorId);
@@ -237,16 +243,23 @@
 
             //un-publish
             $('#SpeechFileTable').on('click', 'a.unPublish', function (e) {
-                e.preventDefault();
+                e.preventDefault();             
+
                 var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
-
+                 //set selected row
+                if ($(selectedRowData).hasClass('selected')) {
+                    $(selectedRowData).removeClass('selected');
+                } else {
+                    oSpeechFileTable.$('tr.selected').removeClass('selected');
+                    $(selectedRowData).addClass('selected');
+                }
                 $("#hidUnPublishRecordingId").val(row.id);
                 $("#lblUnPublishTranscript").text(row.modifiedTranscript);
                 $("#lblUnPublishContributorId").text(row.contributorId);
                 $("#txtUnPublishComment").val(row.comment);
                 var dialog = $("#un-publish-dialog");
-
+                
                 openDialogForRecording(dialog, "Un-Publish Speech File", $("#hidUnPublishRecordingId"), $("#txtUnPublishComment"), "unpublish", '@Url.Action("PublishExcludeRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
 
                 $("#un-publish-dialog").dialog('open');

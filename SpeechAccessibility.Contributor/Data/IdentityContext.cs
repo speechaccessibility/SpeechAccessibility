@@ -28,6 +28,7 @@ namespace SpeechAccessibility.Data
 
         public DbSet<ContributorRace> ContributorRace { get; set; }
 
+        public DbSet<LoginSession> LoginSession { get; set; }  
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
