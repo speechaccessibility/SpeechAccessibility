@@ -1,5 +1,5 @@
 ﻿function openDialogForRecording(dialog, title, recordingIdElem, commentElem, action, postUrl, datatable, returnMessageElem) {
-    //alert(comments);
+   
     dialog.dialog({
         title: title,
         autoOpen: false,
@@ -30,8 +30,13 @@
                             returnMessageElem.text(response.message);
                         }
                         if (response.success === true) {
-
-                            datatable.draw();
+                            if (action == "editComments") {                               
+                                datatable.draw(false);                           
+                            }
+                            else {    
+                                datatable.row('.selected').remove().draw(false);                                  
+                            }
+                                                        
                             dialog.dialog('close');
                         }
                     },

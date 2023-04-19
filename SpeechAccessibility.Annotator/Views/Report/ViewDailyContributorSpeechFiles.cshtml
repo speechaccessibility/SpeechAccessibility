@@ -1,10 +1,42 @@
-﻿@model SpeechAccessibility.Annotator.Models.DailyContributorSpeechFileReportViewModel
+﻿@model List<SpeechAccessibility.Annotator.Models.DailyContributorSpeechFileReportViewModel>
 @{
     
 }
 
 <h1>Daily Report For Contributors Speech Files </h1>
-<p><b>Today: </b>@Model.TodayDate.ToShortDateString() </p>
+Only for the last 30 days
+<div style="width: 1500px">
+    <table id="DailyContributorRecordingReport">
+        <tr>
+            <th style="width: 150px">Date</th>
+            <th># of new contributors</th>
+            <th># of existing contributors</th>
+            <th># of files by new contributors</th>
+            <th># of files by existing contributors</th>
+            <th>Total # of files</th>
+        </tr>
+        @{
+            foreach (var report in Model)
+            {
+                <tr>
+                    <td>@report.TodayDate.ToShortDateString()</td>
+                    <td style="text-align: center">@report.NewContributors</td>
+                    <td style="text-align: center">@report.ExistingContributors</td>
+                    <td style="text-align: center">@report.NewContributorRecordings</td>
+                    <td style="text-align: center">@report.ExistingContributorRecordings</td>
+                    <td style="text-align: center">
+                        @(report.NewContributorRecordings + report.ExistingContributorRecordings)
+                    </td>
+                </tr>
+        
+            }
+        }
+    </table>
+</div>
+
+
+
+@*<p><b>Today: </b>@Model.TodayDate.ToShortDateString() </p>
 <p><b>Number of New Contributors: </b> 
     @{
         if (Model.NewContributorIDs.Any())
@@ -43,5 +75,5 @@
 
         }
     </table>
-    </p>
+    </p>*@
     

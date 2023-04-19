@@ -128,12 +128,12 @@ namespace SpeechAccessibility.Annotator.Controllers
                         .Select(u => u.ContributorId).ToArray();
 
                 contributors = _contributorRepository.Find(c => c.StatusId == 2 && annotatorAssignedContributorIdList.Contains(c.Id))
-                        .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue));
+                        .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue) || c.Comments.Contains(searchValue));
             }
             else
             {
                 contributors = _contributorRepository.Find(c => c.StatusId == filter)
-                    .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue));
+                    .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue) || c.Comments.Contains(searchValue));
             }
             var recordsTotal = contributors.Count();
 
@@ -154,7 +154,9 @@ namespace SpeechAccessibility.Annotator.Controllers
                     NumberAssignBlocks = numberAssignedBlocks.Any() ? numberAssignedBlocks.Count() : 0
                 };
                 if (lastRecording != null)
-                    contributorVM.LastRecording = lastRecording.CreateTS.ToShortDateString();
+                    contributorVM.LastRecording = lastRecording.CreateTS;
+                else
+                    contributorVM.LastRecording = null;
                 contributorVM.AnnotatorAssigned = numberAssignedAnnotator.Any() ? "Yes" : "No";
 
                 contributorViewModels.Add(contributorVM);

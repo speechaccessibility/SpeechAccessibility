@@ -1,14 +1,57 @@
 ﻿@import"https://fonts.googleapis.com/css?family=Montserrat";
 
 
-html {
-    font-size: x-large;
-}
-
 @media (min-width: 768px) {
     html {
         font-size: 16px;
     }
+
+    #waveform {
+        width: 500px;
+        height: 50px;
+    }
+
+}
+
+@media (max-width: 767px) {
+    dialog {
+        width: 100%;
+    }
+
+    #waveform {
+        width: 250px;
+        height: 50px;
+    }
+
+    #rerecordMessage {
+        float: right;
+    }
+
+    html {
+        overflow-wrap: break-word;
+    }
+
+    #education{
+        width:100%;
+    }
+
+    #occupation{
+        width:100%;
+    }
+
+   #congratsHeader{
+       font-size:24px;
+   }
+
+
+    td,th {
+        font-size: large !important;
+    }
+
+    table label {
+        font-size: large !important;
+    }
+
 }
 
 @media print {
@@ -737,11 +780,13 @@ option
 
 .progress {
     background-color: #000000;
+
 }
 
 .progress-bar {
     background-color: #1100cc;
     padding: 15px;
+    border-right:solid 1px;
 }
 
 .progressText {
@@ -752,8 +797,4 @@ option
     font-size:20px;
 }
 
-#waveform{
-    width: 500px;
-    height:50px;
-}
 

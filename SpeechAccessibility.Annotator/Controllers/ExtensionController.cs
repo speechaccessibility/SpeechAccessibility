@@ -11,11 +11,13 @@ using Microsoft.Extensions.Configuration;
 using SpeechAccessibility.Annotator.Services;
 using SpeechAccessibility.Core.Interfaces;
 using NAudio.Wave;
+using SpeechAccessibility.Annotator.Extensions;
+using System.Configuration;
 
 
 namespace SpeechAccessibility.Annotator.Controllers
 {
-    [Authorize(Policy = "AnnotatorAdmin")]
+    [Authorize(Policy = "CompensatorAndAnnotatorAdmin")]
     public class ExtensionController : Controller
     {
         private readonly IRoleRepository _roleRepository;
@@ -29,6 +31,7 @@ namespace SpeechAccessibility.Annotator.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = "AnnotatorAdmin")]
         public ActionResult GetUserInfoFromAD(string netId)
         {
             //check to see if user is already in the system
@@ -48,7 +51,6 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         }
 
-       
         public static bool IsSilence(float amplitude, sbyte threshold)
         {
             if (amplitude == 0)
@@ -109,6 +111,30 @@ namespace SpeechAccessibility.Annotator.Controllers
             });
 
         }
+
+       
+
+        [HttpGet]
+       
+        [ServiceFilter(typeof(DeleteFileAttribute))]
+        public ActionResult DownloadFile(string fileName)
+        {
+            
+            //Build the File Path.
+            var basePath = _configuration["AppSettings:UploadFileFolder"] + "\\GiftCards";
+            var fullPath = Path.Combine(basePath, fileName);
+
+
+            //Read the File data into Byte Array.
+            byte[] bytes = System.IO.File.ReadAllBytes(fullPath);
+
+            //Send the File to Download.
+            return File(bytes, "text/csv", fileName);
+
+           
+
+        }
+
 
     }
 }

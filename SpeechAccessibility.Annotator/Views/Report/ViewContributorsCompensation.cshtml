@@ -1,0 +1,233 @@
+﻿@model SpeechAccessibility.Annotator.Models.ContributorCompensationViewModel
+@{
+    var helperInfo = "";
+}
+@*<h1>Contributors Compensation</h1>*@
+<table>
+    <tr>
+        <td>
+            <h4>Contributors Qualified for First Gift Card (@Model.ContributorsQualifyForFirstCard.Count)</h4>
+        </td>
+        <td>
+            <input type="button" id="btnFirstGiftCard" name="btnFirstGiftCard" value="Generate CSV File" formtarget="_blank" />
+            
+        </td>
+    </tr>
+</table>
+
+
+<div style="width: 1500px">
+    <table id="ContributorsForFirstGiftCard">
+        <tr>
+            <th style="width: 10px;">&nbsp;</th>
+            <th style="width: 350px;">ContributorID</th>
+            <th style="width: 300px;">Name</th>
+            <th style="width: 300px;">Contributor Email</th>
+            <th>Helper</th>
+            <th>#Recordings</th>
+        </tr>
+        @{
+
+            foreach (var contributor in Model.ContributorsQualifyForFirstCard)
+            {
+                <tr>
+                    <td><input type="checkbox" id="chkFirstGiftCard_@contributor.Item1.Id" name="chkFirstGiftCard" value="@contributor.Item1.Id" checked></td>
+                    <td>@contributor.Item1.Id </td>
+                    <td>@contributor.Item1.FirstName &nbsp; @contributor.Item1.LastName</td>
+                    <td>@contributor.Item1.EmailAddress </td>
+                    <td>
+                        @{
+
+                            if (contributor.Item1.HelperInd == "Yes")
+                            {
+                                helperInfo = contributor.Item1.HelperFirstName + " " + contributor.Item1.HelperLastName + " (" + contributor.Item1.HelperEmail + ")";
+
+                            }
+                        }
+                        @helperInfo
+
+                    </td>
+                    <td style="text-align: center">@contributor.Item2</td>
+                </tr>
+            }
+        }
+    </table>
+</div>
+<hr />
+
+<table>
+    <tr>
+        <td>
+            <h4>Contributors Qualified for Second Gift Card (@Model.ContributorsQualifyForSecondCard.Count)</h4>
+        </td>
+        <td><input type="button" id="btnSecondGiftCard" name="btnSecondGiftCard" value="Generate CSV File" /></td>
+    </tr>
+</table>
+<div style="width: 1500px">
+    <table id="ContributorsForSecondGiftCard">
+        <tr>
+            <th style="width: 10px;">&nbsp;</th>
+            <th style="width: 350px;">ContributorID</th>
+            <th style="width: 300px;">Name</th>
+            <th style="width: 300px;">Contributor Email</th>
+            <th>Helper</th>
+            <th>#Recordings</th>
+        </tr>
+        @{
+
+            foreach (var contributor in Model.ContributorsQualifyForSecondCard)
+            {
+                <tr>
+                    <td><input type="checkbox" id="chkSecondGiftCard_@contributor.Item1.Id" name="chkSecondGiftCard" value="@contributor.Item1.Id" checked></td>
+                    <td>@contributor.Item1.Id </td>
+                    <td>@contributor.Item1.FirstName &nbsp; @contributor.Item1.LastName</td>
+                    <td>@contributor.Item1.EmailAddress </td>
+                    <td>
+                        @{
+
+                            if (contributor.Item1.HelperInd == "Yes")
+                            {
+                                helperInfo = contributor.Item1.HelperFirstName + " " + contributor.Item1.HelperLastName + " (" + contributor.Item1.HelperEmail + ")";
+
+                            }
+                        }
+                        @helperInfo
+
+                    </td>
+                    <td style="text-align: center">@contributor.Item2</td>
+                </tr>
+            }
+        }
+    </table>
+</div>
+<hr />
+<table>
+    <tr>
+        <td>
+            <h4>Contributors Qualified for Third Gift Card (@Model.ContributorsQualifyForThirdCard.Count)</h4>
+        </td>
+        <td><input type="button" id="btnThirdGiftCard" name="btnThirdGiftCard" value="Generate CSV File" /></td>
+    </tr>
+</table>
+
+
+<div style="width: 1500px">
+    <table id="ContributorsForThirdGiftCard">
+        <tr>
+            <th style="width: 10px;">&nbsp;</th>
+            <th style="width: 350px;">ContributorID</th>
+            <th style="width: 300px;">Name</th>
+            <th style="width: 300px;">Contributor Email</th>
+            <th>Helper</th>
+            <th>#Recordings</th>
+        </tr>
+        @{
+
+            foreach (var contributor in Model.ContributorsQualifyForThirdCard)
+            {
+                <tr>
+                    <td><input type="checkbox" id="chkThirdGiftCard_@contributor.Item1.Id" name="chkThirdGiftCard" value="@contributor.Item1.Id" checked></td>
+                    <td>@contributor.Item1.Id </td>
+                    <td>@contributor.Item1.FirstName &nbsp; @contributor.Item1.LastName</td>
+                    <td>@contributor.Item1.EmailAddress </td>
+                    <td>
+                        @{
+
+                            if (contributor.Item1.HelperInd == "Yes")
+                            {
+                                helperInfo = contributor.Item1.HelperFirstName + " " + contributor.Item1.HelperLastName + " (" + contributor.Item1.HelperEmail + ")";
+
+                            }
+                        }
+                        @helperInfo
+
+                    </td>
+                    <td style="text-align: center">@contributor.Item2</td>
+                </tr>
+            }
+        }
+    </table>
+</div>
+
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="~/js/listenrecording.js"></script>
+    <script src="~/js/popupdialog.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {          
+
+            $('#btnFirstGiftCard').click(function () {
+                var contributorFirstGiftCardIDs = [];
+                $('[name="chkFirstGiftCard"]:checked').each(function () {
+                    contributorFirstGiftCardIDs.push(this.value);
+                });
+                if (contributorFirstGiftCardIDs.length>0)
+                    GenerateGiftCard(contributorFirstGiftCardIDs, 1);
+                else
+                    alert("Please select a contributor to generate gift card.");               
+            });
+
+            $('#btnSecondGiftCard').click(function () {
+                var contributorSecondGiftCardIDs = [];
+                $('[name="chkSecondGiftCard"]:checked').each(function () {
+                    contributorSecondGiftCardIDs.push(this.value);
+                });
+                if (contributorSecondGiftCardIDs.length > 0)
+                    GenerateGiftCard(contributorSecondGiftCardIDs, 2);
+                else
+                    alert("Please select a contributor to generate gift card.");
+            });
+
+            $('#btnThirdGiftCard').click(function () {
+                var contributorThirdGiftCardIDs = [];
+                $('[name="chkThirdGiftCard"]:checked').each(function () {
+                    contributorThirdGiftCardIDs.push(this.value);
+                });
+                if (contributorThirdGiftCardIDs.length > 0)
+                    GenerateGiftCard(contributorThirdGiftCardIDs, 3);
+                else
+                    alert("Please select a contributor to generate gift card.");
+                
+            });
+
+
+            function GenerateGiftCard(contributorIDs, giftCardType)
+            {
+                $.ajax({
+                    url: '@Url.Action("GenerateGiftCard", "Report")',
+                    type: "POST",
+                    data: {
+                        "contributorIDs": contributorIDs, "cardType": giftCardType
+                    },
+                    success: function (response) {
+                        if (response.success === true) {
+                            if (response.message != "") {
+                                window.location.href =
+                                    "@Url.RouteUrl(new { Controller = "Extension", Action = "DownloadFile" })/?fileName=" +
+                                    response.message;
+                                setTimeout(function () {
+                                    location.reload(true);
+                                }, 1000);
+                            }
+                        }
+                        else {
+                            if (response.message != "") {
+                                alert(message);
+                            }
+                        }
+
+                    },
+                    error: function () { alert('Error Generate Gift Card! It could be the timeout issue. Please try to reload your browser.'); }
+                });
+            }
+
+
+        });//End document ready
+
+    </script>
+}
+

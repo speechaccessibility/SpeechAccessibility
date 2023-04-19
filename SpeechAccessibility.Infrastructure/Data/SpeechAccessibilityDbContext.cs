@@ -21,9 +21,9 @@ namespace SpeechAccessibility.Infrastructure.Data
         public DbSet<BlockOfDigitalCommandPrompts> BlockOfDigitalCommandPrompts { get; set; }
         public DbSet<Category> Category { get; set; }
       
-        public virtual DbSet<ContributorAssignedAnnotator> ContributorAssignedAnnotator { get; set; }
+        public DbSet<ContributorAssignedAnnotator> ContributorAssignedAnnotator { get; set; }
         public DbSet<ContributorAssignedBlock> ContributorAssignedBlock { get; set; }
-       
+        public DbSet<ContributorCompensation> ContributorCompensation { get; set; }
         public DbSet<Recording> Recording { get; set; }
         public DbSet<RecordingRating> RecordingRating { get; set; }
         public DbSet<Prompt> Prompt { get; set; }
@@ -46,6 +46,7 @@ namespace SpeechAccessibility.Infrastructure.Data
             builder.Entity<Category>(ConfigureCategory);
             builder.Entity<ContributorAssignedAnnotator>(ConfigureContributorAssignedAnnotator);
             builder.Entity<ContributorAssignedBlock>(ConfigureContributorAssignedBlock);
+            builder.Entity<ContributorCompensation>(ConfigureContributorCompensation);
             builder.Entity<Recording>(ConfigureRecording);
             builder.Entity<RecordingRating>(ConfigureRecordingRating);
             builder.Entity<Prompt>(ConfigurePrompt);
@@ -235,6 +236,20 @@ namespace SpeechAccessibility.Infrastructure.Data
                 .WithMany(p => p.ContributorAssignedBlock)
                 .HasForeignKey(d => d.BlockId);
         }
+
+        private void ConfigureContributorCompensation(EntityTypeBuilder<ContributorCompensation> entity)
+        {
+            entity.HasIndex(e => e.ContributorId)
+                .HasName("ContributorCompensation_ContributorId_unique")
+                .IsUnique();
+
+            entity.Property(e => e.SendFirstCard).HasColumnType("datetime");
+
+            entity.Property(e => e.SendSecondCard).HasColumnType("datetime");
+
+            entity.Property(e => e.SendThirdCard).HasColumnType("datetime");
+        }
+
 
         private void ConfigureRecordingRating(EntityTypeBuilder<RecordingRating> entity)
         {

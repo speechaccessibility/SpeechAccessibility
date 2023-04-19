@@ -45,6 +45,10 @@ namespace SpeechAccessibility.Models
         [MaxLength(256)]
         public string EmailAddress { get; set; }
 
+
+        [MaxLength(3)]
+         public string HelperInd { get; set; }
+
         [MaxLength(175)]
         public string HelperEmail { get; set; }
 

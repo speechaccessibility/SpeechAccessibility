@@ -7,7 +7,7 @@
 
 <h1>@ViewData["Title"]</h1>
 
-<form asp-route-returnUrl="@Model.ReturnUrl" method="post">
+<form asp-route-returnUrl="@Model.ReturnUrl" method="post" id="registerForm">
     <hr />
 
 
@@ -22,10 +22,10 @@
             <div class="form-group">
                 <fieldset>
                     <legend>Have you been diagnosed with Parkinson's Disease (including PSP, CBD, MSA and post DBS)?</legend>
-                    <input id="parkinsonIndYes" asp-for="Input.parkinsonsInd" type="radio" value="Yes" />
-                    <label for="parkinsonIndYes">Yes</label>
-                    <input id="parkinsonIndNo" asp-for="Input.parkinsonsInd" type="radio" value="No" />
-                    <label for="parkinsonIndNo">No</label>
+                    
+                    <label for="parkinsonIndYes"><input  id="parkinsonIndYes" asp-for="Input.parkinsonsInd" type="radio" value="Yes" /> Yes</label>
+                    
+                    <label for="parkinsonIndNo"><input  id="parkinsonIndNo" asp-for="Input.parkinsonsInd" type="radio" value="No" /> No</label>
                 </fieldset>
                 <br /><span asp-validation-for="Input.parkinsonsInd" class="text-danger"></span>
             </div>
@@ -37,10 +37,10 @@
             <div class="form-group">
                 <fieldset>
                     <legend>Are you 18 years of age or older?</legend>
-                    <input id="eighteenOrOlderYes" asp-for="Input.eighteenOrOlderInd" type="radio" value="Yes" />
-                    <label for="eighteenOrOlderYes">Yes</label>
-                    <input id="eighteenOrOlderNo" asp-for="Input.eighteenOrOlderInd" type="radio" value="No" />
-                    <label for="eighteenOrOlderNo">No</label>
+                    
+                    <label for="eighteenOrOlderYes"><input  id="eighteenOrOlderYes" asp-for="Input.eighteenOrOlderInd" type="radio" value="Yes" /> Yes</label>
+                    
+                    <label for="eighteenOrOlderNo"><input  id="eighteenOrOlderNo" asp-for="Input.eighteenOrOlderInd" type="radio" value="No" /> No</label>
                 </fieldset>
                 <br /><span asp-validation-for="Input.eighteenOrOlderInd" class="text-danger"></span>
             </div>
@@ -51,7 +51,7 @@
         <div class="form-group col-md-5">
             <div class="form-group">
                 <label for="Input_state">What state do you live in?</label>
-                <select asp-for="Input.state" asp-items="@Model.stateList" data-dropup-auto="false">
+                <select  asp-for="Input.state" asp-items="@Model.stateList" data-dropup-auto="false">
                     <option value="" selected>Please Select</option>
                 </select>
                 <br /><span asp-validation-for="Input.state" class="text-danger"></span>
@@ -62,24 +62,24 @@
     <div class="form-row">
         <div class="form-group col-md-3">
             <label asp-for="Input.firstName"><span style="color:red">*</span>First Name</label>
-            <input asp-for="Input.firstName" class="form-control" />
+            <input  asp-for="Input.firstName" class="form-control" />
             <span asp-validation-for="Input.firstName" class="text-danger"></span>
         </div>
         <div class="form-group col-md-3">
             <label asp-for="Input.middleName">Middle Name</label>
-            <input asp-for="Input.middleName" class="form-control" />
+            <input  asp-for="Input.middleName" class="form-control" />
             <span asp-validation-for="Input.middleName" class="text-danger"></span>
         </div>
         <div class="form-group col-md-3">
             <label asp-for="Input.lastName"><span style="color:red">*</span>Last Name</label>
-            <input asp-for="Input.lastName" class="form-control" />
+            <input  asp-for="Input.lastName" class="form-control" />
             <span asp-validation-for="Input.lastName" class="text-danger"></span>
         </div>
             </div>
         <div class="form-row">
             <div class="form-group col-sm-4">
             <label asp-for="Input.phoneNumber"><span style="color:red">*</span>Phone Number</label>
-            <input asp-for="Input.phoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
+            <input  asp-for="Input.phoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
             <span asp-validation-for="Input.phoneNumber" class="text-danger"></span>
         </div>
         </div>
@@ -87,7 +87,7 @@
         <div class="form-group col-sm-4">
 
             <label asp-for="Input.Email"><span style="color:red">*</span>Email</label>
-            <input asp-for="Input.Email" class="form-control" />
+            <input  asp-for="Input.Email" class="form-control" />
             <span asp-validation-for="Input.Email" class="text-danger"></span>
         </div>
 
@@ -108,14 +108,14 @@
     <div class="form-row">
         <div class="form-group col-sm-4">
             <label asp-for="Input.Password"><span style="color:red">*</span>Password</label>
-            <input asp-for="Input.Password" class="form-control" /> 
+            <input  asp-for="Input.Password" class="form-control" />
             <span asp-validation-for="Input.Password" class="text-danger"></span>
         </div>
     </div>
     <div class="form-row">
         <div class="form-group col-sm-4">           
             <label asp-for="Input.ConfirmPassword"><span style="color:red">*</span>Confirm Password</label>
-            <input asp-for="Input.ConfirmPassword" class="form-control" />
+            <input  asp-for="Input.ConfirmPassword" class="form-control" />
             <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
         </div>
     </div>
@@ -124,10 +124,10 @@
         <div class="form-group">
             <fieldset>               
                 <legend><span style="color:red">*</span>Will someone be helping you with this process? (caregiver, family, or friend)</legend>
-                <input id="helperYes" asp-for="Input.HelperInd" type="radio" value="Yes" onclick="checkHelperInd()" />
-                <label for="helperYes">Yes</label>
-                <input id="helperNo" asp-for="Input.HelperInd" type="radio" value="No" onclick="checkHelperInd()" />
-                <label for="helperNo">No</label>
+                
+                <label for="helperYes"><input  id="helperYes" asp-for="Input.HelperInd" type="radio" value="Yes" onclick="checkHelperInd()" /> Yes</label>
+                
+                <label for="helperNo"><input  id="helperNo" asp-for="Input.HelperInd" type="radio" value="No" onclick="checkHelperInd()" /> No</label>
             </fieldset>
             <br /> <span asp-validation-for="Input.HelperInd" class="text-danger"></span>
         </div>
@@ -141,17 +141,17 @@
         <div class="form-row" id="helperDiv">
             <div class="form-group col-md-3">
                 <label for="helperEmail"><span style="color:red">*</span>Helper's Email</label>
-                <input id="helperEmail" asp-for="Input.HelperEmail" class="form-control" />
+                <input  id="helperEmail" asp-for="Input.HelperEmail" class="form-control" />
                 <span class="text-danger">@Html.ValidationMessage("helperEmailValidation")</span>
             </div>
             <div class="form-group col-md-3">
                 <label for="helperFirstName"><span style="color:red">*</span>Helper's First Name</label>
-                <input id="helperFirstName" asp-for="Input.HelperFirstName" class="form-control" />
+                <input  id="helperFirstName" asp-for="Input.HelperFirstName" class="form-control" />
                 <span class="text-danger">@Html.ValidationMessage("helperFirstNameValidation")</span>
             </div>
             <div class="form-group col-md-3">
                 <label for="helperLastName"><span style="color:red">*</span>Helper's Last Name</label>
-                <input id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
+                <input  id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
                 <span class="text-danger">@Html.ValidationMessage("helperLastNameValidation")</span>
             </div>
         </div>
@@ -163,17 +163,17 @@
         <div class="form-row" id="helperDiv" style="display:none">
             <div class="form-group col-md-3">
                 <label for="helperEmail"><span style="color:red">*</span>Helper's Email</label>
-                <input id="helperEmail" asp-for="Input.HelperEmail" class="form-control" />
+                <input  id="helperEmail" asp-for="Input.HelperEmail" class="form-control" />
                 <span class="text-danger">@Html.ValidationMessage("helperEmailValidation")</span>
             </div>
             <div class="form-group col-md-3">               
                 <label for="helperFirstName"><span style="color:red">*</span>Helper's First Name</label>
-                <input id="helperFirstName" asp-for="Input.HelperFirstName" class="form-control" />
+                <input  id="helperFirstName" asp-for="Input.HelperFirstName" class="form-control" />
                 <span class="text-danger">@Html.ValidationMessage("helperFirstNameValidation")</span>
             </div>
             <div class="form-group col-md-3">
                 <label for="helperLastName"><span style="color:red">*</span>Helper's Last Name</label>
-                <input id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
+                <input  id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
                 <span class="text-danger">@Html.ValidationMessage("helperLastNameValidation")</span>
             </div>
         </div>
@@ -194,8 +194,37 @@
 
     }
 
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button class="btn btn-primary" id="registerSubmit">Submit</button>
+
 </form>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script>
+
+    $(document).ready(function () {
+
+        $("#registerForm").submit(function(){
+            
+            //disable the submit button
+            $("#registerSubmit").attr("disabled", true);
+            return true;
+    });
+    });
+
+    function enableSubmit()
+    {
+            $("#registerSubmit").attr("disabled", false);
+    }
+
+    const form = document.querySelector('form');
+    form.addEventListener('change', function () {
+        enableSubmit();
+    });
+    form.addEventListener('keyup', function () {
+        enableSubmit();
+    });
+
+</script>
 
 
 @section Scripts {

@@ -2,11 +2,11 @@
 @{
     ViewData["Title"] = "Complete Confirmation";
 }
-<div class="row align-items-center">
+<div class="container">
         <div class="col-3"></div>
-        <div class="col-6">
+        <div>
             <br />
-        <h1>Congratulations!</h1>
+        <h1 id="congratsHeader">Congratulations!</h1>
         <p>You have completed all of the prompts. Thank you for your participation.</p>
         @if (!Model.completedOptionalQuestions)
         {

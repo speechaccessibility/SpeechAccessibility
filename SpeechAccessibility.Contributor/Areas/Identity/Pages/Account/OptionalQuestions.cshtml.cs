@@ -266,7 +266,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 ModelState.AddModelError("racialGroupValidation", "Racial group is a required field.");
             }
 
-            if ("Yes".Equals(Input.converseInEnglish) && Input.converseInOtherLanguageAge==null)
+            if ("No".Equals(Input.converseInEnglish) && Input.converseInOtherLanguageAge==null)
             {
                 ModelState.AddModelError("otherLanguageAgeValidation", "Please select an age.");
             }

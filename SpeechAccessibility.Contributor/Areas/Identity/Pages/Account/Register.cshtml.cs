@@ -209,6 +209,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
+         
             returnUrl = returnUrl ?? Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
@@ -294,6 +295,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         private Contributor PopulateContributor(IdentityUser user)
         {
             Contributor contributor = new Contributor();
+            contributor.HelperInd = Input.HelperInd;
             contributor.HelperEmail = Input.HelperEmail;
             contributor.HelperFirstName = Input.HelperFirstName;
             contributor.HelperLastName = Input.HelperLastName;

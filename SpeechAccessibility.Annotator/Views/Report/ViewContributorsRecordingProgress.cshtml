@@ -5,14 +5,18 @@
     ViewBag.Title = "Contributors Recording Progress";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 <h1>View Contributors Recording Progress</h1>
+
 <table>
     <tr>
-        <td><b style="color:black;">Select a date range: </b></td>
+        <td><b>Select a date range: </b></td>
     </tr>
     <tr>
-        <td style="color:black;">Start Date:<input class="form-control" id="startdt" name="startdt" type="date" /></td>
-        <td style="color:black;">End Date:<input class="form-control" id="enddt" name="enddt" type="date" />
+        <td>Start Date:<input class="form-control" id="startdt" name="startdt" type="date" /></td>
+        <td>End Date:<input class="form-control" id="enddt" name="enddt" type="date" />
         <td>
             <input type="button" id="submitdate" name="submitdate" value="Submit" style="margin-top:21px; margin-left:25px;" />
         </td>
@@ -20,81 +24,112 @@
 </table>
 
 <br />
-<table id="ConntributorsProgressTable" class="table table-sm table-bordered">
-    @* <tbody>*@
-    <thead>
-        <tr><th>Contributor ID</th><th>Last Recording Time</th><th>Last Recorded Prompt</th></tr>
-    </thead>
-    @* </tbody>*@
-    <tbody id="tableBody">
-    </tbody>
-
-</table>
+<div style="width: 100%">
+    <table class="table table-striped table-bordered table-hover" id="ContributorsProgressTable" cellspacing="0" align="center"></table>
+</div>
 
 @section scripts {
-
-
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
 
             $('input:button[name="submitdate"]').click(function () {
-                //debugger;
                 var sdate = $("#startdt").val();
                 var edate = $("#enddt").val();
-                getContributorsProgress(sdate, edate);
-                //return false;
+                var today = new Date();
+                today = formatDate(today);
+
+                if (sdate > today) {
+                    alert("Start date cannot be in the future.");
+                    return false;
+                } else if (edate && edate < sdate) {
+                    alert("End date cannot be older than start date.");
+                    return false;
+                } else if ((!sdate && edate) || (sdate && !edate)) {
+                    alert("Please enter both start and end dates or leave both fields empty to fetch all the contributors list.");
+                    return false;
+                }
+                else {
+                    //return false;
+                    //getContributorsProgress(sdate, edate);
+                    if ($.fn.DataTable.isDataTable('#ContributorsProgressTable')) {
+                        $('#ContributorsProgressTable').DataTable().destroy();
+                    }
+
+                    var ogetContributorsProgress = $("#ContributorsProgressTable").on('error.dt', function (e, settings, techNote, message) {
+                        alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                    }).DataTable({
+                        "serverSide": false,
+                        "processing": true,
+                        "responsive": true,
+                        "iDisplayLength": 20,
+                        "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                            "<'row'<'col-sm-12't>>" +
+                            "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+                        "ajax": {
+                            "url": '@Url.Action("GetContributorsRecordingProgressforSelectedDates", "Report")',
+                            "data": '{ "startdate":' + sdate + ', "enddate":' + edate + '}',
+                            "type": "POST",
+                            "datatype": "json"
+                        },
+                        "bAutoWidth": false,
+                        "columns": [
+                            {
+                                "title": "Contributor ID",
+                                "data": "contributorId",
+                                "searchable": true,
+                                "orderable": true,
+                                "visible": true,
+                                "name": "contributorId"
+                            },
+                            {
+                                "title": "Last Recording Time",
+                                "data": "createTS",
+                                "render": function (data, type, full, meta) {
+                                    // Assume `data` is the date string in the format of "2023-03-14T11:17:45.473"
+                                    var formattedDate = moment(data).format('MM-DD-YYYY HH:mm');
+                                    return formattedDate;},
+                                "searchable": true,
+                                "orderable": true,
+                                "visible": true,
+                                "name": "createTS"
+                            },
+                            {
+                                "title": "Last Recorded Prompt",
+                                "data": "blockDescription",
+                                "searchable": true,
+                                "orderable": true,
+                                "visible": true,
+                                "name": "blockDescription"
+                            }
+                        ],
+                        "ordering": true,
+                        "paging": true,
+                        "pageLength": 50,
+                        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]]
+                    });
+                }
             });
 
-            function getContributorsProgress(sdate, edate) {
-                $.ajax({
-                    url: '@Url.Action("GetContributorsRecordingProgressforSelectedDates", "Report")',
-                    type: "POST",
-                    data: { "startdate": sdate, "enddate": edate },
-                    success: function (response) {
-                        //debugger;
-                        if (response.counter > 0) {
-                            $('#ConntributorsProgressTable tbody').empty();
+            function formatDate(date) {
+                var d = new Date(date),
+                    month = '' + (d.getMonth() + 1),
+                    day = '' + d.getDate(),
+                    year = d.getFullYear();
 
-                            for (var i = 0; i < response.contributorsProgresslist.length; i++) {
-                                var contributor = response.contributorsProgresslist[i];
+                if (month.length < 2)
+                    month = '0' + month;
+                if (day.length < 2)
+                    day = '0' + day;
 
-                                var date = new Date(contributor.createTS);
-                                const options = { hour: "2-digit", minute: "2-digit", hour12: false };
-                                var formattedTime = date.toLocaleTimeString([], options);
-                                var formattedDate = `${date.toLocaleDateString()}` + ' ' + formattedTime
-
-                                var row = "<tr><td>" + contributor.contributorId + "</td><td>" + formattedDate + "</td><td>" + 'b' + contributor.blockId + '-' + contributor.originalPromptId + "</td><tr>";
-                                $("#ConntributorsProgressTable > tbody:last").append(row);
-                            }
-
-
-                        } else {
-                            $('#ConntributorsProgressTable tbody').empty();
-                        }
-
-                    },
-                    error: function () {
-                        alert("Error: Validate NetID!");
-                        $('.spinner').css('display', 'none');
-                    }
-                });
+                return [year, month, day].join('-');
             }
 
 
-
         });
-
     </script>
 }
-<style>
-    
-    th {
-        text-align: center;
-        color: white;
-        background-color: #13294B
-    }
-
-    td {
-        text-align: center;
-    }
-</style>
