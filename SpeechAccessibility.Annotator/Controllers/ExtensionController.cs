@@ -13,6 +13,9 @@ using SpeechAccessibility.Core.Interfaces;
 using NAudio.Wave;
 using SpeechAccessibility.Annotator.Extensions;
 using System.Configuration;
+using System.Security.Cryptography.Xml;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using WebRtcVadSharp;
 
 
 namespace SpeechAccessibility.Annotator.Controllers
@@ -51,6 +54,111 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         }
 
+        //public bool HasSpeech(byte[] buffer)
+        //{
+        //    using (var vad = new WebRtcVad())
+        //    {
+        //        vad.OperatingMode = OperatingMode.VeryAggressive;
+        //        var hasSpeech = vad.HasSpeech(buffer, SampleRate.Is48kHz, FrameLength.Is30ms);
+        //        return hasSpeech;
+        //    }
+        //}
+
+        //[HttpPost]
+        //public ActionResult FileInformation(string filePath)
+        //{
+        //    var tempPath = "";
+
+        //    AudioFileReader reader = new AudioFileReader(filePath);
+        //    var buffers = new float[reader.Length];
+        //    int samplesRead = reader.Read(buffers, 0, (int)reader.Length);
+        //    int bps = reader.WaveFormat.BitsPerSample;
+
+
+        //    using (var rdr = new WaveFileReader(filePath))
+        //    {
+        //        var monoWaveForamt = WaveFormat.CreateCustomFormat(rdr.WaveFormat.Encoding,
+        //            rdr.WaveFormat.SampleRate,
+        //            1,
+        //            rdr.WaveFormat.AverageBytesPerSecond, rdr.WaveFormat.BlockAlign,
+        //            rdr.WaveFormat.BitsPerSample);
+
+        //        using (var writer = new WaveFileWriter(tempPath, monoWaveForamt))
+        //        {
+        //            var stBuffer = new byte[2 * rdr.WaveFormat.BlockAlign];
+
+        //            while (rdr.Read(stBuffer, 0, stBuffer.Length) > 0)
+        //            {
+        //                var lSamp = BitConverter.ToInt16(stBuffer, 0);
+        //                var rSamp = BitConverter.ToInt16(stBuffer, 2);
+        //                var mSamp = (short)((lSamp + rSamp) / 2);
+
+        //                writer.Write(BitConverter.GetBytes(mSamp), 0, 2);
+        //                writer.Write(BitConverter.GetBytes(mSamp), 0, 2);
+        //            }
+
+        //        }
+        //    }
+
+        //    var frameLength = 30;
+        //    var cntr = 0;
+        //    var start = -1.0;
+        //    var end = -1.0;
+        //    var tots = 0;
+
+        //    using (var rdr = new WaveFileReader(filePath))
+        //    {
+        //        var sRate = rdr.WaveFormat.SampleRate;
+        //        var bytesPerSample = rdr.WaveFormat.BitsPerSample / 8;
+        //        var channels = rdr.WaveFormat.Channels;
+        //        var chunk = sRate * bytesPerSample * channels * frameLength / 1000;
+
+        //        var buff = new byte[chunk];
+
+        //        while (rdr.Read(buff, 0, buff.Length) > 0)
+        //        {
+        //            tots++;
+        //            var isSpeech = HasSpeech(buff);
+
+        //            if (isSpeech)
+        //            {
+        //                cntr++;
+        //            }
+        //            else
+        //            {
+        //                cntr = 0;
+        //            }
+
+        //            if (start < 0)
+        //            {
+        //                if (cntr > 3)
+        //                {
+        //                    start = tots;
+        //                    end = tots;
+        //                    cntr = 0;
+        //                }
+        //            }
+        //            else
+        //            {
+        //                if (cntr > 3)
+        //                {
+        //                    end = tots;
+        //                    cntr = 0;
+        //                }
+        //            }
+        //        }
+        //    }
+
+        //    return Json(new
+        //    {
+        //        Success = true,
+        //        Message = $"start: {(start-3)*.03:F2}, end: {end*.03:F2}"
+        //    });
+
+
+
+        //}
+
         public static bool IsSilence(float amplitude, sbyte threshold)
         {
             if (amplitude == 0)
@@ -61,18 +169,20 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         private sbyte GetThresholdBaseline(float[] buffer, int samplesRead, sbyte silenceThreshold)
         {
+            //silenceThreshold = -20;
             List<double> data = new List<double>();
             for (int n = 0; n < samplesRead; n++)
             {
                 if (!IsSilence(buffer[n], silenceThreshold))
                     data.Add(Math.Abs(buffer[n]));
             }
-
             return (sbyte)(20 * Math.Log10(data.Median()));
         }
 
-        private Tuple<string, string> GetRecordingTimeSpan(string filePath, sbyte silenceThreshold = -20)
+        private Tuple<string, string> GetRecordingTimeSpan(string filePath, sbyte minThreshold = -40, sbyte maxThreshold = -60, sbyte incThreshold = -10, int series = 2 )
         {
+            var path = "\\\\bi-isilon-smb.beckman.illinois.edu\\NovaH\\Dev\\Bic\\";
+            filePath = path + filePath;
             AudioFileReader reader = new AudioFileReader(filePath);
             var buffer = new float[reader.Length];
 
@@ -80,27 +190,49 @@ namespace SpeechAccessibility.Annotator.Controllers
             int endPos = 0; // Final detection of noise meeting threshold
             int samplesRead = reader.Read(buffer, 0, (int)reader.Length);
 
+            sbyte currentThreshold = minThreshold;
+
             // Get threshold base line
-            silenceThreshold = GetThresholdBaseline(buffer, samplesRead, silenceThreshold);
+            do
+            {
+                minThreshold = GetThresholdBaseline(buffer, samplesRead, currentThreshold);
+
+                if (minThreshold != 0)
+                    break;
+                currentThreshold = (sbyte)(currentThreshold + incThreshold);
+            } while (currentThreshold >= maxThreshold);
+
+
+            int cycles = 0;
 
             for (int n = 0; n < samplesRead; n++)
-                if (!IsSilence(buffer[n], silenceThreshold))
+                if (!IsSilence(buffer[n], minThreshold))
                 {
-                    if (startPos == 0)
-                        startPos = n;
-                    endPos = n;
+                    cycles++;
+                    if (cycles > series)
+                    {
+                        if (startPos == 0)
+                            startPos = n - series;
+                        endPos = n;
+                    }
                 }
-            //since there are audio file that has more than one channel, we need to get the trueSample value
-            double trueSample = (double) reader.WaveFormat.SampleRate * reader.WaveFormat.Channels / 1000;
-            var startTime = Math.Round((startPos / trueSample)/100)*100;
-            var endTime = Math.Round((endPos / trueSample) / 100) * 100;
+                else
+                {
+                    cycles = 0;
+                }
 
-            return new Tuple<string, string>(TimeSpan.FromMilliseconds(startTime).ToString("hh':'mm':'ss'.'f"), TimeSpan.FromMilliseconds(endTime).ToString("hh':'mm':'ss'.'f"));
-            }
+            //since there are audio file that has more than one channel, we need to get the trueSample value
+            double trueSample = (double)reader.WaveFormat.SampleRate * reader.WaveFormat.Channels / 1000;
+            var startTime = Math.Round((startPos / trueSample) / 10) * 10;
+            var endTime = Math.Round((endPos / trueSample) / 10) * 10;
+
+            return new Tuple<string, string>(TimeSpan.FromMilliseconds(startTime).ToString("hh':'mm':'ss'.'ff"), TimeSpan.FromMilliseconds(endTime).ToString("hh':'mm':'ss'.'ff"));
+        }
 
         [HttpPost]
         public ActionResult FileInformation(string filePath)
         {
+
             //sbyte silenceThreshold = -18; //decibels
             Tuple<string, string> times = GetRecordingTimeSpan(filePath);
 
@@ -111,8 +243,6 @@ namespace SpeechAccessibility.Annotator.Controllers
             });
 
         }
-
-       
 
         [HttpGet]
        

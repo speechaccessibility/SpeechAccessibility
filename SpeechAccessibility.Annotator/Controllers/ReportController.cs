@@ -149,8 +149,6 @@ namespace SpeechAccessibility.Annotator.Controllers
                     ExistingContributors = existingContributorIDs.Count,
                     ExistingContributorRecordings = existingContributorRecordings.Count()
                 };
-                
-                
 
                 dailyReportList.Add(report);
 
@@ -299,9 +297,9 @@ namespace SpeechAccessibility.Annotator.Controllers
                 var contributor = _contributorRepository.Find(c => c.Id == id).FirstOrDefault();
                 if (contributor != null)
                 {
-                    giftCards.Add(new GiftCardViewModel {Amount = 60, EmailAddress = contributor.EmailAddress });
+                    giftCards.Add(new GiftCardViewModel {Amount = 60.00, Delay = 0,EmailAddress = contributor.EmailAddress });
                     if(contributor.HelperInd=="Yes")
-                        giftCards.Add(new GiftCardViewModel { Amount = 30, EmailAddress = contributor.EmailAddress });
+                        giftCards.Add(new GiftCardViewModel { Amount = 30.00, Delay = 0,EmailAddress = contributor.HelperEmail });
                 }
             }
 
