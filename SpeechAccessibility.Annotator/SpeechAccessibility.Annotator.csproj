@@ -21,6 +21,7 @@
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="6.0.0" />
     <PackageReference Include="System.Runtime.Caching" Version="6.0.0" />
+    <PackageReference Include="WebRtcVadSharp" Version="1.3.2" />
   </ItemGroup>
 
   <ItemGroup>

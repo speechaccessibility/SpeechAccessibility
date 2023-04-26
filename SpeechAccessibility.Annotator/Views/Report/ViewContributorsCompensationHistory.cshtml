@@ -8,8 +8,9 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
 <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 <h1>Contributors Compensation History</h1>
-
-<table class="table table-striped table-bordered table-hover" id="CompensationHistoryTable" cellspacing="0" align="center"></table>
+<div style="width: 1500px">
+    <table class="table table-striped table-bordered table-hover" id="CompensationHistoryTable" cellspacing="0" align="center"></table>
+</div>
 
 @section scripts {
     <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
@@ -38,7 +39,7 @@
                     "datatype": "json"
                 }),
                 "bAutoWidth": false,
-                "aaSorting": [[3, 'desc']],
+                "aaSorting": [[1, 'asc']],
                 "columns": [
                     {
                         "title": "ContributorID",
@@ -64,6 +65,14 @@
                         "visible": true,
                         "name": "Contributor.LastName"
                     },
+                        {
+                            "title": "EmailAddress",
+                            "data": "contributor.emailAddress",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.EmailAddress"
+                        },
                     {
                         "title": "First Card",
                         "data": "contributorCompensation.sendFirstCard",
@@ -125,9 +134,11 @@
                         "orderable": true,
                         "visible": true,
                         "name": "Contributor.HelperInd",
-                        'render': function (data) {
+                        'render': function (data,type,row) {
+                                //console.log(row.contributor.helperEmail);
                             if(data=='Yes')
-                                return 'Yes'
+                                    return row.contributor.helperEmail;
+                                    
                             return ''
                         },
                     },

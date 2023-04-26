@@ -12,7 +12,7 @@
 <table class="table table-sm" id="original-recording-table">
    
     <tr role="row">
-      
+        <th aria-label="Transcript">RecordingID</th>
         <th aria-label="Transcript">Transcript</th>
         <th aria-label="Recording Date" style="width: 150px;">Recording Date</th>
         <th aria-label="Category">Category</th>
@@ -23,7 +23,7 @@
     @foreach (var recording in Model)
     {
         <tr>
-          
+            <td aria-label="Id">@recording.Id</td>
             <td aria-label="Transcript">@recording.OriginalPrompt.Transcript</td>
             <td aria-label="Recording Date">@recording.CreateTS.ToString("MM/dd/yyyy HH:mm")</td>
             <td aria-label="Category">@recording.OriginalPrompt.Category.Description</td>

@@ -1,6 +1,6 @@
 ﻿@model SpeechAccessibility.Annotator.Models.ContributorCompensationViewModel
 @{
-    var helperInfo = "";
+    ViewData["Title"] = "Compensation History";
 }
 @*<h1>Contributors Compensation</h1>*@
 <table>
@@ -33,19 +33,13 @@
                 <tr>
                     <td><input type="checkbox" id="chkFirstGiftCard_@contributor.Item1.Id" name="chkFirstGiftCard" value="@contributor.Item1.Id" checked></td>
                     <td>@contributor.Item1.Id </td>
-                    <td>@contributor.Item1.FirstName &nbsp; @contributor.Item1.LastName</td>
+                    <td>@contributor.Item1.FirstName &nbsp; @contributor.Item1.LastName (@contributor.Item1.EmailAddress)</td>
                     <td>@contributor.Item1.EmailAddress </td>
                     <td>
-                        @{
-
-                            if (contributor.Item1.HelperInd == "Yes")
-                            {
-                                helperInfo = contributor.Item1.HelperFirstName + " " + contributor.Item1.HelperLastName + " (" + contributor.Item1.HelperEmail + ")";
-
-                            }
+                        @if (contributor.Item1.HelperInd == "Yes")
+                        {
+                            @Html.Raw( contributor.Item1.HelperFirstName + " " + contributor.Item1.HelperLastName + " (" + contributor.Item1.HelperEmail + ")")
                         }
-                        @helperInfo
-
                     </td>
                     <td style="text-align: center">@contributor.Item2</td>
                 </tr>
@@ -80,18 +74,13 @@
                 <tr>
                     <td><input type="checkbox" id="chkSecondGiftCard_@contributor.Item1.Id" name="chkSecondGiftCard" value="@contributor.Item1.Id" checked></td>
                     <td>@contributor.Item1.Id </td>
-                    <td>@contributor.Item1.FirstName &nbsp; @contributor.Item1.LastName</td>
+                    <td>@contributor.Item1.FirstName &nbsp; @contributor.Item1.LastName (@contributor.Item1.EmailAddress)</td>
                     <td>@contributor.Item1.EmailAddress </td>
                     <td>
-                        @{
-
-                            if (contributor.Item1.HelperInd == "Yes")
-                            {
-                                helperInfo = contributor.Item1.HelperFirstName + " " + contributor.Item1.HelperLastName + " (" + contributor.Item1.HelperEmail + ")";
-
-                            }
+                        @if (contributor.Item1.HelperInd == "Yes")
+                        {
+                            @Html.Raw( contributor.Item1.HelperFirstName + " " + contributor.Item1.HelperLastName + " (" + contributor.Item1.HelperEmail + ")")
                         }
-                        @helperInfo
 
                     </td>
                     <td style="text-align: center">@contributor.Item2</td>
@@ -128,19 +117,13 @@
                 <tr>
                     <td><input type="checkbox" id="chkThirdGiftCard_@contributor.Item1.Id" name="chkThirdGiftCard" value="@contributor.Item1.Id" checked></td>
                     <td>@contributor.Item1.Id </td>
-                    <td>@contributor.Item1.FirstName &nbsp; @contributor.Item1.LastName</td>
+                    <td>@contributor.Item1.FirstName &nbsp; @contributor.Item1.LastName (@contributor.Item1.EmailAddress)</td>
                     <td>@contributor.Item1.EmailAddress </td>
                     <td>
-                        @{
-
-                            if (contributor.Item1.HelperInd == "Yes")
-                            {
-                                helperInfo = contributor.Item1.HelperFirstName + " " + contributor.Item1.HelperLastName + " (" + contributor.Item1.HelperEmail + ")";
-
-                            }
+                        @if (contributor.Item1.HelperInd == "Yes")
+                        {
+                            @Html.Raw( contributor.Item1.HelperFirstName + " " + contributor.Item1.HelperLastName + " (" + contributor.Item1.HelperEmail + ")")
                         }
-                        @helperInfo
-
                     </td>
                     <td style="text-align: center">@contributor.Item2</td>
                 </tr>

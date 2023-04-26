@@ -107,7 +107,7 @@
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[4, 'desc']],
+                    "aaSorting": [[5, 'desc']],
                     "columns": [
                         {
                             "title": "RecordingId",
@@ -117,6 +117,7 @@
                             "visible": false,
                             "name": "Id"
                         },
+                       
                         {
                             "title": "ContributorID",
                             "data": "contributorId",
@@ -124,6 +125,14 @@
                             "orderable": true,
                             "visible": true,
                             "name": "ContributorId"
+                        },
+                        {
+                            "title": "RecordingID",
+                            "data": "id",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Id"
                         },
                         {
                             "title": "Transcript",
@@ -204,8 +213,8 @@
                     ],                  
                     "createdRow": function (row, data) {
                         //hide the Start and End Time column. if the columns are set to be invisible, the value of the columns are not available for listen dialog
-                        $('td', row).eq(6).hide();
                         $('td', row).eq(7).hide();
+                        $('td', row).eq(8).hide();
                        
                     },
                     "ordering": true,
@@ -216,8 +225,8 @@
                 });
                 
                 //hide the header for Start and End Time column
-                $('#SpeechFileTable th:nth-child(7)').hide();
                 $('#SpeechFileTable th:nth-child(8)').hide();
+                $('#SpeechFileTable th:nth-child(9)').hide();
 
                  //listen the recording
             $('#SpeechFileTable').on('click', 'a.listen', function (e) {
@@ -230,9 +239,9 @@
                 $("#lblContributorId").text(row.contributorId);
               
                 var currentRow = $(this).closest("tr");
-                $("#txtTranscript").val(currentRow.find("td:eq(1)").text());
-                $("#txtStartTime").val(currentRow.find("td:eq(6)").text());
-                $("#txtEndTime").val(currentRow.find("td:eq(7)").text());
+                $("#txtTranscript").val(currentRow.find("td:eq(2)").text());
+                $("#txtStartTime").val(currentRow.find("td:eq(7)").text());
+                $("#txtEndTime").val(currentRow.find("td:eq(8)").text());
                 var audio = document.getElementById('listenRecording');
                 audio.setAttribute("src", row.speechFilePath);
                  audio.load();
@@ -284,9 +293,9 @@
                                             audio.setAttribute("src", "");
                                             $("#listen-dialog").dialog('close');
                                             //oSpeechFileTable.draw();
-                                        currentRow.find('td:eq(1)').text(transcript);
-                                        currentRow.find('td:eq(6)').text(startTime);
-                                        currentRow.find('td:eq(7)').text(endTime);
+                                        currentRow.find('td:eq(2)').text(transcript);
+                                        currentRow.find('td:eq(7)').text(startTime);
+                                        currentRow.find('td:eq(8)').text(endTime);
                                        
                                         }
                                     },
