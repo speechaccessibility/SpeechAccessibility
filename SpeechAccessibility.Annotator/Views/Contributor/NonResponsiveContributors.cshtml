@@ -1,35 +1,39 @@
 ﻿@using System.Security.Claims
+
+
 @{
-    ViewData["Title"] = "Denied Contributors";
-}
-@{
-    ViewBag.Title = "Contributor";
+    ViewBag.Title = "Non-Responsive Contributors";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
 <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-<h1>Denied Contributors</h1>
+<h1>Non-Responsive Contributors</h1>
+<div id="top"></div>
 @{
     var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 }
 <input type="hidden" id="UserRole" value="@userRole" />
 
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
-<div style="width: 1300px">
-    <table class="table table-striped table-bordered table-hover" id="ContributorTable" cellspacing="0" align="center"></table>
+<div style="width: 1500px">
+    <table class="table table-striped table-bordered table-hover" id="NonResponsiveContributorTable" cellspacing="0" align="center"></table>
+</div>
+<div id="sendFollowUp-dialog" style="display: none">
+    <label id="lblFollowUpMessage">Send follow-up message to below Contributor:</label>
+    <input type="hidden" id="hidFollowUpContributorId" />
+    <br /><b>First Name:</b><label id="lblFollowUpFirstName" name="lblFollowUpFirstName"></label>
+    <br /><b>Last Name:</b><label id="lblFollowUpLastName" name="lblFollowUpLastName"></label>
+    <br /><b>Email Address:</b><label id="lblFollowUpEmail" name="lblFollowUpEmail"></label>
+    <br />Message to the Contributor:<br/>
+    <textarea id="txtFollowUpMessage" name="txtFollowUpMessage" rows="4" cols="50" >
+       
+</textarea>
 </div>
 
-<div id="rating-dialog" style="display: none">
-</div>
-@*<div id="undeny-dialog" style="display: none">
-    <label id="lblUnDenyMessage">Un-Deny below Contributor:</label>
-    <input type="hidden" id="hidUnDenyContributorId" />
-    <br /><b>First Name:</b><label id="lblUnDenyFirstName" name="lblUnDenyFirstName"></label>
-    <br /><b>Last Name:</b><label id="lblUnDenyLastName" name="lblUnDenyLastName"></label>
-    <br /><textarea id="txtUnDenyComment" name="txtUnDenyComment" rows="4" cols="50"></textarea>
+<div id="rating-dialog" style="display: none"></div>
 
-</div>*@
+
 <div id="makeChanges-dialog" style="display: none">
     <label id="lblMakeChangesMessage">Contributor:</label>
     <input type="hidden" id="hidMakeChangesContributorId" />
@@ -58,16 +62,18 @@
 </div>
 
 @section scripts {
+
     <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="~/js/listenrecording.js"></script>
     <script src="~/js/Contributor.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
 
-            //bind datatable for Contributor
-            var oContributorsTable = $("#ContributorTable").on('error.dt',
+            //bind datatable for Prompts
+            var oContributorsTable = $("#NonResponsiveContributorTable").on('error.dt',
                 function (e, settings, techNote, message) {
                     alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
                 }).DataTable({
@@ -78,12 +84,12 @@
                     "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
                         "<'row'<'col-sm-12'tr>>p",
                     "ajax": ({
-                        "url": '@Url.Action("LoadContributors", "Contributor", new { filter = 3 })',
+                        "url": '@Url.Action("LoadContributors", "Contributor", new { filter = 4 })',
                         "type": "POST",
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[3, 'desc']],
+                    "aaSorting": [[4, 'desc']],
                     "columns": [
                         {
                             "title": "ID",
@@ -112,6 +118,14 @@
                             "name": "Contributor.LastName"
                         },
                         {
+                            "title": "Email Address",
+                            "data": "contributor.emailAddress",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.EmailAddress"
+                        },
+                        {
                             "title": "Register Date",
                             "data": "contributor.createTS",
                             "searchable": true,
@@ -136,29 +150,34 @@
                             "visible": true,
                             "name": "Contributor.Comments"
                         },
-                       
+                         {
+                            "title": "Sent FollowUp Date",
+                            "data": "followUpDate",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": ""
+                        },
                         {
                             "title": "Actions",
                             "data": "contributor.id",
                             //"targets": 0,
                             "searchable": false,
                             "orderable": false,
-                            "width": '200px',
+                            "width": '300px',
                             "classDescription": 'dt-body-center',
                             "visible": true,
                             "name": "contributor.id",
                             "render": function (data, type, row) {
-                                //console.log(data);
                                 if ($("#UserRole").val() === "SLPAnnotator" || $("#UserRole").val() === "SLPAnnotatorAdmin" || $("#UserRole").val() === "LSVT" || $("#UserRole").val() === "SystemAdmin") {
-                                    var link = '<a href="#" class="viewRating" >View SIT Rating</a>  | <a href="#" class="undeny">Un-Deny</a>';
+                                    var link = '<a href="#" class="approve" >Approve</a>  | <a href="#" class="deny">Deny</a> | <a href="#" class="viewRating">View Rating</a> | <a href="#" class="sendFollowUp">Send Follow-up</a>';
                                     return link;
                                 }
-                                else
-                                {
-                                    var link = '<a href="#" class="viewRating" >View SIT Rating</a>';
+                                else if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin") {
+                                    var link = '<a href="#" class="viewRating"> View Rating </a>';
                                     return link;
                                 }
-                                
+
                             }
                         }
                     ],
@@ -167,51 +186,80 @@
                     "pageLength": 100,
                     "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
                 });
+                
+            //send follow up message to the contributor
+            $('#NonResponsiveContributorTable').on('click',
+                'a.sendFollowUp',
+                function (e) {
+                    e.preventDefault();
+                    var selectedRowData = oContributorsTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();
+                    $("#hidFollowUpContributorId").val(row.contributor.id);
+                    $("#lblFollowUpFirstName").text(row.contributor.firstName);
+                    $("#lblFollowUpLastName").text(row.contributor.lastName);
+                    $("#lblFollowUpEmail").text(row.contributor.emailAddress);
+                    var content = "Dear " + row.contributor.firstName + ",\n\nSincerely,\n Speech Accessibility Project Team\nUniversity of Illinois Urbana - Champaign";
+                    $("#txtFollowUpMessage").val(content);
+                    sendFollowUpContributor('@Url.Action("SendFollowUpToContributor", "Contributor")', oContributorsTable);
+                    $("#sendFollowUp-dialog").dialog('open');
 
-
-          
-            // rate the recording
-            $('#ContributorTable').on('click', 'a.viewRating', function (e) {
+                });
+                
+            //view rating
+            $('#NonResponsiveContributorTable').on('click', 'a.viewRating', function (e) {
                 e.preventDefault();
                 var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
                 var getUrl = "@Url.Action("ViewSITRecordingRating", "SpeechFile")?contributorId=" + row.contributor.id;
-                $("#lblContributor").text(row.id);
                 getRecordingRating(getUrl);
                 $("#rating-dialog").dialog('open');
                 return false;
             });
-           
 
-            $('#ContributorTable').on('click',
-                'a.undeny',
+            $('#NonResponsiveContributorTable').on('click', 'a.approve', function (e) {
+                e.preventDefault();
+                //var selectedRowData = oContributorsTable.row($(this).closest('tr'));
+                //var row = selectedRowData.data();
+                //$("#hidApproveContributorId").val(row.contributor.id);
+                //$("#lblApproveFirstName").text(row.contributor.firstName);
+                //$("#lblApproveLastName").text(row.contributor.lastName);
+                
+                //$("#approve-dialog").dialog('open');
+                $("#tableChangePassword").removeAttr('hidden');               
+                var selectedRowData = oContributorsTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                $("#lblMakeChangesMessage").text("Approve Contributor:");
+                $("#hidMakeChangesContributorId").val(row.contributor.id);
+                $("#lblMakeChangesFirstName").text(row.contributor.firstName);
+                $("#lblMakeChangesLastName").text(row.contributor.lastName);
+                $("#txtMakeChangesComment").val(row.contributor.comments);
+                var postUrl = '@Url.Action("UpdateContributor", "Contributor")';
+                changeContributor(postUrl, oContributorsTable, 2, 'Approve Contributor');
+                $("#makeChanges-dialog").dialog('open');
+
+            });
+
+
+            //deny the contributor
+            $('#NonResponsiveContributorTable').on('click',
+                'a.deny',
                 function (e) {
                     e.preventDefault();
-                    //var selectedRowData = oContributorTable.row($(this).closest('tr'));
-                    //var row = selectedRowData.data();
-                    //$("#hidUnDenyContributorId").val(row.contributor.id);
-                    //$("#lblUnDenyFirstName").text(row.contributor.firstName);
-                    //$("#lblUnDenyLastName").text(row.contributor.lastName);
-                    //$("#txtUnDenyComment").val(row.contributor.comments);
-                    //unDenyContributor();
-                    //$("#undeny-dialog").dialog('open');
-                      $("#tableChangePassword").attr('hidden', 'hidden');                   
+                    $("#tableChangePassword").attr('hidden', 'hidden');
                     var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
-                    $("#lblMakeChangesMessage").text("Un-Deny Contributor:");
+                    $("#lblMakeChangesMessage").text("Deny Contributor:");
                     $("#hidMakeChangesContributorId").val(row.contributor.id);
                     $("#lblMakeChangesFirstName").text(row.contributor.firstName);
                     $("#lblMakeChangesLastName").text(row.contributor.lastName);
                     $("#txtMakeChangesComment").val(row.contributor.comments);
                     var postUrl = '@Url.Action("UpdateContributor", "Contributor")';
-                    changeContributor(postUrl, oContributorsTable, 1, 'Un-Deny Contributor'); //1 for un - deny, 3 for deny, 2 for approve, 4 for non-responsive
+                    changeContributor(postUrl, oContributorsTable, 3, 'Deny Contributor');
                     $("#makeChanges-dialog").dialog('open');
 
-
                 });
-           
 
-           
+
         });//End document ready
 
     </script>

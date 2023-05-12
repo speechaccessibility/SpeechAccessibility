@@ -27,7 +27,9 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IConfiguration _configuration;
         private readonly IRecordingRepository _recordingRepository;
-        public ContributorController(IContributorRepository contributorRepository, IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository, IUserRepository userRepository, IConfiguration configuration, IContributorAssignedBlockRepository contributorAssignedBlockRepository, IRecordingRepository recordingRepository)
+        private  readonly  IContributorFollowUpRepository _contributorFollowUpRepository;
+        private readonly IEmailLoggingRepository _emailLoggingRepository;
+        public ContributorController(IContributorRepository contributorRepository, IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository, IUserRepository userRepository, IConfiguration configuration, IContributorAssignedBlockRepository contributorAssignedBlockRepository, IRecordingRepository recordingRepository, IContributorFollowUpRepository contributorFollowUpRepository, IEmailLoggingRepository emailLoggingRepository)
         {
             _contributorRepository = contributorRepository;
             _contributorAssignedAnnotatorRepository = contributorAssignedAnnotatorRepository;
@@ -35,6 +37,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             _configuration = configuration;
             _contributorAssignedBlockRepository = contributorAssignedBlockRepository;
             _recordingRepository = recordingRepository;
+            _contributorFollowUpRepository = contributorFollowUpRepository;
+            _emailLoggingRepository = emailLoggingRepository;
         }
 
         //[Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdmin")]
@@ -87,7 +91,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             int skip = start != null ? Convert.ToInt32(start) : 0;
            
             var contributors = _contributorRepository.Find(c => c.StatusId == 1)
-                .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue));
+                .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue)
+                || c.EmailAddress.Contains(searchValue) || c.HelperEmail.Contains(searchValue));
 
             var recordsTotal = contributors.Count();
             
@@ -103,9 +108,14 @@ namespace SpeechAccessibility.Annotator.Controllers
             return View();
         }
 
+        public IActionResult NonResponsiveContributors()
+        {
+            return View();
+        }
+
         //[Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdmin")]
         [HttpPost]
-        public ActionResult LoadApprovedDeniedContributors(int filter)
+        public ActionResult LoadContributors(int filter)
         {
 
             var draw = Request.Form["draw"].FirstOrDefault();
@@ -159,6 +169,11 @@ namespace SpeechAccessibility.Annotator.Controllers
                     contributorVM.LastRecording = null;
                 contributorVM.AnnotatorAssigned = numberAssignedAnnotator.Any() ? "Yes" : "No";
 
+                if (filter is 2 or 4) //get the follow-up dates
+                {
+                    contributorVM.FollowUpDate = String.Join("; ", _contributorFollowUpRepository.Find(c => c.ContributorId == contributor.Id)
+                        .Select(f => f.SendTS.ToString()));
+                }
                 contributorViewModels.Add(contributorVM);
             }
 
@@ -235,28 +250,35 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         }
 
-
         [Authorize(Policy = "SLPAnnotatorAndLSVT")]
         [HttpPost]
-        public async Task<ActionResult> ApproveDenyContributor(Guid contributorId, string comment,string passwordChange, int action)
+        public async Task<ActionResult> UpdateContributor(Guid contributorId, string comment, string passwordChange, int action)
         {
-            var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
-            if (contributor != null)
-            {
-                contributor.ChangePassword = passwordChange == "Yes";
-                contributor.StatusId = action;
-                contributor.Comments = comment;
-                if (action == 2)
-                    contributor.ApproveTS = DateTime.Now;
-                else
-                    contributor.UpdateTS = DateTime.Now;
 
-                contributor.ApproveDenyBy = User.Identity.Name;
-                _contributorRepository.Update(contributor);
+            var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+            if (contributor == null)
+            {
+                return Json(new { Success = false, Message = "Contributor is not found." });
             }
-           
+
+            //if (contributor != null)
+            //{
+            if (action==2)
+                contributor.ChangePassword = passwordChange == "Yes";
+            contributor.StatusId = action;
+            contributor.Comments = comment;
+            if (action == 2)
+                contributor.ApproveTS = DateTime.Now;
+            else
+                contributor.UpdateTS = DateTime.Now;
+
+            contributor.ApproveDenyBy = User.Identity.Name;
+            _contributorRepository.Update(contributor);
+            //}
+
             StringBuilder message = new StringBuilder();
             var emailSubject = "";
+            var error = "";
             if (action == 2) //approve
             {
                 //check for LSVT 
@@ -272,9 +294,8 @@ namespace SpeechAccessibility.Annotator.Controllers
                 {
                     message.Append("Please visit the Speech Accessibility App at " + _configuration["AppSettings:ContributorWebLink"] + ". ");
                     message.Append("Log in and click 'Record Prompt.' You should automatically see our informed consent form. Once you consent, you will be prompted to begin recording.");
-                  
-                }
 
+                }
 
                 if (passwordChange == "Yes")
                 {
@@ -283,36 +304,193 @@ namespace SpeechAccessibility.Annotator.Controllers
                 }
 
                 message.Append("<br>Thank you for sharing your voice! ");
-                message.Append("If you have any questions, please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] +  ".");
+                message.Append("If you have any questions, please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] + ".");
                 message.Append("<br><br>Sincerely,");
                 message.Append("<br>The Speech Accessibility Project Team");
                 message.Append("<br>University of Illinois Urbana - Champaign");
-                
+
                 emailSubject = "Your registration has been approved.";
 
-
+                error = await SendEmailToContributor(contributor, emailSubject, message, _configuration["AppSettings:EmailServer"]);
             }
             else if (action == 3)//deny
             {
                 message.Append("Dear " + contributor.FirstName);
                 message.Append("<br>Thank you so much for your interest in participating in the Speech Accessibility Project.");
                 message.Append("<br>Unfortunately, you do not meet the current criteria for the project. If you have specific questions about this,");
-                message.Append("please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] +".");
+                message.Append("please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] + ".");
                 message.Append("<br>Sincerely,");
                 message.Append("<br>The Speech Accessibility Project Team");
                 message.Append("<br>University of Illinois Urbana - Champaign");
 
                 emailSubject = "Your registration has been denied.";
 
+                error = await SendEmailToContributor(contributor, emailSubject, message, _configuration["AppSettings:EmailServer"]);
 
             }
-            
-            var error = await SendEmailToContributor(contributor, emailSubject, message, _configuration["AppSettings:EmailServer"]);
+
+            //logging the email
+            if (action is 2 or 3)
+            {
+                var emailLogging = new EmailLogging
+                {
+                    ContributorId = contributor.Id,
+                    Subject = emailSubject,
+                    SendTo = contributor.EmailAddress,
+                    Message = message.ToString(),
+                    Error = error,
+                    SendTS = DateTime.Now,
+                    SendBy = User.Identity.Name
+                };
+                _emailLoggingRepository.Insert(emailLogging);
+            }
+           
+
             return Json(!string.IsNullOrEmpty(error) ? new { Success = false, Message = error } : new { Success = true, Message = "" });
         }
 
-        //[Authorize(Policy = "AllAnnotator")]
+        //[Authorize(Policy = "SLPAnnotatorAndLSVT")]
+        //[HttpPost]
+        //public async Task<ActionResult> ApproveDenyContributor(Guid contributorId, string comment,string passwordChange, int action)
+        //{
+
+        //    var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+        //    if (contributor != null)
+        //    {
+        //        contributor.ChangePassword = passwordChange == "Yes";
+        //        contributor.StatusId = action;
+        //        contributor.Comments = comment;
+        //        if (action == 2)
+        //            contributor.ApproveTS = DateTime.Now;
+        //        else
+        //            contributor.UpdateTS = DateTime.Now;
+
+        //        contributor.ApproveDenyBy = User.Identity.Name;
+        //        _contributorRepository.Update(contributor);
+        //    }
+
+        //    StringBuilder message = new StringBuilder();
+        //    var emailSubject = "";
+        //    var error = "";
+        //    if (action == 2) //approve
+        //    {
+        //        //check for LSVT 
+        //        //if ParkinsonsInd="Yes", this contributor was routed to LSVT Group
+        //        message.Append("Dear " + contributor.FirstName);
+        //        message.Append("<br>Thank you so much for your interest in participating in the Speech Accessibility Project.");
+        //        message.Append("<br>We are delighted to share that you’ve been accepted to participate. ");
+        //        if (contributor.ParkinsonsInd == "Yes")
+        //        {
+        //            message.Append("Please watch for an email with more information from your LSVT Global mentor to guide you through the participation process.");
+        //        }
+        //        else
+        //        {
+        //            message.Append("Please visit the Speech Accessibility App at " + _configuration["AppSettings:ContributorWebLink"] + ". ");
+        //            message.Append("Log in and click 'Record Prompt.' You should automatically see our informed consent form. Once you consent, you will be prompted to begin recording.");
+
+        //        }
+
+        //        if (passwordChange == "Yes")
+        //        {
+        //            message.Append("<br>");
+        //            message.Append("You are required to change your password when you login in.");
+        //        }
+
+        //        message.Append("<br>Thank you for sharing your voice! ");
+        //        message.Append("If you have any questions, please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] +  ".");
+        //        message.Append("<br><br>Sincerely,");
+        //        message.Append("<br>The Speech Accessibility Project Team");
+        //        message.Append("<br>University of Illinois Urbana - Champaign");
+
+        //        emailSubject = "Your registration has been approved.";
+
+        //        error = await SendEmailToContributor(contributor, emailSubject, message, _configuration["AppSettings:EmailServer"]);
+        //    }
+        //    else if (action == 3)//deny
+        //    {
+        //        message.Append("Dear " + contributor.FirstName);
+        //        message.Append("<br>Thank you so much for your interest in participating in the Speech Accessibility Project.");
+        //        message.Append("<br>Unfortunately, you do not meet the current criteria for the project. If you have specific questions about this,");
+        //        message.Append("please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] +".");
+        //        message.Append("<br>Sincerely,");
+        //        message.Append("<br>The Speech Accessibility Project Team");
+        //        message.Append("<br>University of Illinois Urbana - Champaign");
+
+        //        emailSubject = "Your registration has been denied.";
+
+        //        error = await SendEmailToContributor(contributor, emailSubject, message, _configuration["AppSettings:EmailServer"]);
+
+        //    }
+
+        //    //logging the email
+        //    var emailLogging = new EmailLogging
+        //    {
+        //        ContributorId = contributor.Id,
+        //        Subject = emailSubject,
+        //        SendTo = contributor.EmailAddress,
+        //        Message = message.ToString(),
+        //        Error = error,
+        //        SendTS = DateTime.Now,
+        //        SendBy = User.Identity.Name
+        //    };
+        //    _emailLoggingRepository.Insert(emailLogging);
+
+        //    return Json(!string.IsNullOrEmpty(error) ? new { Success = false, Message = error } : new { Success = true, Message = "" });
+        //}
+
+        [Authorize(Policy = "SLPAnnotatorAndLSVT")]
         [HttpPost]
+        public async Task<ActionResult> SendFollowUpToContributor(Guid contributorId, string message)
+        {
+            var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+            if (contributor == null)
+            {
+                return Json(new { Success = false, Message = "Contributor is not found." });
+            }
+            
+            StringBuilder followUpMessage = new StringBuilder();
+            var emailSubject = "Speech Accessibility Project - Follow-up ";
+            var error = "";
+            message = message.Replace("\n", "<br />");
+            followUpMessage.Append("<br>" + message);
+           
+           
+            error = await SendEmailToContributor(contributor, emailSubject, followUpMessage, _configuration["AppSettings:EmailServer"]);
+            //need to save this email to the database
+            if (string.IsNullOrEmpty(error))
+            {
+                var followUp = new ContributorFollowUp
+                {
+                    ContributorId = contributorId,
+                    EmailContent = message,
+                    SendTS = DateTime.Now,
+                    SendBy = User.Identity.Name
+                };
+                _contributorFollowUpRepository.Insert(followUp);
+                ////update the status of the contributor to Non-Responsive
+                // contributor.StatusId = 4;
+                //contributor.UpdateTS = DateTime.Now;
+                //_contributorRepository.Update(contributor);
+            }
+
+            //logging the email
+            var emailLogging = new EmailLogging
+            {
+                ContributorId = contributor.Id,
+                Subject = emailSubject,
+                SendTo = contributor.EmailAddress,
+                Message = followUpMessage.ToString(),
+                Error = error,
+                SendTS = DateTime.Now,
+                SendBy = User.Identity.Name
+            };
+            _emailLoggingRepository.Insert(emailLogging);
+
+            return Json(!string.IsNullOrEmpty(error) ? new { Success = false, Message = error } : new { Success = true, Message = contributor.EmailAddress });
+        }
+
+        //[Authorize(Policy = "AllAnnotator")]
+            [HttpPost]
         public ActionResult LoadApprovedContributors()
         {
             var draw = Request.Form["draw"].FirstOrDefault();
@@ -346,8 +524,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             if (_configuration["AppSettings:DeveloperMode"] == "Yes")
             {
                 toEmailAddress = _configuration["AppSettings:TestingEmail"];
-                subject = "Testing: Your registration has been approved.";
-                body.Append("This email was sent in a testing mode.The actual email should be sent to " + actualToEmailAddress +
+                subject = "Testing: " + emailSubject;
+                body.Append("This email was sent in a testing mode. The actual email should be sent to " + actualToEmailAddress +
                             ".<br>");
 
                 toEmails = new[] { toEmailAddress };

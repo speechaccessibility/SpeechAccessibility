@@ -131,91 +131,7 @@ namespace SpeechAccessibility.Annotator.Controllers
         }
 
         [HttpPost]
-        public ActionResult LoadModifiedSpeechFiles()
-        {
-            var draw = Request.Form["draw"].FirstOrDefault();
-            var start = Convert.ToInt32(Request.Form["start"].FirstOrDefault());
-            var length = Convert.ToInt32(Request.Form["length"].FirstOrDefault());
-            var searchValue = Request.Form["search[value]"].FirstOrDefault();
-
-            //int pageSize = length != null ? Convert.ToInt32(length) : 0;
-            //int skip = start != null ? Convert.ToInt32(start) : 0;
-
-            int pageSize = Convert.ToInt32(length);
-            int skip = Convert.ToInt32(start);
-
-            //return only recordings for approved contributors
-            var approvedContributors = _contributorRepository.Find(c => c.StatusId == 2).ToList();
-            Guid[] idList = approvedContributors.Select(c => c.Id).ToArray();
-          
-           
-            var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-            List<int> includeStatus = new List<int>() { 1, 2 }; //new or edited
-            //IIncludableQueryable<Recording, Category> recordings;
-            IQueryable<Recording> recordings;
-            if (userRole == "TextAnnotator")
-            {
-                var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
-                Guid[] annotatorAssignedContributorIdList = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == currentUser.Id)
-                    .Select(u => u.ContributorId).ToArray();
-
-                recordings = _recordingRepository
-                    .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId)
-                               && annotatorAssignedContributorIdList.Contains(r.ContributorId))
-                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
-                        || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Comment.Contains(searchValue)
-                        || r.Id.ToString().Contains(searchValue))
-                    .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
-            }
-            else
-            {
-                 recordings = _recordingRepository
-                    .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId))
-                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
-                        || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Comment.Contains(searchValue)
-                        || r.Id.ToString().Contains(searchValue))
-                    .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
-            }
-
-           
-
-            var recordsTotal = recordings.Count();
-            var appName = _configuration["AppSettings:Environment"] switch
-            {
-                "Development" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Dev/",
-                "Test" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Test/",
-                _ => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Prod/"
-            };
-
-            recordings = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordings, Request.Form);
-
-            var recordingList = recordings.Skip(skip).Take(pageSize).Select(r => new Recording()
-            {
-                Id = r.Id,
-                OriginalPrompt = r.OriginalPrompt,
-                ModifiedTranscript = r.ModifiedTranscript,
-                CreateTS = r.CreateTS,
-                RetryCount = r.RetryCount,
-                Comment = r.Comment,
-                ContributorId = r.ContributorId,
-                BlockId = r.BlockId,
-                OriginalPromptId = r.OriginalPromptId,
-                SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName,
-                StartTime = r.StartTime,
-                EndTime = r.EndTime
-
-            });
-
-            //recordingList = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordingList, Request.Form);
-
-
-            return Json(new { draw, data = recordingList, recordsFiltered = recordsTotal, recordsTotal = recordsTotal });
-
-        }
-
-        //Published files page code
-        [HttpPost]
-        public ActionResult LoadPublishedSpeechFiles()
+        public ActionResult LoadSpeechFiles(int recordingStatus)
         {
             var draw = Request.Form["draw"].FirstOrDefault();
             var start = Request.Form["start"].FirstOrDefault();
@@ -232,31 +148,46 @@ namespace SpeechAccessibility.Annotator.Controllers
             };
 
             IQueryable<Recording> recordings;
-            //recording = _recordingRepository.Find(r => r.StatusId == 3).Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.Comment.Contains(searchValue))
-            //    .Include(r => r.OriginalPrompt).ThenInclude(p => p.Category);
-            //    
             var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+            List<int> includeStatus = new List<int>();
+            //if recordingStatus=2, include the new recording
+            if (recordingStatus == 2)
+            {
+                includeStatus.Add(1);
+                includeStatus.Add(2);
+            }
+            else
+            {
+                includeStatus.Add(recordingStatus);
+            }
+
+
+            //return only recordings for approved contributors
             var approvedContributors = _contributorRepository.Find(c => c.StatusId == 2).ToList();
             Guid[] idList = approvedContributors.Select(c => c.Id).ToArray();
 
+            //for TextAnnotator, only return assigned recordings
             if (userRole == "TextAnnotator")
             {
                 var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
                 Guid[] annotatorAssignedContributorIdList = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == currentUser.Id)
                     .Select(u => u.ContributorId).ToArray();
 
+                //get recordings that are not Dysarthria Assessment Sentences (categoryId=1)
                 recordings = _recordingRepository
-                    .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 &&  r.StatusId==3 && annotatorAssignedContributorIdList.Contains(r.ContributorId))
-                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
-                        || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Id.ToString().Contains(searchValue))
+                    .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId)
+                               && annotatorAssignedContributorIdList.Contains(r.ContributorId))
+                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue)
+                        || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue))
                     .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
             }
             else
             {
+                //get recordings that are not Dysarthria Assessment Sentences (categoryId=1)
                 recordings = _recordingRepository
-                    .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && r.StatusId==3)
-                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
-                        || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Id.ToString().Contains(searchValue))
+                    .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId))
+                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue)
+                        || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue))
                     .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
             }
 
@@ -275,16 +206,165 @@ namespace SpeechAccessibility.Annotator.Controllers
                 CreateTS = r.CreateTS,
                 ModifiedTranscript = string.IsNullOrEmpty(r.ModifiedTranscript) ? r.OriginalPrompt.Transcript : r.ModifiedTranscript,
                 FileName = r.FileName,
-                BlockId=r.BlockId,
-                SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId +  "/modified/" + r.FileName,
+                BlockId = r.BlockId,
+                SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName,
                 StartTime = r.StartTime,
                 EndTime = r.EndTime
             });
 
-            //recordingList = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordingList, Request.Form);
-
             return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = recordingList });
         }
+
+        //[HttpPost]
+        //public ActionResult LoadModifiedSpeechFiles()
+        //{
+        //    var draw = Request.Form["draw"].FirstOrDefault();
+        //    var start = Convert.ToInt32(Request.Form["start"].FirstOrDefault());
+        //    var length = Convert.ToInt32(Request.Form["length"].FirstOrDefault());
+        //    var searchValue = Request.Form["search[value]"].FirstOrDefault();
+
+        //    //int pageSize = length != null ? Convert.ToInt32(length) : 0;
+        //    //int skip = start != null ? Convert.ToInt32(start) : 0;
+
+        //    int pageSize = Convert.ToInt32(length);
+        //    int skip = Convert.ToInt32(start);
+
+        //    //return only recordings for approved contributors
+        //    var approvedContributors = _contributorRepository.Find(c => c.StatusId == 2).ToList();
+        //    Guid[] idList = approvedContributors.Select(c => c.Id).ToArray();
+          
+           
+        //    var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+        //    List<int> includeStatus = new List<int>() { 1, 2 }; //new or edited
+          
+        //    IQueryable<Recording> recordings;
+        //    if (userRole == "TextAnnotator")
+        //    {
+        //        var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
+        //        Guid[] annotatorAssignedContributorIdList = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == currentUser.Id)
+        //            .Select(u => u.ContributorId).ToArray();
+
+        //        recordings = _recordingRepository
+        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId)
+        //                       && annotatorAssignedContributorIdList.Contains(r.ContributorId))
+        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
+        //                || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Comment.Contains(searchValue)
+        //                || r.Id.ToString().Contains(searchValue))
+        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
+        //    }
+        //    else
+        //    {
+        //         recordings = _recordingRepository
+        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId))
+        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
+        //                || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Comment.Contains(searchValue)
+        //                || r.Id.ToString().Contains(searchValue))
+        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
+        //    }
+
+           
+
+        //    var recordsTotal = recordings.Count();
+        //    var appName = _configuration["AppSettings:Environment"] switch
+        //    {
+        //        "Development" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Dev/",
+        //        "Test" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Test/",
+        //        _ => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Prod/"
+        //    };
+
+        //    recordings = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordings, Request.Form);
+
+        //    var recordingList = recordings.Skip(skip).Take(pageSize).Select(r => new Recording()
+        //    {
+        //        Id = r.Id,
+        //        OriginalPrompt = r.OriginalPrompt,
+        //        ModifiedTranscript = r.ModifiedTranscript,
+        //        CreateTS = r.CreateTS,
+        //        RetryCount = r.RetryCount,
+        //        Comment = r.Comment,
+        //        ContributorId = r.ContributorId,
+        //        BlockId = r.BlockId,
+        //        OriginalPromptId = r.OriginalPromptId,
+        //        SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName,
+        //        StartTime = r.StartTime,
+        //        EndTime = r.EndTime
+
+        //    });
+
+        //  return Json(new { draw, data = recordingList, recordsFiltered = recordsTotal, recordsTotal = recordsTotal });
+
+        //}
+
+        ////Published files page code
+        //[HttpPost]
+        //public ActionResult LoadPublishedSpeechFiles()
+        //{
+        //    var draw = Request.Form["draw"].FirstOrDefault();
+        //    var start = Request.Form["start"].FirstOrDefault();
+        //    var length = Request.Form["length"].FirstOrDefault();
+        //    var searchValue = Request.Form["search[value]"].FirstOrDefault();
+        //    int pageSize = length != null ? Convert.ToInt32(length) : 0;
+        //    int skip = start != null ? Convert.ToInt32(start) : 0;
+
+        //    var appName = _configuration["AppSettings:Environment"] switch
+        //    {
+        //        "Development" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Dev/",
+        //        "Test" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Test/",
+        //        _ => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Prod/"
+        //    };
+
+        //    IQueryable<Recording> recordings;
+        //    var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+        //    //return only recordings for approved contributors
+        //    var approvedContributors = _contributorRepository.Find(c => c.StatusId == 2).ToList();
+        //    Guid[] idList = approvedContributors.Select(c => c.Id).ToArray();
+
+        //    if (userRole == "TextAnnotator")
+        //    {
+        //        var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
+        //        Guid[] annotatorAssignedContributorIdList = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == currentUser.Id)
+        //            .Select(u => u.ContributorId).ToArray();
+
+        //        recordings = _recordingRepository
+        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 &&  r.StatusId==3 && annotatorAssignedContributorIdList.Contains(r.ContributorId))
+        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
+        //                || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Id.ToString().Contains(searchValue))
+        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
+        //    }
+        //    else
+        //    {
+        //        recordings = _recordingRepository
+        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && r.StatusId==3)
+        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
+        //                || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Id.ToString().Contains(searchValue))
+        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
+        //    }
+
+
+        //    var recordsTotal = recordings.Count();
+        //    recordings = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordings, Request.Form);
+
+        //    var recordingList = recordings.Skip(skip).Take(pageSize).Select(r => new Recording()
+        //    {
+        //        Id = r.Id,
+        //        OriginalPromptId = r.OriginalPromptId,
+        //        ContributorId = r.ContributorId,
+        //        OriginalPrompt = r.OriginalPrompt,
+        //        Status = r.Status,
+        //        Comment = r.Comment,
+        //        CreateTS = r.CreateTS,
+        //        ModifiedTranscript = string.IsNullOrEmpty(r.ModifiedTranscript) ? r.OriginalPrompt.Transcript : r.ModifiedTranscript,
+        //        FileName = r.FileName,
+        //        BlockId=r.BlockId,
+        //        SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId +  "/modified/" + r.FileName,
+        //        StartTime = r.StartTime,
+        //        EndTime = r.EndTime
+        //    });
+
+        //    //recordingList = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordingList, Request.Form);
+
+        //    return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = recordingList });
+        //}
 
         [HttpPost]
         public ActionResult AddCommentsForRecording(int recordingId, string comments)
@@ -352,7 +432,8 @@ namespace SpeechAccessibility.Annotator.Controllers
                 return Json(new { Success = false, Message = "Could not find the Recording" });
             }
 
-
+            if (recording.StatusId == 1)
+                recording.StatusId = 2;
             recording.ModifiedTranscript = transcript;
             recording.StartTime = startTime;
             recording.EndTime = endTime;
@@ -366,7 +447,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         [Authorize(Policy = "TextAnnotator")]
         [HttpPost]
-        public ActionResult PublishExcludeRecording(int recordingId,string comment,  string action)
+        public ActionResult UpdateStatusRecording(int recordingId,string comment,  string action)
         {
             
             var recording = _recordingRepository.Find(p => p.Id == recordingId).FirstOrDefault();
@@ -390,7 +471,6 @@ namespace SpeechAccessibility.Annotator.Controllers
             if (action is "edit" or "unpublish")
             {
                 recording.StatusId = 2;
-                //if(!string.IsNullOrEmpty(comment))
                 recording.Comment = comment;
                 recording.UpdateTS = DateTime.Now;
                 recording.LastUpdateBy = User.Identity.Name;
@@ -403,9 +483,6 @@ namespace SpeechAccessibility.Annotator.Controllers
             if (action == "exclude")
             {
                 recording.StatusId = 4;
-                //if(!string.IsNullOrEmpty(recording.Comment))
-                //    recording.Comment = recording.Comment + ";" + comment;
-                //else
                 recording.Comment = comment;
                 
                 recording.UpdateTS = DateTime.Now;
@@ -424,9 +501,20 @@ namespace SpeechAccessibility.Annotator.Controllers
                 return Json(new { Success = true, Message = "Speech File is published." });
 
             }
+            if (action == "toDiscuss")
+            {
+                recording.StatusId = 5;
+                recording.Comment = comment;
+                recording.UpdateTS = DateTime.Now;
+                recording.LastUpdateBy = User.Identity.Name;
+                _recordingRepository.Update(recording);
+                return Json(new { Success = true, Message = "Speech File is moved to To-Discuss list." });
 
+            }
             if (action == "editComments")
             {
+                if(recording.StatusId== 1)
+                    recording.StatusId = 2;
                 recording.Comment = comment;
                 recording.UpdateTS = DateTime.Now;
                 recording.LastUpdateBy = User.Identity.Name;
@@ -693,76 +781,80 @@ namespace SpeechAccessibility.Annotator.Controllers
             return View();
         }
 
-        [HttpPost]
-        public ActionResult LoadExcludedSpeechFiles()
+        public IActionResult ToDiscussSpeechFiles()
         {
-            var draw = Request.Form["draw"].FirstOrDefault();
-            var start = Request.Form["start"].FirstOrDefault();
-            var length = Request.Form["length"].FirstOrDefault();
-            var searchValue = Request.Form["search[value]"].FirstOrDefault();
-            int pageSize = length != null ? Convert.ToInt32(length) : 0;
-            int skip = start != null ? Convert.ToInt32(start) : 0;
-
-
-            var approvedContributors = _contributorRepository.Find(c => c.StatusId == 2).ToList();
-            Guid[] idList = approvedContributors.Select(c => c.Id).ToArray();
-            
-            var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-           
-            IQueryable<Recording> recordings;
-            if (userRole == "TextAnnotator")
-            {
-                var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
-                Guid[] annotatorAssignedContributorIdList = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == currentUser.Id)
-                    .Select(u => u.ContributorId).ToArray();
-
-                recordings = _recordingRepository
-                    .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && r.StatusId==4
-                               && annotatorAssignedContributorIdList.Contains(r.ContributorId))
-                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.OriginalPrompt.Category.Description.Contains(searchValue))
-                    .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
-            }
-            else
-            {
-                recordings = _recordingRepository
-                    .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && r.StatusId==4)
-                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.OriginalPrompt.Category.Description.Contains(searchValue))
-                    .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
-            }
-
-            //IQueryable<Recording> recording = _recordingRepository.Find(r => r.StatusId==4)
-            //    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.OriginalPrompt.Category.Description.Contains(searchValue))
-            //    .Include(r => r.OriginalPrompt).ThenInclude(p => p.Category);
-
-            var recordsTotal = recordings.Count();
-
-            var appName = _configuration["AppSettings:Environment"] switch
-            {
-                "Development" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Dev/",
-                "Test" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Test/",
-                _ => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Prod/"
-            };
-
-            recordings = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordings, Request.Form);
-
-            var recordingList = recordings.Skip(skip).Take(pageSize).Select(r => new Recording()
-            {
-                Id = r.Id,
-                OriginalPromptId = r.OriginalPromptId,
-                ContributorId = r.ContributorId,
-                OriginalPrompt = r.OriginalPrompt,
-                Status = r.Status,
-                Comment = r.Comment,
-                CreateTS = r.CreateTS,
-                ModifiedTranscript = string.IsNullOrEmpty(r.ModifiedTranscript) ? r.OriginalPrompt.Transcript : r.ModifiedTranscript,
-                FileName = r.FileName,
-                SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName
-            });
-           
-
-            return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = recordingList });
-
+            return View();
         }
+        //[HttpPost]
+        //public ActionResult LoadExcludedSpeechFiles()
+        //{
+        //    var draw = Request.Form["draw"].FirstOrDefault();
+        //    var start = Request.Form["start"].FirstOrDefault();
+        //    var length = Request.Form["length"].FirstOrDefault();
+        //    var searchValue = Request.Form["search[value]"].FirstOrDefault();
+        //    int pageSize = length != null ? Convert.ToInt32(length) : 0;
+        //    int skip = start != null ? Convert.ToInt32(start) : 0;
+
+
+        //    var approvedContributors = _contributorRepository.Find(c => c.StatusId == 2).ToList();
+        //    Guid[] idList = approvedContributors.Select(c => c.Id).ToArray();
+
+        //    var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+
+        //    IQueryable<Recording> recordings;
+        //    if (userRole == "TextAnnotator")
+        //    {
+        //        var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
+        //        Guid[] annotatorAssignedContributorIdList = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == currentUser.Id)
+        //            .Select(u => u.ContributorId).ToArray();
+
+        //        recordings = _recordingRepository
+        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && r.StatusId==4
+        //                       && annotatorAssignedContributorIdList.Contains(r.ContributorId))
+        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.OriginalPrompt.Category.Description.Contains(searchValue))
+        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
+        //    }
+        //    else
+        //    {
+        //        recordings = _recordingRepository
+        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && r.StatusId==4)
+        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.OriginalPrompt.Category.Description.Contains(searchValue))
+        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
+        //    }
+
+        //    //IQueryable<Recording> recording = _recordingRepository.Find(r => r.StatusId==4)
+        //    //    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.OriginalPrompt.Category.Description.Contains(searchValue))
+        //    //    .Include(r => r.OriginalPrompt).ThenInclude(p => p.Category);
+
+        //    var recordsTotal = recordings.Count();
+
+        //    var appName = _configuration["AppSettings:Environment"] switch
+        //    {
+        //        "Development" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Dev/",
+        //        "Test" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Test/",
+        //        _ => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Prod/"
+        //    };
+
+        //    recordings = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordings, Request.Form);
+
+        //    var recordingList = recordings.Skip(skip).Take(pageSize).Select(r => new Recording()
+        //    {
+        //        Id = r.Id,
+        //        OriginalPromptId = r.OriginalPromptId,
+        //        ContributorId = r.ContributorId,
+        //        OriginalPrompt = r.OriginalPrompt,
+        //        Status = r.Status,
+        //        Comment = r.Comment,
+        //        CreateTS = r.CreateTS,
+        //        ModifiedTranscript = string.IsNullOrEmpty(r.ModifiedTranscript) ? r.OriginalPrompt.Transcript : r.ModifiedTranscript,
+        //        FileName = r.FileName,
+        //        SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName
+        //    });
+
+
+        //    return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = recordingList });
+
+        //}
         public async Task<IActionResult> DownloadSpeechFile(int recordingId, string location)
         {
             var recording = _recordingRepository.Find(r => r.Id == recordingId).FirstOrDefault();
