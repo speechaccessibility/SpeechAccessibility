@@ -797,4 +797,9 @@ option
     font-size:20px;
 }
 
+#maintenanceMessage{
+    border:solid 1px;
+    padding:5px;
+}
+
 

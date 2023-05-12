@@ -35,41 +35,63 @@ $(function () {
         containerDiv.hidden = true;
     }
 
-    var categoryId = document.getElementById('categoryId').value;
-    var subCategoryId = document.getElementById('subCategoryId').value;
-    var phonationPromptCount = document.getElementById('phonationPromptCount').value;
-    var showOpenEndedMessage = 'false';
-    if (document.getElementById('showOpenEndedMessage') != null)
-    {
-        showOpenEndedMessage = document.getElementById('showOpenEndedMessage').value
-    }
-    var showSection1And2Message = 'false';
-    if (document.getElementById('showSection1And2Message') != null)
-    {
-        showSection1And2Message = document.getElementById('showSection1And2Message').value;
-    }
+        var categoryId = document.getElementById('categoryId').value;
+        var subCategoryId = document.getElementById('subCategoryId').value;
+        var phonationPromptCount = document.getElementById('phonationPromptCount').value;
+        var showOpenEndedMessage = 'false';
 
-    if (categoryId == 1 && subCategoryId == 5) {
-        var subCategory5Message = document.getElementById('subCategory5Message');
-        subCategory5Message.showModal();
-    }
-    else if (categoryId == 1 && subCategoryId == 4 && phonationPromptCount == 0)
-    {
-        var subCategory4Message = document.getElementById('subCategory4Message')
-        subCategory4Message.showModal();
-    }
-    if (showOpenEndedMessage=='true')
-    {
-        var openEndedMessage = document.getElementById('openEndedMessage');
-        openEndedMessage.showModal();
-    }   
-    if (showSection1And2Message == 'true')
-    {
-        var section1AndTwoMessage = document.getElementById('section1And2Message');
-        section1AndTwoMessage.showModal();
-    }
- 
+        if (document.getElementById('showOpenEndedMessage') != null) {
+            showOpenEndedMessage = document.getElementById('showOpenEndedMessage').value
+        }
+        var showSection1And2Message = 'false';
+        if (document.getElementById('showSection1And2Message') != null) {
+            showSection1And2Message = document.getElementById('showSection1And2Message').value;
+        }
+
+        if (categoryId == 1 && subCategoryId == 5) {
+            var subCategory5Message = document.getElementById('subCategory5Message');
+            if (!subCategory5Message.open) {
+                subCategory5Message.showModal();
+            }
+
+        }
+        else if (categoryId == 1 && subCategoryId == 4 && phonationPromptCount == 0) {
+            var subCategory4Message = document.getElementById('subCategory4Message')
+            if (!subCategory4Message.open) {
+                subCategory4Message.showModal();
+            }
+
+        }
+        if (showOpenEndedMessage == 'true') {
+            var openEndedMessage = document.getElementById('openEndedMessage');
+            if (!openEndedMessage.open) {
+                openEndedMessage.showModal();
+            }
+
+
+        }
+        if (showSection1And2Message == 'true') {
+            var section1AndTwoMessage = document.getElementById('section1And2Message');
+            if (!section1AndTwoMessage.open) {
+                section1AndTwoMessage.showModal();
+            }
+
+        } 
+
 });
+
+function compareEmails() {
+    var email = document.getElementById('contributorEmail').value;
+    var compareEmail = document.getElementById('compareEmail').value;
+    var emailValidation = document.getElementById('confirmEmailValidation');
+
+    if (email.toUpperCase() != compareEmail.toUpperCase()) {
+        emailValidation.innerHTML = "The email and confirmation email do not match."
+    }
+    else {
+        emailValidation.innerHTML = ""
+    }
+}
 
 function supports_dialog() {
     return document.createElement('dialog').getContext;

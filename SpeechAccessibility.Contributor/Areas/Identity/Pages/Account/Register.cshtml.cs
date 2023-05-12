@@ -173,6 +173,8 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Display(Name = "Email")]
             public string Email { get; set; }
 
+             public string ConfirmEmail { get; set; }
+
             [Required]
             [Display(Name = "Helper Indicator")]
             public string HelperInd { get; set; }
@@ -219,6 +221,14 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 {
                     ModelState.AddModelError("helperEmailValidation", "Helper email is required.");
                 }
+                else 
+                {
+                    if (Input.HelperEmail.Equals(Input.Email, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ModelState.AddModelError("helperEmailValidation", "Helper email must be different than the participant's email.");
+                    }
+                }
+
                 if (String.IsNullOrEmpty(Input.HelperFirstName))
                 {
                     ModelState.AddModelError("helperFirstNameValidation", "Helper first name is required.");
@@ -227,10 +237,17 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 {
                     ModelState.AddModelError("helperLastNameValidation", "Helper last name is required.");
                 }
+                
             }
-            
+
             if (ModelState.IsValid)
             {
+
+                if (!Input.Email.Equals(Input.ConfirmEmail, StringComparison.OrdinalIgnoreCase))
+                {
+                    ModelState.AddModelError("confirmEmailValidation", "The email and confirmation email do not match.");
+                    return Page();
+                }
                 if (unqualifiedStates.Contains(Input.state) || "No".Equals(Input.eighteenOrOlderInd))
                 {
                     return RedirectToPage("./Unqualified");

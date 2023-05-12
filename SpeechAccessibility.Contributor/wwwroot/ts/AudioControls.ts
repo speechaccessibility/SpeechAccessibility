@@ -406,7 +406,15 @@ export class AudioControls {
 							(error) => {
 								let msg = `startRecording error: ${error.message}.`
 								console.log(msg)
-								throw new Error(msg)
+								document.dispatchEvent(
+									new CustomEvent(
+										'AudioControls.Error',
+										{
+											'detail': error.stack
+										}
+									)
+								)
+								
 							}
 						)
 					}
@@ -421,7 +429,7 @@ export class AudioControls {
 						if (!this._isRecording) {
 							return false
 						}
-						this._mediaRecorder.stop();
+						this._mediaRecorder.stop()
 					}
 				)
 			}
@@ -518,7 +526,6 @@ export class AudioControls {
 						this.onStop()
 					}
 				);
-
 				//
 				// start recording here
 				this._mediaRecorder.start(this._recordingSampleRateMsec);
@@ -637,7 +644,7 @@ export class AudioControls {
 							.encodeWavFileFromAudioBuffer(
 								buffer,
 								WavFileEncoder.WavFileType.float32
-							)
+						)
 
 						document.getElementById(
 							this._recordStopButtonId

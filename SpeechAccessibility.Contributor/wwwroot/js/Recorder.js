@@ -36,7 +36,20 @@ $(function () {
      recording_interface()
 
     } catch (e) {
-        console.log(`main: ${e}`);
+        console.log(`main: ${e}`);   
+        let myData = new FormData()
+
+        myData.set(
+            'error', e.stack
+        )
+        $.ajax({
+            url: '/Home/LogError',
+            type: 'POST',
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: myData,
+        })
     }
     
 });
@@ -96,7 +109,8 @@ function recording_interface() {
                 }           
                 recordingStatus.innerHTML = "Recording Stopped"
                 event.stopPropagation()
-                event.preventDefault()         
+                event.preventDefault()  
+                
 
                 //send the recording to the controller to be saved
                 var contributorId = document.getElementById('contributorId').value;
@@ -134,7 +148,7 @@ function recording_interface() {
                     filename
                 )
 
-                myAudioControls
+
                 myData.set('filename', filename)
 
                 myData.set('contributorId', contributorId);
@@ -153,31 +167,69 @@ function recording_interface() {
                 ////
                 processRecording(my_url, myData, retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton);
 
+
                 myAudioControls = new AudioControls(codec,
                     'recordButton',
                     undefined,
                     'waveform', "black", "white", 120000);
-
             }
         )     
         recordButton.addEventListener(
             'AudioControls.RecordingTimeExceeded',
-            (event) => {
-                //alert('Recording has met the max time limit. You may proceed to the next prompt. ');
+            (event) => {               
                 document.getElementById('maxTimeDialog').showModal();
             })
 
         document.addEventListener('AudioControls.Error',
             (event) => {
                 var errorDiv = document.getElementById('errorDiv');
-                if ('Permission denied' == event.detail) {                  
+
+                var recordError = false;
+                if ('Permission denied' == event.detail || (event.detail != null && event.detail.includes('The request is not allowed by the user agent or the platform in the current context')))
+                {                  
                     errorDiv.innerHTML = 'Microphone is blocked. Please allow the microphone access in your browser settings and reload the page.'
+                }
+                else if ('Requested device not found' == event.detail || 'The object can not be found here.' == event.detail)
+                {
+                    errorDiv.innerHTML = 'No audio input devices found. Please attach a microphone and reload this page.'
+                }
+                else if (event.detail != null && event.detail.includes('There was an error starting the MediaRecorder'))
+                {
+                    recordError = true;
                 }
                 else {
                     errorDiv.innerHTML = 'Error: ' + event.detail + '<br/> You may contact speechaccessibility@beckman.illinois.edu for assistance.'
                 }
-                var containerDiv = document.getElementById("container");
-                containerDiv.hidden = true;
+                if (!recordError)
+                {
+                    var containerDiv = document.getElementById("container");
+                    containerDiv.hidden = true;
+
+                    const dialog = document.querySelector('dialog[open]')
+                    if (dialog != null) {
+                        dialog.close();
+                    } 
+                }               
+
+                let myData = new FormData()
+                var contributorId = document.getElementById('contributorId').value;
+                var errorMessage = "";
+                if (contributorId != null) {
+                   errorMessage= contributorId + " ";
+                } 
+                errorMessage += event.detail;
+                myData.set(
+                    'error', errorMessage
+                )
+                $.ajax({
+                    url: '/Home/LogError',
+                    type: 'POST',
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    data: myData,
+                })
+
             })
 
         let codec = isBrowserSupported();
@@ -187,9 +239,8 @@ function recording_interface() {
             undefined,
             'waveform', "black", "white", 120000);
 
-
-
         const other_thing = 4;
+
     } catch (e) {
         throw `permissions.query: ${e}`;
     }
@@ -201,6 +252,7 @@ function delay(time) {
 
 async function processRecording(my_url, myData, retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton) {
 
+    try {
     var saveDiv = document.getElementById('saveDiv');
     saveDiv.style.display = "block";
     button.attr('hidden', true)
@@ -208,12 +260,27 @@ async function processRecording(my_url, myData, retryCount, categoryId, subCateg
     await postRecording(my_url, myData,retryCount,categoryId);
 
     updateButtons(retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton,saveDiv);
-}
+    } catch (e) {
+        let myData = new FormData()
+
+        myData.set(
+            'error', e.stack
+        )
+        $.ajax({
+            url: '/Home/LogError',
+            type: 'POST',
+            cache: false,
+            contentType: false,
+            processData: false,
+            data: myData,
+        })
+
+    }
+    }
 
    async function postRecording(my_url,myData,retryCount,categoryId) {
     let result;
 
-    try {
         result = await $.ajax({
             url: my_url,
             type: 'POST',
@@ -235,10 +302,7 @@ async function processRecording(my_url, myData, retryCount, categoryId, subCateg
         }).done(function () { return result; })
 
         return result;
-
-    } catch (error) {
-        console.error(error);
-    }
+    
 }
 
 function updateButtons(retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton,saveDiv) {
@@ -264,7 +328,7 @@ function updateButtons(retryCount, categoryId, subCategoryId, button, rerecordMe
         button.hide();
         rerecordMessage.innerText = '';       
 
-    }    
+    }   
     
 }
 
