@@ -17,6 +17,8 @@ using SpeechAccessibility.Data;
 using System.Text;
 using Microsoft.AspNetCore.Http;
 using UAParser;
+using System.IO;
+using Microsoft.Extensions.Configuration;
 
 namespace SpeechAccessibility.Areas.Identity.Pages.Account
 {
@@ -27,16 +29,19 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
         private readonly IdentityContext _identityContext;
+        private readonly IConfiguration _config;
+
 
         public LoginModel(SignInManager<IdentityUser> signInManager, 
             ILogger<LoginModel> logger,
             UserManager<IdentityUser> userManager,
-            IdentityContext identityContext)
+            IdentityContext identityContext,IConfiguration config)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _identityContext = identityContext;
+            _config = config;
         }
 
         [BindProperty]
@@ -93,59 +98,76 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                // This doesn't count login failures towards account lockout
-                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-                if (result.Succeeded)
-                {
-                  
-                    Task<IdentityUser> current_User = _signInManager.UserManager.FindByNameAsync(Input.Email);
-                    IdentityUser user = current_User.Result;
-                    string id = user.Id;
-
-                    if (Input.RememberMe)
-
+                try {
+                    // This doesn't count login failures towards account lockout
+                    // To enable password failures to trigger account lockout, set lockoutOnFailure: true
+                    var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                    if (result.Succeeded)
                     {
-                        var cookieOptions = new CookieOptions
+                        Task <IdentityUser> current_User = _signInManager.UserManager.FindByNameAsync(Input.Email);
+                        IdentityUser user = current_User.Result;
+                        string id = user.Id;
+
+                        if (Input.RememberMe)
+
                         {
-                            Expires = DateTime.UtcNow.AddDays(30)
-                        };
+                            var cookieOptions = new CookieOptions
+                            {
+                                Expires = DateTime.UtcNow.AddDays(30)
+                            };
 
-                        Response.Cookies.Append("SAAEmail", Input.Email, cookieOptions);
+                            Response.Cookies.Append("SAAEmail", Input.Email, cookieOptions);
+                        }
+
+
+                        //Retrieve the contributor that is linked to the signed in user ID
+                        bool changePassword = _identityContext.Contributor
+                           .Where(o => o.IdentityUser.Id == id).Select(c => c.ChangePassword).FirstOrDefault();
+
+                        if (changePassword)
+                        {
+                            string code = await _userManager.GeneratePasswordResetTokenAsync(user);
+                            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+                            return RedirectToPage("./ResetPassword", new { code = code, Email = Input.Email, LoggedIn = true });
+                        }
+                        _logger.LogInformation("User logged in.");
+
+                        InsertLoginSession(id);
+
+                        return RedirectToAction("RecordPrompt");
                     }
-                                     
-
-                    //Retrieve the contributor that is linked to the signed in user ID
-                    bool changePassword = _identityContext.Contributor
-                       .Where(o => o.IdentityUser.Id == id).Select(c => c.ChangePassword).FirstOrDefault();
-
-                    if (changePassword)
+                    if (result.RequiresTwoFactor)
                     {
-                        string code = await _userManager.GeneratePasswordResetTokenAsync(user);
-                        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                       
-                        return RedirectToPage("./ResetPassword", new { code = code, Email = Input.Email, LoggedIn=true});
+                        return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
                     }
-                    _logger.LogInformation("User logged in.");
+                    if (result.IsLockedOut)
+                    {
+                        _logger.LogWarning("User account locked out.");
+                        return RedirectToPage("./Lockout");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                        return Page();
+                    }
 
-                    InsertLoginSession(id);
+                }
+                catch(Exception ex) {
+                    string date = DateTime.Now.ToString("yyyy-MM-dd");
+                    string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
 
-                    return RedirectToAction("RecordPrompt");
-                }
-                if (result.RequiresTwoFactor)
-                {
-                    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-                }
-                if (result.IsLockedOut)
-                {
-                    _logger.LogWarning("User account locked out.");
-                    return RedirectToPage("./Lockout");
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    Directory.CreateDirectory(Path.GetDirectoryName(fileLocation));
+                    using (StreamWriter writer = new StreamWriter(fileLocation, true))
+                    {
+                        string error = DateTime.Now.ToString() + "Login error for " + Input.Email + ": " + ex;
+                        writer.WriteLine(error);
+                        writer.Close();
+                    }
+                    ModelState.AddModelError(string.Empty, " Login attempt failed.");
                     return Page();
                 }
+                
             }
 
             // If we got this far, something failed, redisplay form

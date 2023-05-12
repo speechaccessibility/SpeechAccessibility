@@ -70,12 +70,30 @@ namespace SpeechAccessibility.Controllers
 
         public IActionResult Index()
         {
+            DateTime currentDate = DateTime.Now;
+            ViewBag.MaintenanceMessage = _recordingContext.Maintenance.Where(m => m.StartDate <= currentDate && m.EndDate >= currentDate).Where(m=>m.ContributorInd==true).Select(m=>m.Message).FirstOrDefault();
             return View();
         }
 
         public IActionResult Privacy()
         {
             return View();
+        }
+
+        [HttpPost]
+        public void LogError(IFormCollection form)
+        {
+            string errorMessage = form["error"]; 
+            string date = DateTime.Now.ToString("yyyy-MM-dd");
+            string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
+
+            Directory.CreateDirectory(Path.GetDirectoryName(fileLocation));
+            using (StreamWriter writer = new StreamWriter(fileLocation, true))
+            {
+                string error = DateTime.Now.ToString() + " " + errorMessage;
+                writer.WriteLine(error);
+                writer.Close();
+            }
         }
 
         [HttpPost]
@@ -91,11 +109,12 @@ namespace SpeechAccessibility.Controllers
             {
                 string date = DateTime.Now.ToString("yyyy-MM-dd");
                 string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
+                Guid contributorId = new Guid(form["contributorId"]);
 
                 Directory.CreateDirectory(Path.GetDirectoryName(fileLocation));
                 using (StreamWriter writer = new StreamWriter(fileLocation, true))
                 {
-                    string error = DateTime.Now.ToString() + e;
+                    string error = DateTime.Now.ToString() + " " + contributorId + " " + e;
                     writer.WriteLine(error);
                     writer.Close();
                 }

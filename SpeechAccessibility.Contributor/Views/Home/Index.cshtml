@@ -8,10 +8,14 @@
 <br />
 
     <div class="col-lg-10" style="margin:auto">
+    @if (ViewBag.MaintenanceMessage != null)
+    {
+        <p id="maintenanceMessage" class="text-danger"><strong>@ViewBag.MaintenanceMessage</strong></p>
+    }
         <p>
             The Speech Accessibility Project seeks to make speech technology more
             useful for people with diverse speech patterns and disabilities.
-            Thanks for your interest in participating.
+        Thanks for your interest in participating. We are recruiting U.S. residents over the age of 18.
         If you’d like to participate, you must <a asp-area="Identity" asp-page="/Account/Screening">sign up</a> for an account.
        </p>
             <p>If you have Parkinson’s (including PSP, CBD, MSA and post-DBS), we’ll have a mentor from <a href="https://www.lsvtglobal.com/">LSVT Global</a> contact you. That individual will evaluate your speech to see if you qualify for our project. If you do, they’ll guide you through our informed consent process and help you get started.</p>

@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using SpeechAccessibility.Data;
+using SpeechAccessibility.Models;
 
 namespace SpeechAccessibility.Areas.Identity.Pages.Account.Manage
 {
@@ -18,15 +20,17 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account.Manage
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IEmailSender _emailSender;
+        private readonly IdentityContext _context;
 
         public EmailModel(
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
-            IEmailSender emailSender)
+            IEmailSender emailSender, IdentityContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailSender = emailSender;
+            _context= context;
         }
 
         public string Username { get; set; }
@@ -91,19 +95,24 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account.Manage
             var email = await _userManager.GetEmailAsync(user);
             if (Input.NewEmail != email)
             {
-                var userId = await _userManager.GetUserIdAsync(user);
-                var code = await _userManager.GenerateChangeEmailTokenAsync(user, Input.NewEmail);
-                var callbackUrl = Url.Page(
-                    "/Account/ConfirmEmailChange",
-                    pageHandler: null,
-                    values: new { userId = userId, email = Input.NewEmail, code = code },
-                    protocol: Request.Scheme);
-                await _emailSender.SendEmailAsync(
-                    Input.NewEmail,
-                    "Confirm your email",
-                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                //var userId = await _userManager.GetUserIdAsync(user);
+                //var code = await _userManager.GenerateChangeEmailTokenAsync(user, Input.NewEmail);
+                //var callbackUrl = Url.Page(
+                //    "/Account/ConfirmEmailChange",
+                //    pageHandler: null,
+                //    values: new { userId = userId, email = Input.NewEmail, code = code },
+                //    protocol: Request.Scheme);
+                //await _emailSender.SendEmailAsync(
+                //    Input.NewEmail,
+                //    "Confirm your email",
+                //    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-                StatusMessage = "Confirmation link to change email sent. Please check your email.";
+                await _userManager.SetEmailAsync(user, Input.NewEmail);
+                await _userManager.SetUserNameAsync(user, Input.NewEmail);
+                Contributor contributor = _context.Contributor.Where(c => c.IdentityUser == user).FirstOrDefault();
+                contributor.EmailAddress = Input.NewEmail;
+                _context.SaveChanges();
+                StatusMessage = "Email has been successfully updated";
                 return RedirectToPage();
             }
 

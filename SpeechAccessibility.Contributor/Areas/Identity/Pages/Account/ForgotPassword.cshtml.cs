@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using SpeechAccessibility.Models;
 using SpeechAccessibility.Services;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace SpeechAccessibility.Areas.Identity.Pages.Account
 {
@@ -20,11 +22,13 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IMailService _emailSender;
+        private readonly IConfiguration _config;
 
-        public ForgotPasswordModel(UserManager<IdentityUser> userManager, IMailService emailSender)
+        public ForgotPasswordModel(UserManager<IdentityUser> userManager, IMailService emailSender, IConfiguration config)
         {
             _userManager = userManager;
             _emailSender = emailSender;
+            _config = config;
         }
 
         [BindProperty]
@@ -41,10 +45,21 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         {
             if (ModelState.IsValid)
             {
+                string date = DateTime.Now.ToString("yyyy-MM-dd");
+                string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
+
+                Directory.CreateDirectory(Path.GetDirectoryName(fileLocation));
+
                 var user = await _userManager.FindByEmailAsync(Input.Email);
                 //if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
                 if (user == null)
                  {
+                    using (StreamWriter writer = new StreamWriter(fileLocation, true))
+                    {
+                        string error = DateTime.Now.ToString() + " " + Input.Email + " not found. Reset password email not sent.";
+                        writer.WriteLine(error);
+                        writer.Close();
+                    }
                     // Don't reveal that the user does not exist or is not confirmed
                     return RedirectToPage("./ForgotPasswordConfirmation");
                 }
@@ -59,11 +74,18 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                     values: new { area = "Identity", code },
                     protocol: Request.Scheme);
 
-                await _emailSender.SendEmailAsync(
-                    Input.Email,
-                    "Reset Password",
-                    $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+                using (StreamWriter writer = new StreamWriter(fileLocation, true))
+                {
+                    string message = DateTime.Now.ToString() + " Sending reset password email to " + Input.Email;
+                    writer.WriteLine(message);
+                    writer.Close();
+                }
 
+                await _emailSender.SendEmailAsync(
+                   Input.Email,
+                   "Reset Password",
+                   $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+               
                 return RedirectToPage("./ForgotPasswordConfirmation");
             }
 

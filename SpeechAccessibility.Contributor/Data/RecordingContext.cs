@@ -27,6 +27,8 @@ namespace SpeechAccessibility
         public DbSet<BlockOfDigitalCommandPrompts> BlockOfDigitalCommandPrompts { get; set; }
         public DbSet<Category> Category { get; set; }
 
+        public DbSet<Maintenance> Maintenance { get; set; }
+
         public DbSet<BlockMasterOfPrompts> BlockMasterOfPrompts {get;set;}
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

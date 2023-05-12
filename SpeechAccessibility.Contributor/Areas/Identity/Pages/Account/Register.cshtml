@@ -48,9 +48,9 @@
     </div>
     <div class="form-row">
         <span style="color:red">*</span>
-        <div class="form-group col-md-5">
+        <div class="form-group col-md-6">
             <div class="form-group">
-                <label for="Input_state">What state do you live in?</label>
+                <label for="Input_state">What state do you live in?<br /> (We are currently recruiting U.S. residents only.)</label>
                 <select  asp-for="Input.state" asp-items="@Model.stateList" data-dropup-auto="false">
                     <option value="" selected>Please Select</option>
                 </select>
@@ -87,9 +87,17 @@
         <div class="form-group col-sm-4">
 
             <label asp-for="Input.Email"><span style="color:red">*</span>Email</label>
-            <input  asp-for="Input.Email" class="form-control" />
+            <input id="contributorEmail" asp-for="Input.Email" class="form-control" onkeyup="compareEmails()" />
             <span asp-validation-for="Input.Email" class="text-danger"></span>
         </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-sm-4">
+
+            <label asp-for="Input.ConfirmEmail"><span style="color:red">*</span>Confirm Email</label>
+            <input id="compareEmail" asp-for="Input.ConfirmEmail" class="form-control" onkeyup="compareEmails()" />
+            <span id="confirmEmailValidation" asp-validation-for="Input.ConfirmEmail" class="text-danger"></span>
+    </div>
 
     </div>
     <div class="form-row">
