@@ -68,7 +68,7 @@
                     "datatype": "json"
                 }),
                 "bAutoWidth": false,
-                "aaSorting": [[2, 'asc']],
+                "aaSorting": [[3, 'desc']],
                 "columns": [
                     {
                         "title": "ID",
@@ -94,14 +94,32 @@
                         "visible": true,
                         "name": "Category.Description"
                     },
-                        {
-                            "title": "InUsed",
-                            "data": "inUsed",
-                            "searchable": true,
-                            "orderable": true,
-                            "visible": false,
-                            "name": "InUsed"
-                        },
+                    {
+                        "title": "DateAdded",
+                        "data": "createTS",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": true,
+                        "name": "CreateTS",
+                        'render': function (data) {
+                            if (data != null) {
+                                var date = new Date(data);
+                                var month = date.getMonth() + 1;
+                                return (month.toString().length > 1 ? month : "0" + month) + "/" + date.getDate() + "/" + date.getFullYear() + "&nbsp;" + (date.getHours() < 10 ? ("0" + date.getHours()) : date.getHours()) + ":" + (date.getMinutes() < 10 ? ("0" + date.getMinutes()) : date.getMinutes());
+
+                            }
+                            return '';
+                        }
+
+                    },
+                    {
+                        "title": "InUsed",
+                        "data": "inUsed",
+                        "searchable": true,
+                        "orderable": true,
+                        "visible": false,
+                        "name": "InUsed"
+                    },
 
                     {
                         "title": "Actions",
@@ -138,15 +156,7 @@
                         }
                                
                     }
-                    //,
-                    //    {
-                    //        "title": "Active",
-                    //        "data": "active",
-                    //        "searchable": true,
-                    //        "orderable": true,
-                    //        "visible": true,
-                    //        "name": "Active"
-                    //    }
+                   
                 ],
                 "ordering": true,
                 "paging": true,

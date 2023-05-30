@@ -1,7 +1,4 @@
 ﻿@using System.Security.Claims
-@{
-    ViewData["Title"] = "Excluded Speech Files";
-}
 
 @{
     ViewBag.Title = "Excluded Speech Files";
@@ -44,18 +41,16 @@
     </p>
 </div>
 
-<div id="exclude-dialog" style="display: none">
+<div id="updateStatus-dialog" style="display: none">
     <p>
-        <input type="hidden" id="hidExcludeRecordingId" />
+        <input type="hidden" id="hidUpdateStatusRecordingId" />
         <span class="ui-icon ui-icon-alert" style="float: left; margin: 0 7px 20px 0;"></span>
-        <label id="lblExcludeMessage">Are you sure to exclude this speech file?</label><br />
-        <b>ContributorID: </b><label id="lblExcludeContributorId" name="lblExcludeContributorId"></label><br />
-        <b>Transcript: </b><label id="lblExcludeTranscript" name="lblExcludeTranscript"></label>
-        <br />
-        <b>Comments:</b><br/><textarea id="txtExcludeComment" name="txtExcludeComment" rows="4" cols="50"></textarea>
+        <label id="lblUpdateStatusMessage">Are you sure to update status for this speech file?</label><br />
+        <b>ContributorID: </b><label id="lblUpdateStatusContributorId" name="lblUpdateStatusContributorId"></label><br />
+        <b>Transcript: </b><label id="lblUpdateStatusTranscript" name="lblUpdateStatusTranscript"></label>
+        <br /><b>Comments:</b><br /><textarea id="txtUpdateStatusComment" name="txtUpdateStatusComment" rows="4" cols="50"></textarea>
     </p>
 </div>
-
 
 
 
@@ -65,7 +60,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
     <script src="~/js/listenrecording.js"></script>
-    <script src="~/js/popupdialog.js"></script>
+    <script src="~/js/SpeechFile.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
 
@@ -81,7 +76,10 @@
                     "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
                         "<'row'<'col-sm-12'tr>>p",
                     "ajax": ({
-                        "url": '@Url.Action("LoadExcludedSpeechFiles", "SpeechFile")',
+                        "url": '@Url.Action("LoadSpeechFiles", "SpeechFile")',
+                        data: {
+                            "recordingStatus": 4
+                        },
                         "type": "POST",
                         "datatype": "json"
                     }),
@@ -204,23 +202,19 @@
                     $(selectedRowData).addClass('selected');
                 }
 
-                clearExcludedInputFields();
-                $("#hidExcludeRecordingId").val(row.id);
-                $("#lblExcludeTranscript").text(row.modifiedTranscript);
-                $("#lblExcludeContributorId").text(row.contributorId);
-                $("#txtExcludeComment").val(row.comment);
-                openDialogForRecording($("#exclude-dialog"), "Un-Exclude Speech File", $("#hidExcludeRecordingId"), $("#txtExcludeComment"), "edit", '@Url.Action("PublishExcludeRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+                $('#lblUpdateStatusMessage').text("Are you sure you want to exclude this speech file?");
+                $("#hidUpdateStatusRecordingId").val(row.id);
+                $("#lblUpdateStatusTranscript").text(row.modifiedTranscript);
+                $("#lblUpdateStatusContributorId").text(row.contributorId);
+                $("#txtUpdateStatusComment").val(row.comment);
 
-                $("#exclude-dialog").dialog('open');
+                UpdateRecordingStatus($("#updateStatus-dialog"), "Un-Exclude Speech File", "edit", '@Url.Action("UpdateStatusRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+                $("#updateStatus-dialog").dialog('open');
+
                 return false;
             });
             
-            function clearExcludedInputFields() {
-                $("#hidExcludeRecordingId").val("");
-                $("#lblExcludeTranscript").text("");
-                $("#lblExcludeContributorId").text("");
-                $("#txtExcludeComment").val("")
-            }
+    
         
             //edit comments
             $('#SpeechFileTable').on('click', 'a.editComment', function (e) {
@@ -228,14 +222,16 @@
                 e.preventDefault();
                 var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
-                clearExcludedInputFields();
-                $("#hidExcludeRecordingId").val(row.id);
-                $("#lblExcludeTranscript").text(row.modifiedTranscript);
-                $("#lblExcludeContributorId").text(row.contributorId);
-                $("#txtExcludeComment").val(row.comment);
-                openDialogForRecording($("#exclude-dialog"), "Edit Comments", $("#hidExcludeRecordingId"), $("#txtExcludeComment"), "editComments", '@Url.Action("PublishExcludeRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+               
+                $('#lblUpdateStatusMessage').text("Edit Comments for Speech File");
+                $("#hidUpdateStatusRecordingId").val(row.id);
+                $("#lblUpdateStatusTranscript").text(row.modifiedTranscript);
+                $("#lblUpdateStatusContributorId").text(row.contributorId);
+                $("#txtUpdateStatusComment").val(row.comment);
 
-                $("#exclude-dialog").dialog('open');
+                UpdateRecordingStatus($("#updateStatus-dialog"), "Edit Comments for Speech File", "editComments", '@Url.Action("UpdateStatusRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+                $("#updateStatus-dialog").dialog('open');
+
                 return false;
             });
 

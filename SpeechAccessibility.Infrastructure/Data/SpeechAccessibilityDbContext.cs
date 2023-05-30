@@ -24,6 +24,8 @@ namespace SpeechAccessibility.Infrastructure.Data
         public DbSet<ContributorAssignedAnnotator> ContributorAssignedAnnotator { get; set; }
         public DbSet<ContributorAssignedBlock> ContributorAssignedBlock { get; set; }
         public DbSet<ContributorCompensation> ContributorCompensation { get; set; }
+        public DbSet<ContributorFollowUp> ContributorFollowUp { get; set; }
+        public  DbSet<EmailLogging> EmailLogging { get; set; }
         public DbSet<Recording> Recording { get; set; }
         public DbSet<RecordingRating> RecordingRating { get; set; }
         public DbSet<Prompt> Prompt { get; set; }
@@ -47,6 +49,8 @@ namespace SpeechAccessibility.Infrastructure.Data
             builder.Entity<ContributorAssignedAnnotator>(ConfigureContributorAssignedAnnotator);
             builder.Entity<ContributorAssignedBlock>(ConfigureContributorAssignedBlock);
             builder.Entity<ContributorCompensation>(ConfigureContributorCompensation);
+            builder.Entity<ContributorFollowUp>(ConfigureContributorFollowUp);
+            builder.Entity<EmailLogging>(ConfigureEmailLogging);
             builder.Entity<Recording>(ConfigureRecording);
             builder.Entity<RecordingRating>(ConfigureRecordingRating);
             builder.Entity<Prompt>(ConfigurePrompt);
@@ -237,6 +241,13 @@ namespace SpeechAccessibility.Infrastructure.Data
                 .HasForeignKey(d => d.BlockId);
         }
 
+        private void ConfigureContributorFollowUp(EntityTypeBuilder<ContributorFollowUp> entity)
+        {
+            entity.Property(e => e.EmailContent).HasColumnType("text");
+
+            entity.Property(e => e.SendTS)
+                .HasColumnType("datetime");
+        }
         private void ConfigureContributorCompensation(EntityTypeBuilder<ContributorCompensation> entity)
         {
             entity.HasIndex(e => e.ContributorId)
@@ -248,6 +259,19 @@ namespace SpeechAccessibility.Infrastructure.Data
             entity.Property(e => e.SendSecondCard).HasColumnType("datetime");
 
             entity.Property(e => e.SendThirdCard).HasColumnType("datetime");
+        }
+
+        private void ConfigureEmailLogging(EntityTypeBuilder<EmailLogging> entity)
+        {
+            entity.Property(e => e.Message).HasColumnType("text");
+            entity.Property(e=>e.Error).HasColumnType("text");
+            entity.Property(e => e.SendBy).HasMaxLength(50);
+
+            entity.Property(e => e.SendTS)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getdate())");
+
+            entity.Property(e => e.Subject).HasMaxLength(200);
         }
 
 

@@ -9,5 +9,6 @@ namespace SpeechAccessibility.Annotator.Models
         public  int NumberAssignBlocks { get; set; }
         public DateTime? LastRecording { get; set; }
         public  string AnnotatorAssigned { get; set; }
+        public string FollowUpDate { get; set; }
     }
 }

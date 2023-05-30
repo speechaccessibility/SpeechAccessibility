@@ -46,7 +46,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         public IActionResult ViewAnnotatorAssignedContributors()
         {
-            ViewBag.ExistingAnnotators =  _userRepository.Find(u => u.RoleId == 4 & u.Active == "Yes")
+            ViewBag.ExistingAnnotators = _userRepository.Find(u => u.RoleId == 4 & u.Active == "Yes")
                 .OrderBy(r => r.LastName).Select(u =>
                     new SelectListItem()
                     {
@@ -58,11 +58,11 @@ namespace SpeechAccessibility.Annotator.Controllers
             return View();
         }
 
-        
+
 
         public ActionResult GetAnnotatorAssignedContributors(int annotatorId)
         {
-            
+
             Guid[] assignedContributorIdList = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == annotatorId)
                 .Select(u => u.ContributorId).ToArray();
             //var assignedContributors = _contributorRepository.Find(c => assignedContributorIdList.Contains(c.Id));
@@ -70,57 +70,103 @@ namespace SpeechAccessibility.Annotator.Controllers
             var assignedContributors =
                 _contributorRepository.Find(c => assignedContributorIdList.Contains(c.Id)).ToList();
 
-            return assignedContributors.Any() ? Json(new { Counter = assignedContributors.Count, Contributors = assignedContributors }) : Json(new { Counter = 0});
+            return assignedContributors.Any() ? Json(new { Counter = assignedContributors.Count, Contributors = assignedContributors }) : Json(new { Counter = 0 });
         }
 
-        ////contributors report
+        //contributors report
         //public IActionResult ViewContributorsRecordingProgress()
         //{
         //    return View();
         //}
 
-    
-        //public ActionResult GetContributorsRecordingProgressforSelectedDates(DateTime? startdate, DateTime? enddate)
-        //{
-        //    var draw = Request.Form["draw"].FirstOrDefault();
-        //    if (startdate == null && enddate == null)
-        //    {
-        //        // Return all records
-        //        var contributorsProgress = _recordingRepository.GetAll().ToList();
-        //        var result = contributorsProgress
-        //            .GroupBy(cp => cp.ContributorId)
-        //            .Select(g => g.OrderByDescending(cp => cp.CreateTS).FirstOrDefault())
-        //            .OrderBy(cp => cp.ContributorId)
-        //            .Select(cp => new
-        //            {
-        //                cp.ContributorId,
-        //                cp.CreateTS,
-        //                BlockDescription = "b" + (cp.BlockId == null ? "0" : _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() ? _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "") : "0") + "-" + cp.OriginalPromptId
-        //            })
-        //            .ToList();
+
+        [HttpPost]
+        public ActionResult GetContributorsRecordingProgressforSelectedDates(DateTime? startdate, DateTime? enddate)
+        {
+            var draw = Request.Form["draw"].FirstOrDefault();
+            var searchValue = Request.Form["search[value]"].FirstOrDefault();
+            if (startdate == null && enddate == null)
+            {
+                // Return all records
+
+                var contributorsProgress = _recordingRepository.GetAll().ToList();
+                List<ContributorRecordingProgressViewModel> tempresult = new List<ContributorRecordingProgressViewModel>();
+   
+                var result = contributorsProgress
+                    .GroupBy(cp => cp.ContributorId)
+                    .Select(g => g.OrderByDescending(cp => cp.CreateTS).FirstOrDefault())
+                    .Where(cp =>
+                        cp.ContributorId.ToString().Contains(searchValue) ||
+                        cp.CreateTS.ToString("MM-dd-yyyy HH:mm").Contains(searchValue) ||
+                        ("b" + (cp.BlockId == null ? "0" : _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() ? _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "") : "0") + "-" + cp.OriginalPromptId).Contains(searchValue) 
+                        //|| (cp.BlockId != null && _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() &&
+                        //_blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "").Contains(searchValue)
+                        //|| cp.OriginalPromptId.ToString().Contains(searchValue))
+                    )
+                    .OrderBy(cp => cp.ContributorId)
+                    .Select(cp => new
+                    {
+                        cp.ContributorId,
+                        CreateTS = cp.CreateTS.ToString("MM-dd-yyyy HH:mm"),
+                        BlockDescription = "b" + (cp.BlockId == null ? "0" : _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() ? _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "") : "0") + "-" + cp.OriginalPromptId
+                    })
+                    .ToList();
+                foreach (var res in result)
+                {
+                    tempresult.Add(new ContributorRecordingProgressViewModel()
+                    {
+                        ContributorId = res.ContributorId,
+                        CreateTS = res.CreateTS,
+                        BlockDescription = res.BlockDescription
+                    });
 
 
-        //        return contributorsProgress.Any() ? Json(new { draw = draw, recordsFiltered = contributorsProgress.Count, recordsTotal = contributorsProgress.Count, data = result }) : Json(new { Counter = 0 });
-        //    }
-        //    else
-        //    {
-        //        Guid[] contributorProgressList = _recordingRepository.Find(c => c.CreateTS >= startdate && c.CreateTS <= enddate).Select(l => l.ContributorId).ToArray();
+                }
+                var tempList = DynamicSortingExtensions<ContributorRecordingProgressViewModel>.SetOrderByDynamic(tempresult.AsQueryable(), Request.Form);
+                return contributorsProgress.Any() ? Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = result.Count, data = tempList }) : Json(new { Counter = 0 });
+            }
+            else
+            {
+                Guid[] contributorProgressList = _recordingRepository.Find(c => c.CreateTS >= startdate && c.CreateTS <= enddate).Select(l => l.ContributorId).ToArray();
 
-        //        var contributorsProgress = _recordingRepository.Find(c => contributorProgressList.Contains(c.ContributorId)).ToList();
-        //        var result = contributorsProgress
-        //                      .GroupBy(cp => cp.ContributorId)
-        //                      .Select(g => g.OrderByDescending(cp => cp.CreateTS).FirstOrDefault())
-        //                      .OrderBy(cp => cp.ContributorId)
-        //                      .Select(cp => new {
-        //                          cp.ContributorId,
-        //                          cp.CreateTS,
-        //                          BlockDescription = "b" + (cp.BlockId == null ? "0" : _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() ? _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "") : "0") + "-" + cp.OriginalPromptId
-        //                      })
-        //                      .ToList();
+                var contributorsProgress = _recordingRepository.Find(c => contributorProgressList.Contains(c.ContributorId)).ToList();
+                List<ContributorRecordingProgressViewModel> tempresult = new List<ContributorRecordingProgressViewModel>();
+                var result = contributorsProgress
+                              .GroupBy(cp => cp.ContributorId)
+                              .Select(g => g.OrderByDescending(cp => cp.CreateTS).FirstOrDefault())
+                              .Where(cp =>
+                        cp.ContributorId.ToString().Contains(searchValue) ||
+                        cp.CreateTS.ToString("MM-dd-yyyy HH:mm").Contains(searchValue) ||
+                        ("b" + (cp.BlockId == null ? "0" : _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() ? _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "") : "0") + "-" + cp.OriginalPromptId).Contains(searchValue)
+                        //|| (cp.BlockId != null && _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() &&
+                        //_blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "").Contains(searchValue)
+                        //|| cp.OriginalPromptId.ToString().Contains(searchValue))
+                    )
+                              .OrderBy(cp => cp.ContributorId)
+                              .Select(cp => new
+                              {
+                                  cp.ContributorId,
+                                  CreateTS = cp.CreateTS.ToString("MM-dd-yyyy HH:mm"),
+                                  BlockDescription = "b" + (cp.BlockId == null ? "0" : _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() ? _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "") : "0") + "-" + cp.OriginalPromptId
+                              })
+                              .ToList();
 
-        //        return contributorsProgress.Any() ? Json(new { draw = draw, recordsFiltered = contributorsProgress.Count, recordsTotal = contributorsProgress.Count, data = result }) : Json(new { Counter = 0 });
-        //    }
-        //}
+                foreach (var res in result)
+                {
+                    tempresult.Add(new ContributorRecordingProgressViewModel()
+                    {
+                        ContributorId = res.ContributorId,
+                        CreateTS = res.CreateTS,
+                        BlockDescription = res.BlockDescription
+                    });
+
+
+                }
+                var tempList = DynamicSortingExtensions<ContributorRecordingProgressViewModel>.SetOrderByDynamic(tempresult.AsQueryable(), Request.Form);
+
+                return contributorsProgress.Any() ? Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = result.Count, data = tempList }) : Json(new { Counter = 0 });
+            }
+        }
 
         public ActionResult ViewDailyContributorSpeechFiles()
         {
@@ -136,9 +182,9 @@ namespace SpeechAccessibility.Annotator.Controllers
             var todayDate = DateTime.Now;
             for (var i = 1; i <= 30; i++)
             {
-                var newContributorIDs = _contributorRepository.Find(c => c.ApproveTS.Value.Date == todayDate.Date).Select(c => c.Id).ToList();
-                var newContributorRecordings = _recordingRepository.Find(r => newContributorIDs.Contains(r.ContributorId) && r.CreateTS.Date == todayDate.Date && r.BlockId >0);
-                var existingContributorIDs = _contributorRepository.Find(c => c.ApproveTS.Value.Date <= todayDate.Date).Select(c => c.Id).ToList();
+                var newContributorIDs = _contributorRepository.Find(c => DateTime.Compare(c.ApproveTS.Value.Date, todayDate.Date) == 0  && c.StatusId==2).Select(c => c.Id).ToList();
+                var newContributorRecordings = _recordingRepository.Find(r => newContributorIDs.Contains(r.ContributorId) && r.CreateTS.Date == todayDate.Date && r.BlockId > 0);
+                var existingContributorIDs = _contributorRepository.Find(c => c.ApproveTS.Value.Date < todayDate.Date && c.StatusId==2).Select(c => c.Id).ToList();
                 var existingContributorRecordings = _recordingRepository.Find(r => existingContributorIDs.Contains(r.ContributorId) && !newContributorIDs.Contains(r.ContributorId) && r.CreateTS.Date == todayDate.Date && r.BlockId != null);
 
                 var report = new DailyContributorSpeechFileReportViewModel
@@ -153,7 +199,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                 dailyReportList.Add(report);
 
                 todayDate = todayDate.AddDays(-1);
-                
+
             }
 
             return View(dailyReportList);
@@ -191,42 +237,42 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             var contributorCompensation = new ContributorCompensationViewModel
             {
-               
+
                 ContributorsQualifyForFirstCard = new List<Tuple<Contributor, int>>(),
                 ContributorsQualifyForSecondCard = new List<Tuple<Contributor, int>>(),
                 ContributorsQualifyForThirdCard = new List<Tuple<Contributor, int>>()
             };
-            
+
             var allPaidContributorsId = _contributorCompensationRepository.GetAll();
-            
-            Guid[] paidContributorIDs = allPaidContributorsId.Where(c => c.SendFirstCard != null && c.SendSecondCard!= null && c.SendThirdCard!= null)
+
+            Guid[] paidContributorIDs = allPaidContributorsId.Where(c => c.SendFirstCard != null && c.SendSecondCard != null && c.SendThirdCard != null)
                 .Select(c => c.ContributorId).ToArray();
 
             Guid[] paidContributorFor200IDs = allPaidContributorsId.Where(c => c.SendFirstCard != null).Select(c => c.ContributorId).ToArray();
             Guid[] paidContributorFor400IDs = allPaidContributorsId.Where(c => c.SendSecondCard != null).Select(c => c.ContributorId).ToArray();
             Guid[] paidContributorFor600IDs = allPaidContributorsId.Where(c => c.SendThirdCard != null).Select(c => c.ContributorId).ToArray();
 
-            var contributorList = _recordingRepository.Find(c=>!paidContributorIDs.Contains(c.ContributorId) && c.BlockId >= 1).GroupBy(c => c.ContributorId)
+            var contributorList = _recordingRepository.Find(c => !paidContributorIDs.Contains(c.ContributorId) && c.BlockId >= 1).GroupBy(c => c.ContributorId)
                 .Select(c => new { ContributorId = c.Key, count = c.Count() }).ToList();
 
             foreach (var contributor in contributorList)
             {
-                if (contributor.count >= 155  && !paidContributorFor200IDs.Contains(contributor.ContributorId))
+                if (contributor.count >= 155 && !paidContributorFor200IDs.Contains(contributor.ContributorId))
                 {
-                     contributorCompensation.ContributorsQualifyForFirstCard
-                        .Add(new Tuple<Contributor, int>(_contributorRepository.Find(c => !paidContributorFor200IDs.Contains(c.Id) 
-                            && c.Id.Equals(contributor.ContributorId)).FirstOrDefault(),  contributor.count));
+                    contributorCompensation.ContributorsQualifyForFirstCard
+                       .Add(new Tuple<Contributor, int>(_contributorRepository.Find(c => !paidContributorFor200IDs.Contains(c.Id)
+                           && c.Id.Equals(contributor.ContributorId)).FirstOrDefault(), contributor.count));
                 }
-                if (contributor.count >= 310  && !paidContributorFor400IDs.Contains(contributor.ContributorId))
+                if (contributor.count >= 310 && !paidContributorFor400IDs.Contains(contributor.ContributorId))
                 {
                     contributorCompensation.ContributorsQualifyForSecondCard
-                        .Add(new Tuple<Contributor, int>(_contributorRepository.Find(c => !paidContributorFor400IDs.Contains(c.Id) 
+                        .Add(new Tuple<Contributor, int>(_contributorRepository.Find(c => !paidContributorFor400IDs.Contains(c.Id)
                             && c.Id.Equals(contributor.ContributorId)).FirstOrDefault(), contributor.count));
                 }
                 if (contributor.count >= 450 && !paidContributorFor600IDs.Contains(contributor.ContributorId))
                 {
                     contributorCompensation.ContributorsQualifyForThirdCard
-                        .Add(new Tuple<Contributor, int>(_contributorRepository.Find(c => !paidContributorFor600IDs.Contains(c.Id) 
+                        .Add(new Tuple<Contributor, int>(_contributorRepository.Find(c => !paidContributorFor600IDs.Contains(c.Id)
                             && c.Id.Equals(contributor.ContributorId)).FirstOrDefault(), contributor.count));
                 }
             }
@@ -260,7 +306,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                             paid.SendFirstCardBy = User.Identity.Name;
                             break;
                         case 2:
-                            paid.SendSecondCard= DateTime.Now;
+                            paid.SendSecondCard = DateTime.Now;
                             paid.SendSecondCardBy = User.Identity.Name;
                             break;
                         default:
@@ -297,9 +343,9 @@ namespace SpeechAccessibility.Annotator.Controllers
                 var contributor = _contributorRepository.Find(c => c.Id == id).FirstOrDefault();
                 if (contributor != null)
                 {
-                    giftCards.Add(new GiftCardViewModel {Amount = 60.00, Delay = 0,EmailAddress = contributor.EmailAddress });
-                    if(contributor.HelperInd=="Yes")
-                        giftCards.Add(new GiftCardViewModel { Amount = 30.00, Delay = 0,EmailAddress = contributor.HelperEmail });
+                    giftCards.Add(new GiftCardViewModel { Amount = 60.00, Delay = 0, EmailAddress = contributor.EmailAddress });
+                    if (contributor.HelperInd == "Yes")
+                        giftCards.Add(new GiftCardViewModel { Amount = 30.00, Delay = 0, EmailAddress = contributor.HelperEmail });
                 }
             }
 
@@ -350,8 +396,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             var total = compensationHistory.Count;
             var tempList = DynamicSortingExtensions<ContributorCompensationHistoryViewModel>.SetOrderByDynamic(compensationHistory.AsQueryable(), Request.Form);
 
-            compensationHistory = tempList.Where(comp=>comp.Contributor.FirstName.ToLower().Contains(searchValue) 
-                                                       || comp.Contributor.LastName.ToLower().Contains(searchValue) 
+            compensationHistory = tempList.Where(comp => comp.Contributor.FirstName.ToLower().Contains(searchValue)
+                                                       || comp.Contributor.LastName.ToLower().Contains(searchValue)
                                                        || comp.ContributorCompensation.ContributorId.ToString().Contains(searchValue)).Skip(skip).Take(pageSize)
                 .Select(comp => new ContributorCompensationHistoryViewModel()
                 {

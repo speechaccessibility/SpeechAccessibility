@@ -97,7 +97,9 @@ namespace SpeechAccessibility.Annotator
             services.AddScoped<IContributorAssignedAnnotatorRepository, ContributorAssignedAnnotatorRepository>();
             services.AddScoped<IContributorAssignedBlockRepository, ContributorAssignedBlockRepository>();
             services.AddScoped<IContributorCompensationRepository, ContributorCompensationRepository>();
+            services.AddScoped<IContributorFollowUpRepository, ContributorFollowUpRepository>();
             services.AddScoped<IPromptRepository, PromptRepository>();
+            services.AddScoped<IEmailLoggingRepository, EmailLoggingRepository>();
             services.AddScoped<IRecordingRepository, RecordingRepository>();
             services.AddScoped<IRecordingRatingRepository, RecordingRatingRepository>();
             services.AddScoped<IRecordingStatusRepository, RecordingStatusRepository>();
