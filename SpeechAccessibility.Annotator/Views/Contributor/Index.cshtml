@@ -37,7 +37,18 @@
 
     </p>
 </div>
+<div id="sendFollowUp-dialog" style="display: none">
+    <label id="lblFollowUpMessage">Send follow-up message to below Contributor:</label>
+    <input type="hidden" id="hidFollowUpContributorId" />
+    <br /><b>First Name:</b><label id="lblFollowUpFirstName" name="lblFollowUpFirstName"></label>
+    <br /><b>Last Name:</b><label id="lblFollowUpLastName" name="lblFollowUpLastName"></label>
+    <br /><b>Email Address:</b><label id="lblFollowUpEmail" name="lblFollowUpEmail"></label>
+    <br />Message to the Contributor:<br />
+    <textarea id="txtFollowUpMessage" name="txtFollowUpMessage" rows="4" cols="50">
 
+</textarea>
+
+</div>
 
 
 @section scripts {
@@ -46,6 +57,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
     <script src="~/js/listenrecording.js"></script>
+    <script src="~/js/Contributor.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
 
@@ -61,12 +73,12 @@
                     "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
                         "<'row'<'col-sm-12'tr>>p",
                     "ajax": ({
-                        "url": '@Url.Action("LoadApprovedDeniedContributors", "Contributor", new { filter = 2 })',
+                        "url": '@Url.Action("LoadContributors", "Contributor", new { filter = 2 })',
                         "type": "POST",
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[7, 'desc']],
+                    "aaSorting": [[6, 'desc']],
                     "columns": [
                          {
                              "title": "View Blocks",
@@ -93,14 +105,14 @@
                             "visible": true,
                             "name": "Contributor.FirstName"
                         },
-                        {
-                            "title": "MiddleName",
-                            "data": "contributor.middleName",
-                            "searchable": true,
-                            "orderable": true,
-                            "visible": true,
-                            "name": "Contributor.MiddleName"
-                        },
+                        //{
+                        //    "title": "MiddleName",
+                        //    "data": "contributor.middleName",
+                        //    "searchable": true,
+                        //    "orderable": true,
+                        //    "visible": true,
+                        //    "name": "Contributor.MiddleName"
+                        //},
                         {
                             "title": "LastName",
                             "data": "contributor.lastName",
@@ -109,6 +121,22 @@
                             "visible": true,
                             "name": "Contributor.LastName"
                         },
+                        //{
+                        //    "title": "Email Address",
+                        //    "data": "contributor.emailAddress",
+                        //    "searchable": true,
+                        //    "orderable": true,
+                        //    "visible": true,
+                        //    "name": "Contributor.EmailAddress"
+                        //},
+                        //{
+                        //    "title": "HelperAddress",
+                        //    "data": "contributor.helperEmail",
+                        //    "searchable": true,
+                        //    "orderable": true,
+                        //    "visible": true,
+                        //    "name": "Contributor.HelperEmail"
+                        //},
                         {
                             "title": "ApprovedDate",
                             "data": "contributor.approveTS",
@@ -127,7 +155,7 @@
                             }
                         },
                         {
-                            "title": "#AssignedBLocks",
+                            "title": "#BLocks",
                             "data": "numberAssignBlocks",
                             "searchable": true,
                             "orderable": false,
@@ -162,6 +190,14 @@
                             "name": "AnnotatorAssigned"
                         },
                         {
+                            "title": "Sent FollowUp Date",
+                            "data": "followUpDate",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": ""
+                        },
+                        {
                             "title": "Actions",
                             "data": "contributor.id",
                             //"targets": 0,
@@ -174,7 +210,7 @@
                             "render": function (data, type, row) {
                                 var link="";
                                 if ($("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
-                                    link = '<a href="#" class="assignAnnotator" >Assign Annotators</a> | <a href="#" class="viewSITRating" >View SIT Rating</a>';
+                                    link = '<a href="#" class="assignAnnotator" >Assign Annotators</a> | <a href="#" class="viewSITRating" >View SIT Rating</a><br>| <a href="#" class="sendFollowUp">Send Follow-up</a>';
                                     return link;
                                 }
                                 link = '<a href="#" class="viewSITRating" >View SIT Rating</a>';
@@ -331,9 +367,26 @@
                 });
             }
 
-           
+            //send follow up message to the contributor
+            $('#ContributorTable').on('click',
+                'a.sendFollowUp',
+                function (e) {
+                    e.preventDefault();
+                    var selectedRowData = oContributorTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();
+                    $("#hidFollowUpContributorId").val(row.contributor.id);
+                    $("#lblFollowUpFirstName").text(row.contributor.firstName);
+                    $("#lblFollowUpLastName").text(row.contributor.lastName);
+                    $("#lblFollowUpEmail").text(row.contributor.emailAddress);
+                    var content = "Dear " + row.contributor.firstName + ",\n\nSincerely,\n Speech Accessibility Project Team\nUniversity of Illinois Urbana - Champaign";
+                    $("#txtFollowUpMessage").val(content);
+                    sendFollowUpContributor('@Url.Action("SendFollowUpToContributor", "Contributor")', oContributorTable);
+                    $("#sendFollowUp-dialog").dialog('open');
 
-           
+                });
+
+
+
 
         });//End document ready
 

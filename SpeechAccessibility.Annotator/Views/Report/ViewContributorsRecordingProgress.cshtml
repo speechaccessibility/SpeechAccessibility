@@ -60,58 +60,55 @@
                         $('#ContributorsProgressTable').DataTable().destroy();
                     }
 
-                    var ogetContributorsProgress = $("#ContributorsProgressTable").on('error.dt', function (e, settings, techNote, message) {
-                        alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
-                    }).DataTable({
-                        "serverSide": false,
-                        "processing": true,
-                        "responsive": true,
-                        "iDisplayLength": 20,
-                        "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
-                            "<'row'<'col-sm-12't>>" +
-                            "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-                        "ajax": {
-                            "url": '@Url.Action("GetContributorsRecordingProgressforSelectedDates", "Report")',
-                            "data": '{ "startdate":' + sdate + ', "enddate":' + edate + '}',
-                            "type": "POST",
-                            "datatype": "json"
-                        },
-                        "bAutoWidth": false,
-                        "columns": [
-                            {
-                                "title": "Contributor ID",
-                                "data": "contributorId",
-                                "searchable": true,
-                                "orderable": true,
-                                "visible": true,
-                                "name": "contributorId"
-                            },
-                            {
-                                "title": "Last Recording Time",
-                                "data": "createTS",
-                                "render": function (data, type, full, meta) {
-                                    // Assume `data` is the date string in the format of "2023-03-14T11:17:45.473"
-                                    var formattedDate = moment(data).format('MM-DD-YYYY HH:mm');
-                                    return formattedDate;},
-                                "searchable": true,
-                                "orderable": true,
-                                "visible": true,
-                                "name": "createTS"
-                            },
-                            {
-                                "title": "Last Recorded Prompt",
-                                "data": "blockDescription",
-                                "searchable": true,
-                                "orderable": true,
-                                "visible": true,
-                                "name": "blockDescription"
-                            }
-                        ],
-                        "ordering": true,
-                        "paging": true,
-                        "pageLength": 50,
-                        "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]]
-                    });
+                    var ogetContributorsProgress = $("#ContributorsProgressTable").on('error.dt',
+                        function (e, settings, techNote, message) {
+                            alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                        }).DataTable({
+                            "serverSide": true,
+                            "processing": true,
+                            "responsive": true,
+                            "iDisplayLength": 100,
+                            "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                                "<'row'<'col-sm-12'tr>>p",
+                            "ajax": ({
+                                "url": '@Url.Action("GetContributorsRecordingProgressforSelectedDates", "Report")',
+                                "data": { 'startdate': $('input[name=startdt]').val(), 'enddate': $('input[name=enddt]').val() },
+                                "type": "POST",
+                                "datatype": "json"
+                            }),
+                            "bAutoWidth": false,
+                            "aaSorting": [[1, 'asc']],
+                            "columns": [
+                                {
+                                    "title": "Contributor ID",
+                                    "data": "contributorId",
+                                    "searchable": true,
+                                    "orderable": true,
+                                    "visible": true,
+                                    "name": "ContributorId"
+                                },
+                                {
+                                    "title": "Last Recording Time",
+                                    "data": "createTS",
+                                    "searchable": true,
+                                    "orderable": true,
+                                    "visible": true,
+                                    "name": "CreateTS"
+                                },
+                                {
+                                    "title": "Last Recorded Prompt",
+                                    "data": "blockDescription",
+                                    "searchable": true,
+                                    "orderable": false,
+                                    "visible": true,
+                                    "name": "BlockDescription"
+                                }
+                            ],
+                            "ordering": true,
+                            "paging": true,
+                            "pageLength": 100,
+                            "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+                        });
                 }
             });
 
@@ -128,7 +125,6 @@
 
                 return [year, month, day].join('-');
             }
-
 
         });
     </script>

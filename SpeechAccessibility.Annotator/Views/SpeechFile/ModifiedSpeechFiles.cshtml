@@ -1,10 +1,7 @@
 ﻿@using System.Security.Claims
-@{
-    ViewData["Title"] = "Modified Speech Files";
-}
 
 @{
-    ViewBag.Title = "Modified Speech Files";
+    ViewBag.Title = "WIP Speech Files";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -23,30 +20,18 @@
     <table class="table table-striped table-bordered table-hover" id="SpeechFileTable" cellspacing="0" align="center"></table>
 </div>
 
-
-<div id="exclude-dialog" style="display: none">
+<div id="updateStatus-dialog" style="display: none">
     <p>
-        <input type="hidden" id="hidExcludeRecordingId" />
+        <input type="hidden" id="hidUpdateStatusRecordingId" />
         <span class="ui-icon ui-icon-alert" style="float: left; margin: 0 7px 20px 0;"></span>
-        <label id="lblExcludeMessage">Are you sure to exclude this speech file?</label><br/>
-        <b>ContributorID: </b><label id="lblExcludeContributorId" name="lblExcludeContributorId"></label><br/>
-        <b>Transcript: </b><label id="lblExcludeTranscript" name="lblExcludeTranscript"></label>
-        <br/><textarea id="txtExcludeComment" name="txtExcludeComment" rows="4" cols="50"></textarea>
+        <label id="lblUpdateStatusMessage">Are you sure to update status for this speech file?</label><br/>
+        <b>ContributorID: </b><label id="lblUpdateStatusContributorId" name="lblUpdateStatusContributorId"></label><br />
+        <b>Transcript: </b><label id="lblUpdateStatusTranscript" name="lblUpdateStatusTranscript"></label>
+        <br /><b>Comments:</b><br /><textarea id="txtUpdateStatusComment" name="txtUpdateStatusComment" rows="4" cols="50"></textarea>
     </p>
 </div>
 
-<div id="publish-dialog" style="display: none">
-    <p>
-        <input type="hidden" id="hidPublishRecordingId" />
-        <label id="lblPublishMessage">Are you sure to publish this speech file?</label><br/>
-        <b>ContributorID: </b><label id="lblPublishContributorId" name="lblPublishContributorId"></label><br/>
-        <b>Transcript: </b><label id="lblPublishranscript" name="lblPublishranscript"></label>
-        <br />
-        <b>Comments:</b><br />
-        <textarea id="txtPublishComment" name="txtPublishComment" rows="4" cols="50"></textarea>
-       
-    </p>
-</div>
+
 
 <div id="upload-dialog" style="display: none">
     <input type="hidden" id="hidUploadRecordingId" name="recordingId" />
@@ -57,6 +42,23 @@
         <br/><b>ContributorID:</b><label id="lblUploadContributorId" name="lblUploadContributorId"></label>
     <input type="file" id="recordingFile" name="recordingFile" accept="audio/wav" />
 </div>
+
+@*<div id="listen-dialog" style="display: none">
+    <p>
+        <b>ContributorID:</b><label id="lblListenContributorId" name="lblListenContributorId"></label>
+        <br />
+        <b>Transcript:</b><label id="lblListenTranscript" name="lblListenTranscript"></label>
+        <br /><b>Start: </b><label id="lblStartTime" name="lblStartTime"></label>&nbsp;&nbsp;
+        <b>End: </b><label id="lblEndTime" name="lblEndTime"></label>
+        <br />
+        <input type="hidden" id="hidFileName" />
+        <audio id="listenRecording" controls>
+            <source src="">
+        </audio>
+
+    </p>
+</div>
+*@
 
 <div id="listen-dialog" style="display: none">
     <p>
@@ -86,7 +88,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
     <script src="~/js/listenrecording.js"></script>
-    <script src="~/js/popupdialog.js"></script>
+    <script src="~/js/SpeechFile.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
 
@@ -102,7 +104,10 @@
                     "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
                         "<'row'<'col-sm-12'tr>>p", //'<"top"l>rift<"bottom"p><"clear">',
                     "ajax": ({
-                        "url": '@Url.Action("LoadModifiedSpeechFiles", "SpeechFile")',
+                        "url": '@Url.Action("LoadSpeechFiles", "SpeechFile")',
+                        data: {
+                            "recordingStatus": 2
+                        },
                         "type": "POST",
                         "datatype": "json"
                     }),
@@ -185,7 +190,8 @@
                                 var link="";
                                 if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
                                     link = '<a href="#" class="listen">Listen</a> | <a href="@Url.Action("DownloadSpeechFile", "SpeechFile")?recordingId=' + data 
-                                        + '&location=modified">Download</a> | <a href="#" class="upload" >Update Recording</a> | <a href="#" class="exclude">Exclude</a> | <a href="#" class="publish">Publish</a> | <a href="#" class="editComment">Edit Comments</a>';
+                                        + '&location=modified">Download</a> | <a href="#" class="upload" >Update Recording</a> | <a href="#" class="exclude">Exclude</a> '
+                                        + '<br>| <a href="#" class="publish">Publish</a> | <a href="#" class="toDiscuss">To Discuss</a> | <a href="#" class="editComment">Edit Comments</a > ';
                                       return link;
                                 }
 
@@ -237,89 +243,31 @@
                 $("#hidUpdateTranscriptRecordingId").val(row.id);
                 $("#hidFileName").val(row.speechFilePath);
                 $("#lblContributorId").text(row.contributorId);
-              
-                var currentRow = $(this).closest("tr");
-                $("#txtTranscript").val(currentRow.find("td:eq(2)").text());
-                $("#txtStartTime").val(currentRow.find("td:eq(7)").text());
-                $("#txtEndTime").val(currentRow.find("td:eq(8)").text());
+
+                $("#txtTranscript").val(row.modifiedTranscript);
+                $("#txtStartTime").val(row.startTime);
+                $("#txtEndTime").val(row.endTime);
                 var audio = document.getElementById('listenRecording');
                 audio.setAttribute("src", row.speechFilePath);
                  audio.load();
                 var dialog = $("#listen-dialog");
                  if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
-                    listenEditTanscriptRecording(audio, dialog, $(this).closest('tr'));
+                    listenEditTanscriptRecording('@Url.Action("UpdateRecordingTranscript", "SpeechFile")', audio, dialog, oSpeechFileTable, $("#lblMessage"));
                 }
                  else
                  {
                     listenRecording(audio, dialog);
                  }
-                    
-                $("#listen-dialog").dialog('open');
+
+                dialog.dialog('open');
                 return false;
             });
 
-            function listenEditTanscriptRecording(audio, dialog, currentRow) {
-                $("#listen-dialog").dialog({
-                    title: "Listen Speech File",
-                    autoOpen: false,
-                    resizable: false,
-                    width: 700,
-                    show: { effect: 'drop', direction: "up" },
-                    modal: true,
-                    draggable: true,
-                    closeOnEscape: true,
-                    position: { my: "left top", at: "left+50 top+100", of: window },
-                    open: function () {
-                        dialog.css('overflow', 'hidden'); //hide the vertial bar on the dialog
-                    },
-                    close: function () {
-                        audio.setAttribute("src", "");
-                    },
-                    buttons: {
-                        Update: function(){
-                                var recordingId = $("#hidUpdateTranscriptRecordingId").val();
-                                var transcript = $("#txtTranscript").val();
-                                var startTime = $("#txtStartTime").val();
-                            var endTime = $("#txtEndTime").val();
-                                $.ajax({
-                                    url: '@Url.Action("UpdateRecordingTranscript", "SpeechFile")',
-                                    type: "POST",
-                                    data: {
-                                    "recordingId": recordingId, "transcript": transcript, "startTime": startTime, "endTime":endTime
-                                    },
-                                    success: function (response) {
-                                        if (response.success === true) {
-                                            clearUpdateTranscriptInputFields();
-                                            audio.setAttribute("src", "");
-                                            $("#listen-dialog").dialog('close');
-                                            //oSpeechFileTable.draw();
-                                        currentRow.find('td:eq(2)').text(transcript);
-                                        currentRow.find('td:eq(7)').text(startTime);
-                                        currentRow.find('td:eq(8)').text(endTime);
-                                       
-                                        }
-                                    },
-                                    error: function () { alert('Error Updating Transcript! It could be the timeout issue. Please try to reload your browser.'); }
-                                });
-                        }
-
-                        ,close: function () {
-                            audio.setAttribute("src", "");
-                            $(this).dialog('close');
-                        }
-                    }
-
-                });
-            }
-
-            
-
-
-       
+           
             //exclude the recording
             $('#SpeechFileTable').on('click', 'a.exclude', function (e) {
                 e.preventDefault();
-                  var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+                    var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
                 //set selected row
                 if ($(selectedRowData).hasClass('selected')) {
@@ -328,177 +276,108 @@
                     oSpeechFileTable.$('tr.selected').removeClass('selected');
                     $(selectedRowData).addClass('selected');
                 }
-                clearExcludedInputFields();
-                $("#hidExcludeRecordingId").val(row.id);
-                $("#lblExcludeTranscript").text(row.modifiedTranscript);
-                $("#lblExcludeContributorId").text(row.contributorId);
-                $("#txtExcludeComment").val(row.comment);
-                openDialogForRecording($("#exclude-dialog"), "Exclude Speech File", $("#hidExcludeRecordingId"), $("#txtExcludeComment"), "exclude", '@Url.Action("PublishExcludeRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+               
+                $('#lblUpdateStatusMessage').text("Are you sure you want to exclude this speech file?");
+                $("#hidUpdateStatusRecordingId").val(row.id);
+                $("#lblUpdateStatusTranscript").text(row.modifiedTranscript);
+                $("#lblUpdateStatusContributorId").text(row.contributorId);
+                $("#txtUpdateStatusComment").val(row.comment);
 
-                $("#exclude-dialog").dialog('open');
+                UpdateRecordingStatus($("#updateStatus-dialog"), "Exclude Speech File", "exclude", '@Url.Action("UpdateStatusRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+                $("#updateStatus-dialog").dialog('open');
                 return false;
             });
 
            
 
         //publish the recording
-            $('#SpeechFileTable').on('click', 'a.publish', function (e) {
+        $('#SpeechFileTable').on('click', 'a.publish', function (e) {
             e.preventDefault();
-                var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
-                var row = selectedRowData.data();
-                //set selected row
-                if ($(selectedRowData).hasClass('selected')) {
-                    $(selectedRowData).removeClass('selected');
-                } else {
-                    oSpeechFileTable.$('tr.selected').removeClass('selected');
-                    $(selectedRowData).addClass('selected');
-                }
-                clearPublishedInputFields();
-                $("#hidPublishRecordingId").val(row.id);
-                $("#lblPublishranscript").text(row.modifiedTranscript);
-                $("#lblPublishContributorId").text(row.contributorId);
-                $("#txtPublishComment").val(row.comment);
+            var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+            var row = selectedRowData.data();
+            //set selected row
+            if ($(selectedRowData).hasClass('selected')) {
+                $(selectedRowData).removeClass('selected');
+            } else {
+                oSpeechFileTable.$('tr.selected').removeClass('selected');
+                $(selectedRowData).addClass('selected');
+            }
+            $('#lblUpdateStatusMessage').text("Are you sure you want to publish this speech file?");
+            $("#hidUpdateStatusRecordingId").val(row.id);
+            $("#lblUpdateStatusTranscript").text(row.modifiedTranscript);
+            $("#lblUpdateStatusContributorId").text(row.contributorId);
+            $("#txtUpdateStatusComment").val(row.comment);
 
-                openDialogForRecording($("#publish-dialog"), "Publish Speech File", $("#hidPublishRecordingId"), $("#txtPublishComment"), "publish", '@Url.Action("PublishExcludeRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
-                $("#publish-dialog").dialog('open');
+            UpdateRecordingStatus($("#updateStatus-dialog"), "Publish Speech File", "publish", '@Url.Action("UpdateStatusRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+            $("#updateStatus-dialog").dialog('open');
             return false;
         });
 
-        
-        
-        
-        //upload new recording
-          $('#SpeechFileTable').on('click',
+        //Move to ToDiscuss list
+        $('#SpeechFileTable').on('click', 'a.toDiscuss', function (e) {
+            e.preventDefault();
+            var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+            var row = selectedRowData.data();
+            //set selected row
+            if ($(selectedRowData).hasClass('selected')) {
+                $(selectedRowData).removeClass('selected');
+            } else {
+                oSpeechFileTable.$('tr.selected').removeClass('selected');
+                $(selectedRowData).addClass('selected');
+            }
+            $('#lblUpdateStatusMessage').text("Are you sure to move this speech file to To-Discuss list?");
+            $("#hidUpdateStatusRecordingId").val(row.id);
+            $("#lblUpdateStatusTranscript").text(row.modifiedTranscript);
+            $("#lblUpdateStatusContributorId").text(row.contributorId);
+            $("#txtUpdateStatusComment").val(row.comment);
+
+                UpdateRecordingStatus($("#updateStatus-dialog"), "Move Speech File to To-Discuss List", "toDiscuss", '@Url.Action("UpdateStatusRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+            $("#updateStatus-dialog").dialog('open');
+            return false;
+        });
+
+
+            //upload new recording
+            $('#SpeechFileTable').on('click',
                 'a.upload',
                 function (e) {
-                e.preventDefault();
+                    e.preventDefault();
                     var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
-              
+
                     $("#hidUploadRecordingId").val(row.id);
                     $("#hidUploadContributorId").val(row.contributorId);
                     $("#lblUploadContributorId").text(row.contributorId);
                     $("#lblUploadTranscript").text(row.modifiedTranscript);
-                    uploadNewRecording();
+                    uploadNewRecording('@Url.Action("UploadModifiedRecording", "SpeechFile")', $("#upload-dialog"), $("#lblMessage"))
                     $("#upload-dialog").dialog('open');
                     return false;
-            });
-
-        //upload new recording
-        function uploadNewRecording() {
-                $("#upload-dialog").dialog({
-                title: "Upload New Recording",
-                autoOpen: false,
-                resizable: false,
-                width: 700,
-                show: { effect: 'drop', direction: "up" },
-                modal: true,
-                draggable: true,
-                closeOnEscape: true,
-                position: { my: "left top", at: "left+50 top+100", of: window },
-                open: function () {
-                        $('#upload-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
-                },
-                close: function () {
-                   clearUploadRecordingInputFields();
-                },
-                buttons: {
-                    "Upload": function () {
-                        if ($("#recordingFile").val() != "") {
-                            var contributorId = $("#hidUploadContributorId").val();
-                            var recordingId = $("#hidUploadRecordingId").val();
-                            var recordingVM = new FormData();
-                            recordingVM.append("Id", recordingId);
-                            recordingVM.append("ContributorId", contributorId);
-                            recordingVM.append('file', $('#recordingFile')[0].files[0]);
+                });
 
 
-                            $.ajax({
-                                    url: '@Url.Action("UploadModifiedRecording", "SpeechFile")',
-                                type: "POST",
-                                dataType: "json",
-                                contentType: false,
-                                processData: false,
-                                data: recordingVM,                           
-                                success: function (response) {
-                                        clearUploadRecordingInputFields();                                      
-                                      
-                                        if (response.success === true) {                                  
-                                            
-                                            $("#lblMessage").text(response.message);
-                                            $("#upload-dialog").dialog('close');
-                                        } 
-                                        else
-                                        {
-                                            $("#lblUploadTranscriptMessage").text(response.message);
-                                        }
-                                     
-                                },
-                                error: function () { alert('Error Uploading Recording! It could be the timeout issue. Please try to reload your browser.'); }
-                            });
+       
 
-                        }
-                        else
-                        {
-                                $("#lblUploadTranscriptMessage").text("File Upload field cannot be empty.");
-                        }
-                            
+        //edit comments
+        $('#SpeechFileTable').on('click', 'a.editComment', function (e) {
+            e.preventDefault();
+            e.preventDefault();
+            var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+            var row = selectedRowData.data();
+          
+            $('#lblUpdateStatusMessage').text("Edit Comments for Speech File");
+            $("#hidUpdateStatusRecordingId").val(row.id);
+            $("#lblUpdateStatusTranscript").text(row.modifiedTranscript);
+            $("#lblUpdateStatusContributorId").text(row.contributorId);
+            $("#txtUpdateStatusComment").val(row.comment);
 
-                    },
-                    close: function () {
-                            clearUploadRecordingInputFields();
-                        $(this).dialog('close');
-                    }
-                }
+                UpdateRecordingStatus($("#updateStatus-dialog"), "Edit Comments for Speech File", "editComments", '@Url.Action("UpdateStatusRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+            $("#updateStatus-dialog").dialog('open');
 
-            });
-        }
+            return false;
+        });
 
-            //edit comments
-            $('#SpeechFileTable').on('click', 'a.editComment', function (e) {
-                e.preventDefault();
-                e.preventDefault();
-                var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
-                var row = selectedRowData.data();
-                clearExcludedInputFields();
-                $("#hidExcludeRecordingId").val(row.id);
-                $("#lblExcludeTranscript").text(row.modifiedTranscript);
-                $("#lblExcludeContributorId").text(row.contributorId);
-                $("#txtExcludeComment").val(row.comment);
-                openDialogForRecording($("#exclude-dialog"), "Edit Comments", $("#hidExcludeRecordingId"), $("#txtExcludeComment"), "editComments", '@Url.Action("PublishExcludeRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+     
 
-                $("#exclude-dialog").dialog('open');
-                return false;
-            });
-
-        function clearExcludedInputFields() {
-            $("#hidExcludeRecordingId").val("");
-            $("#lblExcludeTranscript").text("");
-            $("#lblExcludeContributorId").text("");
-            $("#txtExcludeComment").val("")
-        }
-        
-        function clearPublishedInputFields() {
-            $("#hidPublishRecordingId").val("");
-            $("#lblPublishranscript").text("");
-            $("#lblPublishContributorId").text("");
-        }
-
-        function clearUpdateTranscriptInputFields() {
-                $("#hidUpdateTranscriptRecordingId").val("");
-                $("#lblContributorId").text("");
-                $("#txtTranscript").val("");
-                $("#txtStartTime").val("");
-                $("#txtEndTime").val("");
-        }
-        function clearUploadRecordingInputFields() {
-                $("#hidUploadRecordingId").val("");
-                $("#lblUploadTranscriptMessage").text("");
-                $("#lblUploadTranscript").text("");
-                $("#hidUploadContributorId").val("")
-                $("#lblUploadContributorId").text("")
-                $("#recordingFile").val("");            
-        }
         
 
         });//End document ready
