@@ -37,15 +37,47 @@
             <div class="form-group">
                 <fieldset>
                     <legend>Are you 18 years of age or older?</legend>
-                    
-                    <label for="eighteenOrOlderYes"><input  id="eighteenOrOlderYes" asp-for="Input.eighteenOrOlderInd" type="radio" value="Yes" /> Yes</label>
-                    
-                    <label for="eighteenOrOlderNo"><input  id="eighteenOrOlderNo" asp-for="Input.eighteenOrOlderInd" type="radio" value="No" /> No</label>
+
+                    <label for="eighteenOrOlderYes"><input  id="eighteenOrOlderYes" asp-for="Input.eighteenOrOlderInd" type="radio" value="Yes"  onclick="checkEighteenInd()"/> Yes</label>
+
+                    <label for="eighteenOrOlderNo"><input  id="eighteenOrOlderNo" asp-for="Input.eighteenOrOlderInd" type="radio" value="No" onclick="checkEighteenInd()" /> No</label>
                 </fieldset>
                 <br /><span asp-validation-for="Input.eighteenOrOlderInd" class="text-danger"></span>
             </div>
         </div>
     </div>
+     @if (Model != null && Model.Input != null && "Yes".Equals(Model.Input.eighteenOrOlderInd))
+    {
+        <div class="form-row" id="birthYearDiv">
+            <span style="color:red">*</span>
+        <div class="form-group col-md-8">
+            <div class="form-group">
+                <fieldset>
+                    <legend>What is your year of birth?</legend>
+                    <label for="birthYear"></label> <select id="birthYear" asp-for="Input.BirthYear" asp-items="@Model.yearList"> <option value="" selected>Please Select</option></select>           
+                </fieldset>
+                    <br /> <span class="text-danger">@Html.ValidationMessage("birthYearValidation")</span>
+            </div>
+        </div>
+        </div>
+    }
+    else
+    {
+                      <div class="form-row" style="display:none" id="birthYearDiv">
+                <span style="color:red">*</span>
+            <div class="form-group col-md-8">
+                <div class="form-group">
+                    <fieldset>
+                        <legend>What is your year of birth?</legend>
+                        <label for="birthYear"></label> <select id="birthYear" asp-for="Input.BirthYear" asp-items="@Model.yearList"> <option value="" selected>Please Select</option></select>           
+                    </fieldset>
+                        <br /> <span class="text-danger">@Html.ValidationMessage("birthYearValidation")</span>
+
+                </div>
+            </div>
+            </div>
+    
+    }
     <div class="form-row">
         <span style="color:red">*</span>
         <div class="form-group col-md-6">
@@ -162,6 +194,12 @@
                 <input  id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
                 <span class="text-danger">@Html.ValidationMessage("helperLastNameValidation")</span>
             </div>
+                <div class="form-group col-sm-4">
+                <label asp-for="Input.HelperPhoneNumber"><span style="color:red">*</span>Helper's Phone Number</label>
+                <input id="helperPhoneNumber" asp-for="Input.HelperPhoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
+                   <span class="text-danger">@Html.ValidationMessage("helperPhoneNumberValidation")</span><br/>
+                         <span asp-validation-for="Input.HelperPhoneNumber" class="text-danger"></span>
+            </div>
         </div>
     }
     else
@@ -184,6 +222,12 @@
                 <input  id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
                 <span class="text-danger">@Html.ValidationMessage("helperLastNameValidation")</span>
             </div>
+                  <div class="form-group col-sm-4">
+                    <label asp-for="Input.HelperPhoneNumber"><span style="color:red">*</span>Helper's Phone Number</label>
+                        <input id="helperPhoneNumber" asp-for="Input.HelperPhoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
+                     <span class="text-danger">@Html.ValidationMessage("helperPhoneNumberValidation")</span><br/>
+                         <span asp-validation-for="Input.HelperPhoneNumber" class="text-danger"></span>
+                </div>
         </div>
 
         <div class="form-row" hidden>

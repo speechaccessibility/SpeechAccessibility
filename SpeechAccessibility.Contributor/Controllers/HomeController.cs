@@ -133,7 +133,8 @@ namespace SpeechAccessibility.Controllers
                 string fileName = Path.ChangeExtension(file.FileName, ".wav");
                 int retryCount = Int32.Parse(form["retryCount"]);
                 int blockId = Int32.Parse(form["blockId"]);
-
+                string clientStartDate = form["clientStartDate"];
+                string clientEndDate = form["clientEndDate"];
                 string transcript = _recordingContext.Prompt.Where(p => p.Id == promptId).Select(p => p.Transcript).First();
 
                 Prompt prompt = new Prompt
@@ -161,7 +162,9 @@ namespace SpeechAccessibility.Controllers
                     Status = new RecordingStatus { Id = 1 },
                     RetryCount = retryCount,
                     Block = block,
-                    ModifiedTranscript = transcript
+                    ModifiedTranscript = transcript,
+                    ClientStartTS = clientStartDate,
+                    ClientEndTS = clientEndDate
 
                 };
 
@@ -316,6 +319,7 @@ namespace SpeechAccessibility.Controllers
                         int spontaneousPromptCount = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt).Where(p => p.SubCategory.Id == 5).Count();
                         if (spontaneousPromptCount > 0 || contributor.ParkinsonsInd == "Yes")
                         {
+        
                             Recording lastRecording = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).AsEnumerable().LastOrDefault();
 
                             //Approval is required after the first section has been completed
@@ -375,7 +379,7 @@ namespace SpeechAccessibility.Controllers
 
                             }
                             //Route to the ApprovalRequired page if the status isn't Approved
-                            else if ("New".Equals(contributorStatus))
+                            else if ("New".Equals(contributorStatus) || "Non-Responsive".Equals(contributorStatus))
                             {
                                 ViewBag.Parkinsons = contributor.ParkinsonsInd;
                                 return View("ApprovalRequired");

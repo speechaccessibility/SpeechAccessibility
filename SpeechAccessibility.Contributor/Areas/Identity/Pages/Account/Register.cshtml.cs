@@ -1,26 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SpeechAccessibility.Data;
-using SpeechAccessibility.Data.Entities;
 using SpeechAccessibility.Models;
 using SpeechAccessibility.Services;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace SpeechAccessibility.Areas.Identity.Pages.Account
 {
@@ -61,6 +56,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             "None"
         };
 
+        
         public List<SelectListItem> stateList { get; } = new List<SelectListItem>
          {
                     new SelectListItem { Value = "AL", Text = "Alabama" },
@@ -120,9 +116,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
         private static List<SelectListItem> getYearList()
         {
-            List<SelectListItem> yearList = new List<SelectListItem>();
-            SelectListItem unknown = new SelectListItem { Value = "0", Text = "Unknown" };
-            yearList.Add(unknown);
+            List<SelectListItem> yearList = new List<SelectListItem>();       
             for (int i = DateTime.Now.Year; i >= 1900; i--)
             {
                 SelectListItem item = new SelectListItem { Value = i.ToString(), Text = i.ToString() };
@@ -142,8 +136,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Required]
             [Display(Name = "Parkinson's Disease Indicator")]
             public string parkinsonsInd { get; set; }
+
             [Required]
-            [Display(Name = "Eighteen Indicator")]
+            [Display(Name ="EighteenOrOlder")]
             public string eighteenOrOlderInd { get; set; }
 
             [Required]
@@ -189,6 +184,10 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Display(Name = "Helper's Last Name")]
             public string HelperLastName { get; set; }
 
+            [MaxLength(10)]
+            [Display(Name = "Helper Phone Number")]
+            public string HelperPhoneNumber { get; set; }
+
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 9)]
             [DataType(DataType.Password)]
@@ -202,6 +201,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             [Required]
             public bool ContactLSVT { get; set; }
+
+            [Display(Name ="Birth Year")]
+            public string BirthYear { get; set; }
         }
 
         public void OnGet()
@@ -221,13 +223,6 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 {
                     ModelState.AddModelError("helperEmailValidation", "Helper email is required.");
                 }
-                else 
-                {
-                    if (Input.HelperEmail.Equals(Input.Email, StringComparison.OrdinalIgnoreCase))
-                    {
-                        ModelState.AddModelError("helperEmailValidation", "Helper email must be different than the participant's email.");
-                    }
-                }
 
                 if (String.IsNullOrEmpty(Input.HelperFirstName))
                 {
@@ -237,7 +232,27 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 {
                     ModelState.AddModelError("helperLastNameValidation", "Helper last name is required.");
                 }
+                if (String.IsNullOrEmpty(Input.HelperPhoneNumber))
+                {
+                    ModelState.AddModelError("helperPhoneNumberValidation", "Helper phone number is required.");
+                }
+                else
+                {
+                    bool result = Regex.Match(Input.HelperPhoneNumber, @"^[0-9]*$").Success;
+
+                    if (!result)
+                    {
+                        ModelState.AddModelError("helperPhoneNumberValidation", "Helper phone number must be numeric.");
+                    }
+                }
                 
+            }
+
+            if ("Yes".Equals(Input.eighteenOrOlderInd)) { 
+            
+                if(String.IsNullOrEmpty(Input.BirthYear)) {
+                    ModelState.AddModelError("birthYearValidation", "Birth year is required.");
+                }
             }
 
             if (ModelState.IsValid)
@@ -248,6 +263,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                     ModelState.AddModelError("confirmEmailValidation", "The email and confirmation email do not match.");
                     return Page();
                 }
+                
                 if (unqualifiedStates.Contains(Input.state) || "No".Equals(Input.eighteenOrOlderInd))
                 {
                     return RedirectToPage("./Unqualified");
@@ -316,6 +332,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             contributor.HelperEmail = Input.HelperEmail;
             contributor.HelperFirstName = Input.HelperFirstName;
             contributor.HelperLastName = Input.HelperLastName;
+            contributor.HelperPhoneNumber = Input.HelperPhoneNumber;
             contributor.FirstName = Input.firstName;
             contributor.MiddleName = Input.middleName;
             contributor.LastName = Input.lastName;
@@ -327,7 +344,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             contributor.ContactLSVT = Input.ContactLSVT;
             contributor.EmailAddress = Input.Email;
             contributor.PhoneNumber = Input.phoneNumber;
+            contributor.BirthYear = Input.BirthYear;
             return contributor;
         }
+
     }
 }

@@ -79,7 +79,9 @@ function recording_interface() {
                     let button = $('#recordButton')
                     let nextButton = $('#nextButton');
                     let recordingStatus = document.getElementById('recordingStatus')
-                    
+
+                    let clientStartTS = new Date(Date.now()).toLocaleString()
+                    document.getElementById("clientStartTS").value = clientStartTS;
                     nextButton.attr('hidden', true)
                     let text = button.text()
                     if (button.text() === 'Stop Recording') {
@@ -110,8 +112,9 @@ function recording_interface() {
                 recordingStatus.innerHTML = "Recording Stopped"
                 event.stopPropagation()
                 event.preventDefault()  
-                
 
+                let clientStartDate = document.getElementById("clientStartTS").value;
+                let clientEndDate = new Date(Date.now()).toLocaleString()
                 //send the recording to the controller to be saved
                 var contributorId = document.getElementById('contributorId').value;
                 var promptId = document.getElementById('promptId').value;
@@ -156,7 +159,8 @@ function recording_interface() {
                 myData.set('categoryId', categoryId);
                 myData.set('retryCount', retryCount);
                 myData.set('blockId', blockId);
-
+                myData.set('clientStartDate', clientStartDate);
+                myData.set('clientEndDate', clientEndDate);
                 let my_url = Cookies.get('url')
 
                 ////

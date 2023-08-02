@@ -12,7 +12,7 @@
 
 <table>
     <tr>
-        <td><b>Select a date range: </b></td>
+        <td colspan="2"><b>Select a date range for Contributor's approved date: </b></td>
     </tr>
     <tr>
         <td>Start Date:<input class="form-control" id="startdt" name="startdt" type="date" /></td>
@@ -77,7 +77,10 @@
                                 "datatype": "json"
                             }),
                             "bAutoWidth": false,
-                            "aaSorting": [[1, 'asc']],
+                            "aaSorting": [[3, 'desc']],
+                            "oLanguage": {
+                               "sSearch": "Search only For Name and ID"
+                             },
                             "columns": [
                                 {
                                     "title": "Contributor ID",
@@ -88,12 +91,46 @@
                                     "name": "ContributorId"
                                 },
                                 {
-                                    "title": "Last Recording Time",
-                                    "data": "createTS",
+                                    "title": "FirstName",
+                                    "data": "firstName",
                                     "searchable": true,
                                     "orderable": true,
                                     "visible": true,
-                                    "name": "CreateTS"
+                                    "name": "FirstName"
+                                },
+                                 {
+                                    "title": "LastName",
+                                    "data": "lastName",
+                                    "searchable": true,
+                                    "orderable": true,
+                                    "visible": true,
+                                    "name": "LastName"
+                                },
+                                {
+                                    "title": "Approved Date",
+                                    "data": "approveTS",
+                                    "searchable": true,
+                                    "orderable": true,
+                                    "visible": true,
+                                    "name": "ApproveTS",
+                                    'render': function (data) {
+                                        var date = new Date(data);
+                                        var month = date.getMonth() + 1;
+                                        return (month.toString().length > 1 ? month : "0" + month) + "/" + date.getDate() + "/" + date.getFullYear() + "&nbsp;" + (date.getHours() < 10 ? ("0" + date.getHours()) : date.getHours()) + ":" + (date.getMinutes() < 10 ? ("0" + date.getMinutes()) : date.getMinutes());
+                                    },
+                                },
+                                {
+                                    "title": "Last Recording Time",
+                                    "data": "recordCreateTS",
+                                    "searchable": true,
+                                    "orderable": true,
+                                    "visible": true,
+                                    "name": "RecordCreateTS",
+                                    'render': function (data) {
+                                        var date = new Date(data);
+                                        var month = date.getMonth() + 1;
+                                        return (month.toString().length > 1 ? month : "0" + month) + "/" + date.getDate() + "/" + date.getFullYear() + "&nbsp;" + (date.getHours() < 10 ? ("0" + date.getHours()) : date.getHours()) + ":" + (date.getMinutes() < 10 ? ("0" + date.getMinutes()) : date.getMinutes());
+                                    },
                                 },
                                 {
                                     "title": "Last Recorded Prompt",

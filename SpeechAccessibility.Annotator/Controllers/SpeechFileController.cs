@@ -107,7 +107,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             {
                 var isAssigned = _contributorAssignedAnnotatorRepository
                     .Find(c => c.ContributorId == contributorId && c.UserId == currentUser.Id).FirstOrDefault();
-                if(isAssigned==null)
+                if(isAssigned is null)
                     return PartialView("_ContributorAssignedBlocks", assignedBlocks);
 
             }
@@ -462,7 +462,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             {
                 var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
                 var assignedRecording = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == currentUser.Id && c.ContributorId == recording.ContributorId).FirstOrDefault();
-                if(assignedRecording==null)
+                if(assignedRecording is null)
                     return Json(new { Success = false, Message = "This recording is not assigned to you." });
                 
             }
@@ -754,14 +754,16 @@ namespace SpeechAccessibility.Annotator.Controllers
                 rating.RatingBy = User.Identity.Name;
             }
             _recordingRatingRepository.AddRange(recordingForRating.RecordingRating);
-            //if (!string.IsNullOrEmpty(recording.Comment))
-            //    recording.Comment = recording.Comment + ";" + recordingForRating.Comment;
-            //else
-            recording.Comment = recordingForRating.Comment;
-            
-            recording.UpdateTS = DateTime.Now;
-            recording.LastUpdateBy = User.Identity.Name;
-            _recordingRepository.Update(recording);
+          
+            if ((!string.IsNullOrEmpty(recordingForRating.Comment) && !recordingForRating.Comment.Equals(recording.Comment)) || (string.IsNullOrEmpty(recordingForRating.Comment) && !string.IsNullOrEmpty(recording.Comment)))
+            {
+                recording.Comment = recordingForRating.Comment;
+                recording.UpdateTS = DateTime.Now;
+                recording.LastUpdateBy = User.Identity.Name;
+                _recordingRepository.Update(recording);
+            }
+
+           
             return Json(new { Success = true, Message = "Recorded is rated." });
 
         }

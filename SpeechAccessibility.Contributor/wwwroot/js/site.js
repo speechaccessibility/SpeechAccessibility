@@ -130,6 +130,17 @@ function checkHelperInd()
         document.getElementById("helperEmail").value = "";
         document.getElementById("helperFirstName").value = "";
         document.getElementById("helperLastName").value = "";
+        document.getElementById("helperPhoneNumber").value = "";
+    }
+}
+
+function checkEighteenInd() {
+    if (document.getElementById("eighteenOrOlderYes").checked) {
+        document.getElementById("birthYearDiv").style.display = "flex";
+    }
+    else {
+        document.getElementById("birthYearDiv").style.display = "none";
+        document.getElementById("birthYear").value = "";
     }
 }
 

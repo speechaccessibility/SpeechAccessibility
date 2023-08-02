@@ -1,6 +1,8 @@
 ﻿
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Drawing.Printing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -9,11 +11,13 @@ using CsvHelper.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SpeechAccessibility.Annotator.Extensions;
 using SpeechAccessibility.Annotator.Models;
 using SpeechAccessibility.Core.Interfaces;
 using SpeechAccessibility.Core.Models;
+using SpeechAccessibility.Infrastructure.Data;
 
 namespace SpeechAccessibility.Annotator.Controllers
 {
@@ -27,6 +31,7 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IContributorCompensationRepository _contributorCompensationRepository;
         private readonly IConfiguration _configuration;
         private readonly IBlockMasterRepository _blockMasterRepository;
+    
 
         public ReportController(IUserRepository userRepository, IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository, IContributorRepository contributorRepository, IRecordingRepository recordingRepository, IContributorCompensationRepository contributorCompensationRepository, IConfiguration configuration, IBlockMasterRepository blockMasterRepository)
         {
@@ -74,99 +79,59 @@ namespace SpeechAccessibility.Annotator.Controllers
         }
 
         //contributors report
-        //public IActionResult ViewContributorsRecordingProgress()
-        //{
-        //    return View();
-        //}
-
+        public IActionResult ViewContributorsRecordingProgress()
+        {
+            return View();
+        }
 
         [HttpPost]
         public ActionResult GetContributorsRecordingProgressforSelectedDates(DateTime? startdate, DateTime? enddate)
         {
             var draw = Request.Form["draw"].FirstOrDefault();
+            var start = Request.Form["start"].FirstOrDefault();
+            var length = Request.Form["length"].FirstOrDefault();
+            int pageSize = length != null ? Convert.ToInt32(length) : 0;
+            int skip = start != null ? Convert.ToInt32(start) : 0;
             var searchValue = Request.Form["search[value]"].FirstOrDefault();
-            if (startdate == null && enddate == null)
+            IQueryable<Contributor> approvedContributors;
+            List<ContributorRecordingProgressViewModel> recordings = new List<ContributorRecordingProgressViewModel>();
+            if (startdate is null && enddate is null)
             {
-                // Return all records
-
-                var contributorsProgress = _recordingRepository.GetAll().ToList();
-                List<ContributorRecordingProgressViewModel> tempresult = new List<ContributorRecordingProgressViewModel>();
-   
-                var result = contributorsProgress
-                    .GroupBy(cp => cp.ContributorId)
-                    .Select(g => g.OrderByDescending(cp => cp.CreateTS).FirstOrDefault())
-                    .Where(cp =>
-                        cp.ContributorId.ToString().Contains(searchValue) ||
-                        cp.CreateTS.ToString("MM-dd-yyyy HH:mm").Contains(searchValue) ||
-                        ("b" + (cp.BlockId == null ? "0" : _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() ? _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "") : "0") + "-" + cp.OriginalPromptId).Contains(searchValue) 
-                        //|| (cp.BlockId != null && _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() &&
-                        //_blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "").Contains(searchValue)
-                        //|| cp.OriginalPromptId.ToString().Contains(searchValue))
-                    )
-                    .OrderBy(cp => cp.ContributorId)
-                    .Select(cp => new
-                    {
-                        cp.ContributorId,
-                        CreateTS = cp.CreateTS.ToString("MM-dd-yyyy HH:mm"),
-                        BlockDescription = "b" + (cp.BlockId == null ? "0" : _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() ? _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "") : "0") + "-" + cp.OriginalPromptId
-                    })
-                    .ToList();
-                foreach (var res in result)
-                {
-                    tempresult.Add(new ContributorRecordingProgressViewModel()
-                    {
-                        ContributorId = res.ContributorId,
-                        CreateTS = res.CreateTS,
-                        BlockDescription = res.BlockDescription
-                    });
-
-
-                }
-                var tempList = DynamicSortingExtensions<ContributorRecordingProgressViewModel>.SetOrderByDynamic(tempresult.AsQueryable(), Request.Form);
-                return contributorsProgress.Any() ? Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = result.Count, data = tempList }) : Json(new { Counter = 0 });
+                approvedContributors = _contributorRepository.Find(c => c.StatusId == 2)
+                    .Where(c => c.Id.ToString().Contains(searchValue.ToLower()) || c.LastName.Contains(searchValue) || c.FirstName.Contains(searchValue) );
             }
             else
             {
-                Guid[] contributorProgressList = _recordingRepository.Find(c => c.CreateTS >= startdate && c.CreateTS <= enddate).Select(l => l.ContributorId).ToArray();
-
-                var contributorsProgress = _recordingRepository.Find(c => contributorProgressList.Contains(c.ContributorId)).ToList();
-                List<ContributorRecordingProgressViewModel> tempresult = new List<ContributorRecordingProgressViewModel>();
-                var result = contributorsProgress
-                              .GroupBy(cp => cp.ContributorId)
-                              .Select(g => g.OrderByDescending(cp => cp.CreateTS).FirstOrDefault())
-                              .Where(cp =>
-                        cp.ContributorId.ToString().Contains(searchValue) ||
-                        cp.CreateTS.ToString("MM-dd-yyyy HH:mm").Contains(searchValue) ||
-                        ("b" + (cp.BlockId == null ? "0" : _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() ? _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "") : "0") + "-" + cp.OriginalPromptId).Contains(searchValue)
-                        //|| (cp.BlockId != null && _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() &&
-                        //_blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "").Contains(searchValue)
-                        //|| cp.OriginalPromptId.ToString().Contains(searchValue))
-                    )
-                              .OrderBy(cp => cp.ContributorId)
-                              .Select(cp => new
-                              {
-                                  cp.ContributorId,
-                                  CreateTS = cp.CreateTS.ToString("MM-dd-yyyy HH:mm"),
-                                  BlockDescription = "b" + (cp.BlockId == null ? "0" : _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).Any() ? _blockMasterRepository.Find(b => b.Id == cp.BlockId.Value).FirstOrDefault().Description.Replace("Block ", "") : "0") + "-" + cp.OriginalPromptId
-                              })
-                              .ToList();
-
-                foreach (var res in result)
-                {
-                    tempresult.Add(new ContributorRecordingProgressViewModel()
-                    {
-                        ContributorId = res.ContributorId,
-                        CreateTS = res.CreateTS,
-                        BlockDescription = res.BlockDescription
-                    });
-
-
-                }
-                var tempList = DynamicSortingExtensions<ContributorRecordingProgressViewModel>.SetOrderByDynamic(tempresult.AsQueryable(), Request.Form);
-
-                return contributorsProgress.Any() ? Json(new { draw = draw, recordsFiltered = result.Count, recordsTotal = result.Count, data = tempList }) : Json(new { Counter = 0 });
+                 approvedContributors = _contributorRepository.Find(c => c.StatusId == 2 && c.ApproveTS >= startdate && c.ApproveTS <= enddate)
+                     .Where(c => c.Id.ToString().Contains(searchValue.ToLower()) || c.LastName.Contains(searchValue) || c.FirstName.Contains(searchValue));
             }
+           
+            foreach (var contributor in approvedContributors)
+            {
+              
+                var lastRecording = _recordingRepository.Find(r => r.BlockId != null && r.ContributorId==contributor.Id)
+                    .OrderByDescending(r => r.CreateTS).Include(b => b.Block).FirstOrDefault();
+                if (lastRecording is not null)
+                {
+                    ContributorRecordingProgressViewModel temp = new ContributorRecordingProgressViewModel
+                    {
+                        ContributorId = contributor.Id,
+                        LastName = contributor.LastName,
+                        FirstName = contributor.FirstName,
+                        ApproveTS = (DateTime)contributor.ApproveTS,
+                        RecordCreateTS = lastRecording.CreateTS,
+                        BlockDescription = "b" + lastRecording.Block.Description + "-" + lastRecording.OriginalPromptId
+                    };
+                    recordings.Add(temp);
+                }
+            }
+            var recordsTotal = recordings.Count();
+            var result = DynamicSortingExtensions<ContributorRecordingProgressViewModel>.SetOrderByDynamic(recordings.AsQueryable(), Request.Form).ToList();
+            result = result.Skip(skip).Take(pageSize).ToList();
+            return Json(new { draw, recordsFiltered = recordsTotal, recordsTotal, data = result });
+          
         }
+
 
         public ActionResult ViewDailyContributorSpeechFiles()
         {
@@ -182,9 +147,9 @@ namespace SpeechAccessibility.Annotator.Controllers
             var todayDate = DateTime.Now;
             for (var i = 1; i <= 30; i++)
             {
-                var newContributorIDs = _contributorRepository.Find(c => DateTime.Compare(c.ApproveTS.Value.Date, todayDate.Date) == 0  && c.StatusId==2).Select(c => c.Id).ToList();
+                var newContributorIDs = _contributorRepository.Find(c => DateTime.Compare(c.ApproveTS.Value.Date, todayDate.Date) == 0 && c.StatusId == 2).Select(c => c.Id).ToList();
                 var newContributorRecordings = _recordingRepository.Find(r => newContributorIDs.Contains(r.ContributorId) && r.CreateTS.Date == todayDate.Date && r.BlockId > 0);
-                var existingContributorIDs = _contributorRepository.Find(c => c.ApproveTS.Value.Date < todayDate.Date && c.StatusId==2).Select(c => c.Id).ToList();
+                var existingContributorIDs = _contributorRepository.Find(c => c.ApproveTS.Value.Date < todayDate.Date && c.StatusId == 2).Select(c => c.Id).ToList();
                 var existingContributorRecordings = _recordingRepository.Find(r => existingContributorIDs.Contains(r.ContributorId) && !newContributorIDs.Contains(r.ContributorId) && r.CreateTS.Date == todayDate.Date && r.BlockId != null);
 
                 var report = new DailyContributorSpeechFileReportViewModel
@@ -404,11 +369,198 @@ namespace SpeechAccessibility.Annotator.Controllers
                     ContributorCompensation = comp.ContributorCompensation,
                     Contributor = comp.Contributor
                 }).ToList();
-
+            
 
             return Json(new { draw = draw, recordsFiltered = total, recordsTotal = total, data = compensationHistory });
 
         }
+
+        public IActionResult ViewAnnotationProgress()
+        {
+
+            DateTime endDate = DateTime.Today;
+            DateTime startDate = endDate.AddDays(-7);
+            ViewBag.StartDate = startDate.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = endDate.ToString("yyyy-MM-dd");
+            return View();
+        }
+        //public IActionResult ViewAnnotationProgress(DateTime? startDateIn, DateTime? endDateIn)
+        //{
+        //    List<AnnotationProgressViewModel> list = new List<AnnotationProgressViewModel>();
+        //    //set default search dates 
+        //    DateTime startDate;
+        //    DateTime endDate;
+        //    if (endDateIn is null)
+        //    {
+        //        endDate = DateTime.Today;
+        //        if (startDateIn is null)
+        //        {
+        //            startDate = endDate.AddDays(-7);
+        //        }
+        //        else
+        //        {
+        //            startDate = Convert.ToDateTime(startDateIn);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        endDate = Convert.ToDateTime(endDateIn);
+
+        //        if (startDateIn is null)
+        //        {
+        //            startDate = endDate.AddDays(-1);
+        //        }
+        //        else
+        //        {
+        //            startDate = Convert.ToDateTime(startDateIn);
+        //        }
+        //    }
+
+        //    ViewBag.StartDate = startDate.ToString("yyyy-MM-dd");
+        //    ViewBag.EndDate = endDate.ToString("yyyy-MM-dd");
+
+        //    var annotators = _contributorAssignedAnnotatorRepository.Find(a => a.User.Active == "Yes")
+        //        .Include(a=>a.User).ToList()
+        //            .GroupBy(a => new { a.User });
+
+        //    while (startDate <= endDate)
+        //    {
+        //        //get each annotator assigned recordings group by status 
+        //        foreach (var annotator in annotators)
+        //        {
+        //            var temp = new AnnotationProgressViewModel
+        //            {
+        //                ReportDate = startDate,
+        //                Annotator = annotator.Key.User
+        //            };
+
+        //            //get assigned Contributors
+        //            var contributorIds = annotator.ToList().Select(a => a.ContributorId);
+
+        //            temp.AssignedRecordingByContributor = _recordingRepository.Find(r => contributorIds.Contains(r.ContributorId) &&
+        //                    r.BlockId != null
+        //                    && DateTime.Compare(r.UpdateTS.Date, startDate.Date) ==
+        //                    0)
+        //                .Include(r => r.Status)
+        //                .ToList()
+        //                .GroupBy(r => new { r.ContributorId, r.StatusId, r.Status.Name })
+        //                .Select(group => new RecordingStatusViewModel()
+        //                {
+        //                    ContributorId = group.Key.ContributorId,
+        //                    Status = group.Key.Name,  
+        //                    NumberOfRecord= group.ToList().Count
+
+        //                })
+        //                .ToList();
+
+        //            list.Add(temp);
+        //        }
+        //        startDate = startDate.AddDays(1);
+        //    }
+
+        //    return View(list);
+        //}
+
+        [HttpPost]
+        public ActionResult LoadAnnotatorsForProgress()
+        {
+            var draw = Request.Form["draw"].FirstOrDefault();
+            var start = Request.Form["start"].FirstOrDefault();
+            var length = Request.Form["length"].FirstOrDefault();
+            var searchValue = Request.Form["search[value]"].FirstOrDefault();
+            int pageSize = length != null ? Convert.ToInt32(length) : 0;
+            int skip = start != null ? Convert.ToInt32(start) : 0;
+
+            var annotators = _contributorAssignedAnnotatorRepository.Find(a => a.User.Active == "Yes" && a.User.LastName.Contains(searchValue) || a.User.FirstName.Contains(searchValue))
+                .Include(a => a.User).Distinct();
+            var recordsTotal = annotators.Count();
+           
+            var annotatorList = annotators.Skip(skip).Take(pageSize).Select(p => new User()
+            {
+                Id = p.User.Id,
+                FirstName = p.User.FirstName,
+                LastName = p.User.LastName,
+                NetId = p.User.NetId
+            }).Distinct();
+            annotatorList = DynamicSortingExtensions<User>.SetOrderByDynamic(annotatorList, Request.Form);
+            return Json(new { draw, data = annotatorList, recordsFiltered = recordsTotal, recordsTotal = recordsTotal });
+
+        }
+
+        [HttpPost]
+        public PartialViewResult LoadAnnotatorsWorkingSpeechFiles(int annotatorId, DateTime? startDateIn, DateTime? endDateIn)
+        {
+            //set default search dates 
+            DateTime startDate;
+            DateTime endDate;
+            if (endDateIn is null)
+            {
+                endDate = DateTime.Today;
+                if (startDateIn is null)
+                {
+                    startDate = endDate.AddDays(-7);
+                }
+                else
+                {
+                    startDate = Convert.ToDateTime(startDateIn);
+                }
+            }
+            else
+            {
+                endDate = Convert.ToDateTime(endDateIn);
+                if (startDateIn is null)
+                {
+                    startDate = endDate.AddDays(-1);
+                }
+                else
+                {
+                    startDate = Convert.ToDateTime(startDateIn);
+                    if (DateTime.Compare(endDate.Date,startDate.Date) < 0)
+                    {
+                        startDate = endDate.AddDays(-1);
+                    }
+                }
+            }
+
+            List<AnnotationProgressViewModel> list = new List<AnnotationProgressViewModel>();
+          
+            while (startDate <= endDate)
+            {
+                //get each annotator assigned recordings group by status
+                var temp = new AnnotationProgressViewModel
+                {
+                    ReportDate = startDate,
+                    AnnotatorId = annotatorId
+                };
+
+                //get assigned Contributors
+                var contributorIds = _contributorAssignedAnnotatorRepository.Find(a => a.UserId==annotatorId)
+                    .ToList().Select(a => a.ContributorId);
+
+                temp.AssignedRecordingByContributor = _recordingRepository.Find(r => contributorIds.Contains(r.ContributorId) &&
+                        r.BlockId != null
+                        && DateTime.Compare(r.UpdateTS.Date, startDate.Date) ==
+                        0)
+                    .Include(r => r.Status)
+                    .ToList()
+                    .GroupBy(r => new { r.ContributorId, r.StatusId, r.Status.Name })
+                    .Select(group => new RecordingStatusViewModel()
+                    {
+                        ContributorId = group.Key.ContributorId,
+                        Status = group.Key.Name,
+                        NumberOfRecord = group.ToList().Count,
+                        ReportDate = startDate
+
+                    })
+                    .ToList();
+                list.Add(temp);
+                startDate = startDate.AddDays(1);
+            }
+
+            return PartialView("_AnnotatorsWorkingSpeechFiles", list);
+
+        }
+
 
     }
 }
