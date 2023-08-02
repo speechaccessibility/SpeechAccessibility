@@ -9,6 +9,8 @@
     <title>@ViewData["Title"] - Speech Accessibility Annotator</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
+    
+   
 </head>
 <body>
     <header class="bg-beckman no-print">
@@ -49,19 +51,18 @@
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsSA" aria-controls="navbarsSA" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-
                 <div class="collapse navbar-collapse" id="navbarsSA">
                     <ul class="navbar-nav mr-auto">
                         @if (userRole is "TextAnnotatorAdmin" or "TextAnnotator" or "SLPAnnotatorAdmin" or "SLPAnnotator" or "SystemAdmin") //clarion group
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="order" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Speech Files</a>
-                                <div class="dropdown-menu" aria-labelledby="order">
+                                <a class="nav-link dropdown-toggle" href="#" id="speechfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Speech Files</a>
+                                <div class="dropdown-menu" aria-labelledby="speechfile">
                                     @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotatorAdmin" or "SLPAnnotator" or "SystemAdmin")
                                     {
                                         <a class="dropdown-item" href="@Url.Action("AllSITSpeechFiles", "SpeechFile")">SIT Speech Files</a>
                                     }
-                                  
+
                                     <a class="dropdown-item" href="@Url.Action("Index", "SpeechFile")">Original Speech Files</a>
                                     <a class="dropdown-item" href="@Url.Action("ModifiedSpeechFiles", "SpeechFile")">WIP Speech Files</a>
                                     <a class="dropdown-item" href="@Url.Action("ToDiscussSpeechFiles", "SpeechFile")">To-Discuss Speech Files</a>
@@ -70,25 +71,25 @@
                                 </div>
                             </li>
                         }
-
-
+                        
+                    
                         @if (userRole is "TextAnnotator" or "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "LSVT" or "SystemAdmin") //Heejin group
-                        {  
+                        {
                             <li class="nav-item dropdown">
-                               <a class="nav-link dropdown-toggle" href="#" id="order" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Contributor</a>
-                                <div class="dropdown-menu" aria-labelledby="order">
+                                <a class="nav-link dropdown-toggle" href="#" id="contributor" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Contributor</a>
+                                <div class="dropdown-menu" aria-labelledby="contributor">
                                     @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "LSVT" or "SystemAdmin")
                                     {
                                         <a class="dropdown-item" href="@Url.Action("ContributorsWaitingForApproval", "Contributor")">Contributors Waiting For Approval</a>
 
                                     }
-                                    
+
                                     <a class="dropdown-item" href="@Url.Action("Index", "Contributor")">Approved Contributors</a>
                                     <a class="dropdown-item" href="@Url.Action("NonResponsiveContributors", "Contributor")">Non-Responsive Contributors</a>
                                     <a class="dropdown-item" href="@Url.Action("DeniedContributors", "Contributor")">Denied Contributors</a>
 
                                 </div>
-                           </li>
+                            </li>
 
                         }
                         @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotatorAdmin" or "SystemAdmin")
@@ -103,21 +104,22 @@
                         }
                         @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotatorAdmin" or "Compensator" or "SystemAdmin")
                         {
-                            
+
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="order" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Report</a>
-                                <div class="dropdown-menu" aria-labelledby="order">
+                                <a class="nav-link dropdown-toggle" href="#" id="report" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Report</a>
+                                <div class="dropdown-menu" aria-labelledby="report">
                                     @if (userRole != "Compensator")
                                     {
                                         <a class="dropdown-item" href="@Url.Action("ViewAnnotatorAssignedContributors", "Report")">View Annotator Assigned Contributors</a>
-                                      @*  <a class="dropdown-item" href="@Url.Action("ViewContributorsRecordingProgress", "Report")">View Contributors Recording Progress</a>*@
+                                        <a class="dropdown-item" href="@Url.Action("ViewAnnotationProgress", "Report")">View Annotation Progress</a>
+                                        <a class="dropdown-item" href="@Url.Action("ViewContributorsRecordingProgress", "Report")">View Contributors Recording Progress</a>
                                         <a class="dropdown-item" href="@Url.Action("ViewDailyContributorSpeechFiles", "Report")">View Daily Contributor Speech Files</a>
                                     }
                                     <a class="dropdown-item" href="@Url.Action("ViewContributorsCompensation", "Report")">View Contributors Compensation</a>
                                     <a class="dropdown-item" href="@Url.Action("ViewContributorsCompensationHistory", "Report")">View Contributors Compensation History</a>
                                 </div>
                             </li>
-                           
+
                         }
                         @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotatorAdmin" or "SystemAdmin")
                         {
@@ -126,7 +128,7 @@
 
                             </li>
                         }
-                        
+
                         <li class="nav-item">
                             <a class="nav-link" href="@Url.Action("Logout", "Auth")">Logout</a>
                         </li>
@@ -149,7 +151,8 @@
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
     <script src="~/js/site.js" asp-append-version="true"></script>
     @RenderSection("Scripts", required: false)
 </body>

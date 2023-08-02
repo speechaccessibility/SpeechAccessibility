@@ -1,0 +1,287 @@
+﻿@*@model List<SpeechAccessibility.Annotator.Models.AnnotationProgressViewModel>
+*@
+@{
+    ViewBag.Title = "Annotation Progress";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<h1>Annotation Progress</h1>
+
+<table style="border-collapse: collapse !important; border: none !important;">
+    <tr>
+        <td style="border: none !important;">
+            <label><b>Start Date:</b></label>
+        </td>
+        <td style="border: none !important;">
+            <input id="startDateIn" name="startDateIn" type="date" />
+        </td>
+        <td><b>End Date:</b></td>
+        <td><input id="endDateIn" name="endDateIn" type="date"  /></td>
+        <td><input type="button" id="btnSubmit" name="btnSubmit" value="Refresh Data" class="btn btn-primary btn-sm"/></td>
+    </tr>
+</table>
+
+@*@using (Html.BeginForm("ViewAnnotationProgress", "Report", FormMethod.Post))
+{
+    <table style="border-collapse: collapse !important; border: none !important;">
+        <tr>
+            <td style="border: none !important;">
+                <label><b>Start Date:</b></label>
+            </td>
+            <td style="border: none !important;">
+                <input id="startDateIn" name="startDateIn" type="date" value="@ViewBag.StartDate" />
+            </td>
+            <td><b>End Date:</b></td>
+            <td><input id="endDateIn" name="endDateIn" type="date" value="@ViewBag.EndDate" /></td>
+            <td><input type="submit" id="btnSubmit" name="btnSubmit" value="Submit" class="btn btn-primary btn-sm"/></td>
+        </tr>
+    </table>
+}*@
+
+@*<div style="width: 1500px">
+@{
+    foreach (var report in Model)
+    {
+            <table id="AnnotationProgressReport" style="width: 1000px;">
+            @{
+                    if (report.AssignedRecordingByContributor.Count > 0)
+                {
+                        <tr style="background-color: #797d7f; color: white">
+                            <td><b>@report.ReportDate.ToShortDateString() - @report.Annotator.LastName , @report.Annotator.FirstName</b></td>
+                    </tr>
+                    <tr>
+                        <td>
+                                <table>
+                                <tr style="background-color:#b3b6b7 ">
+                                    <td style="width: 50px">&nbsp;</td>
+                                        <td style="width: 400px"><b>ContributorId</b></td>
+                                        <td style="width: 100px"><b>Status</b></td>
+                                        <td style="width: 200px"><b>Number of Records</b></td>
+                                </tr>
+                                @{
+                                    var counter = 1;
+                                    foreach (var recording in report.AssignedRecordingByContributor)
+                                    {
+                                        <tr>
+                                            <td>@counter</td>
+                                            <td>@recording.ContributorId</td>
+                                            <td>@recording.Status</td>
+                                            <td>@recording.NumberOfRecord</td>
+                                        </tr>
+                                        counter++;
+                                    }
+                                }
+
+                            </table>
+                        </td>
+                    </tr>      
+                }
+            }
+        </table>
+    }
+}
+    
+</div>
+*@
+<div style="width: 1500px">
+    <table class="table table-striped table-bordered table-hover" id="AnnotationProgressTable" cellspacing="0" align="center"></table>
+</div>
+
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            setCurrentDate();
+            //$('#txtStart').datepicker().datepicker('setDate', new Date());
+            //$('#startDateIn').datepicker();
+            //$('#endDateIn').datepicker();
+
+
+            //bind datatable for Speech File
+            var oAnnotationProgressTable = $("#AnnotationProgressTable").on('error.dt',
+                function(e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                "serverSide": true,
+                "processing": true,
+                "responsive": true,
+                "iDisplayLength": 100,
+                "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                    "<'row'<'col-sm-12'tr>>p", //'<"top"l>rift<"bottom"p><"clear">',
+                "ajax": ({
+                        "url": '@Url.Action("LoadAnnotatorsForProgress", "Report")',
+                    "type": "POST",
+                    "datatype": "json"
+                }),
+                "bAutoWidth": false,
+                "aaSorting": [[3, 'asc']],
+                "columns": [
+                        {
+                            "className": 'details-control',
+                            "orderable": false,
+                            "data": null,
+                            "defaultContent": '',
+                            "width": "20px"
+                        },
+
+                        {
+                            "title": "UserId",
+                            "data": "id",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "Id"
+                        },
+
+                        {
+                            "title": "FirstName",
+                            "data": "firstName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "FirstName"
+                        },
+                        {
+                            "title": "LastName",
+                            "data": "lastName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "LastName"
+                        },
+                  
+                ],
+                "ordering": true,
+                "paging": true,
+                "pageLength": 100,
+                "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+
+            });
+
+            $('#AnnotationProgressTable tbody').on('click',
+                'td.details-control',
+                function() {
+                    var tr = $(this).closest('tr');
+                    var row = oAnnotationProgressTable.row(tr);
+                    var annotatorId = oAnnotationProgressTable.row(this).data().id;
+
+                    if (row.child.isShown()) {
+                        // This row is already open - close it
+                        row.child.hide();
+                        tr.removeClass('shown');
+                    } else {
+                        // Open this row
+                        row.child(formatDataTableDetailRow(annotatorId)).show();
+                        tr.addClass('shown');
+                        buildAnnotationProgressTable(annotatorId);
+                    }
+                });
+
+            function buildAnnotationProgressTable(annotatorId) {
+                $.ajax({
+                    url: '@Url.Action("LoadAnnotatorsWorkingSpeechFiles", "Report")',
+                    type: 'POST',
+                    data: {
+                        'annotatorId': annotatorId, 'startDateIn': $('#startDateIn').val(), 'endDateIn': $('#endDateIn').val()
+                    }, 
+                    success: function (data) {
+                        var recordingList = $("#AnnotationProgress_" + annotatorId);
+                        recordingList.html(data);
+                        
+                    },
+                    error: function () {
+                        alert("Error loading Annotation Progress");
+                    }
+                });
+
+            }
+            function formatDataTableDetailRow(annotatorId) {
+                return '<div id="AnnotationProgress_' + annotatorId + '"></div>';
+
+            }
+
+          
+            $("#btnSubmit").click(function () {
+                var startDateVal= $('#startDateIn').val();
+                var endDateVal = $('#endDateIn').val();
+                var startDate;
+                var endDate;
+
+                if (endDateVal==null || endDateVal=="") {                   
+                    endDate = new Date();
+                    if (startDateVal == null || startDateVal=="") {
+                        startDate = new Date();
+                        startDate.setDate(endDate.getDate() -7);                        
+                    }
+                    else
+                    {
+                        //need to add "'T00:00", if not the return date is one day less
+                        startDate = new Date(startDateVal + 'T00:00');
+                        if (startDate > endDate) {
+                            startDate = new Date();
+                            startDate.setDate(endDate.getDate() - 1);
+                        }
+                    }
+                }
+                else
+                {
+                    //need to add "'T00:00", if not the return date is one day less
+                    endDate = new Date(endDateVal + 'T00:00');
+                    if (startDateVal == null || startDateVal=="") {
+                        startDate = new Date();
+                        startDate.setDate(endDate.getDate() -1);                        
+                    }
+                    else 
+                    {
+                        //need to add "'T00:00", if not the return date is one day less
+                        startDate = new Date(startDateVal + 'T00:00');
+                        if (startDate > endDate)
+                        {
+                            startDate = new Date();
+                            startDate.setDate(endDate.getDate() - 1);
+                        }                        
+                    }
+                }
+
+                var formattedStartDate = formatDate(startDate);
+                var formattedEndDate = formatDate(endDate);
+                $('#startDateIn').val(formattedStartDate);
+                $('#endDateIn').val(formattedEndDate);
+              
+            });
+
+        }); //End document ready
+
+      
+
+        function setCurrentDate()
+        {
+            var end = new Date();
+            var start = new Date();
+            start.setDate(end.getDate() -7);          
+                      
+            var startDate = formatDate(start);
+            var endDate = formatDate(end);
+            $('#startDateIn').val(startDate);
+            $('#endDateIn').val(endDate);
+        }
+        
+        function formatDate(dateIn)
+        {
+            var date = new Date(dateIn);
+            var dateDay = ("0" + date.getDate()).slice(-2);
+            var dateMonth = ("0" + (date.getMonth() + 1)).slice(-2);
+            var dateVal = date.getFullYear() + "-" + (dateMonth) + "-" + (dateDay);
+
+            return dateVal;
+
+        }
+
+    </script>
+}

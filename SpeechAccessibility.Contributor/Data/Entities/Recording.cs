@@ -29,5 +29,9 @@ namespace SpeechAccessibility.Models
         public DateTime UpdateTS { get; set; }
 
         public string LastUpdateBy { get; set; }
+
+        public string ClientStartTS { get; set; }
+
+        public string ClientEndTS { get; set; }
     }
 }

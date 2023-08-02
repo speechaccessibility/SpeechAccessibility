@@ -56,6 +56,10 @@ namespace SpeechAccessibility.Models
         public string HelperFirstName { get; set; }
         [MaxLength(50)]
         public string HelperLastName { get; set; }
+
+        [MaxLength(10)]
+        public string HelperPhoneNumber { get; set; }
+
         [MaxLength(4)]
         [Required]
         public string StateResidence { get; set; }
@@ -74,5 +78,7 @@ namespace SpeechAccessibility.Models
 
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime UpdateTS { get; set; }
+
+        public string BirthYear { get; set; }
     }
 }

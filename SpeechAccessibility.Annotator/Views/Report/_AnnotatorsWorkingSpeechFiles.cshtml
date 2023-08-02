@@ -1,0 +1,85 @@
+﻿@model List<SpeechAccessibility.Annotator.Models.AnnotationProgressViewModel>
+@{
+    Layout = null;
+}
+@{
+    foreach (var report in Model)
+    {
+        <table id="AnnotationProgressReport" style="width: 1000px;">
+            @{
+                if (report.AssignedRecordingByContributor.Count > 0)
+                {
+                    <tr style="background-color: #797d7f; color: white">
+                        <td><b>@report.ReportDate.ToShortDateString()</b></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <table>
+                                <tr style="background-color:#b3b6b7 ">
+                                    <td style="width: 50px">&nbsp;</td>
+                                    <td style="width: 400px"><b>ContributorId</b></td>
+                                    <td style="width: 100px"><b>Status</b></td>
+                                    <td style="width: 200px"><b>Number of Records</b></td>
+                                </tr>
+                                @{
+                                    var counter = 1;
+                                    foreach (var recording in report.AssignedRecordingByContributor)
+                                    {
+                                        <tr>
+                                            <td>@counter</td>
+                                            <td>@recording.ContributorId</td>
+                                            <td>@recording.Status</td>
+                                            <td>@recording.NumberOfRecord</td>
+                                        </tr>
+                                        counter++;
+                                    }
+                                }
+
+                            </table>
+                        </td>
+                    </tr>      
+                }
+            }
+        </table>
+    }
+
+}
+
+@*<table>
+    <tr style="background-color:#b3b6b7 ">
+        <td style="width: 50px">&nbsp;</td>
+        <td style="width: 400px"><b>ContributorId</b></td>
+        <td style="width: 100px"><b>Status</b></td>
+        <td style="width: 200px"><b>Number of Records</b></td>
+    </tr>
+    @{
+        var counter = 1;
+        foreach (var report in Model.AssignedRecordingByContributor)
+        {
+            <tr>
+                <td>@counter</td>
+                <td>@report.ContributorId</td>
+                <td>@report.Status</td>
+                <td>@report.NumberOfRecord</td>
+            </tr>
+            counter++;
+        }
+    }
+
+</table>*@
+
+
+<script language="javascript" type="text/javascript">
+
+    $(document).ready(function () {
+
+
+       
+
+
+
+    });//End document ready
+
+
+
+</script>
