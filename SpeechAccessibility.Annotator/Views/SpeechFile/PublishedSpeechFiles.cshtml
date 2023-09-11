@@ -17,7 +17,7 @@
 }
 <input type="hidden" id="UserRole" value="@userRole" />
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
-<div style="width: 1500px">
+<div style="width: 1800px">
     <table class="table table-striped table-bordered table-hover" id="SpeechFileTable" cellspacing="0" align="center"></table>
 </div>
 
@@ -79,7 +79,7 @@
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[5, 'desc']],
+                    "aaSorting": [[6, 'desc']],
                     "columns": [
                         {
                             "title": "FileId",
@@ -96,6 +96,14 @@
                             "orderable": true,
                             "visible": true,
                             "name": "ContributorId"
+                        },
+                        {
+                            "title": "Etiology",
+                            "data": "etiologyName",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "EtiologyName"
                         },
                         {
                             "title": "RecordingID",
@@ -143,6 +151,7 @@
                             "visible": true,
                             "name": "Comment"
                         },
+                          
 
                         {
                             "title": "Actions",

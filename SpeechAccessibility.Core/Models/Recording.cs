@@ -40,6 +40,9 @@ namespace SpeechAccessibility.Core.Models
         [NotMapped]
         public bool IsContributorApproved { get; set; }
 
+        [NotMapped]
+        public string EtiologyName { get; set; }
+
 
     }
 }

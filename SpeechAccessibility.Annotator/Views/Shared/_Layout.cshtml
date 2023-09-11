@@ -1,6 +1,13 @@
 ﻿@using System.Security.Claims
+@using Microsoft.AspNetCore.Mvc.TagHelpers
 @using Microsoft.Extensions.Configuration
+@using SpeechAccessibility.Annotator.Extensions
+@using SpeechAccessibility.Core.Interfaces
+@using SpeechAccessibility.Core.Models
 @inject IConfiguration Configuration
+@*@inject IEtiologyRepository EtiologyRepository*@
+@inject ISubRoleRepository SubRoleRepository
+@inject IUserSubRoleRepository UserSubRoleRepository
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,6 +24,8 @@
         @{
             var siteName = Configuration.GetSection("AppSettings")["SiteName"];
             var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+            var hasSubRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.OtherPhone)?.Value; //we need to store extra information, so we use this exiting claim
+          
         }
         <div id="top-banner" class="row" role="banner">
             <div id="university-logo" class="col-sm-3">
@@ -53,7 +62,7 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarsSA">
                     <ul class="navbar-nav mr-auto">
-                        @if (userRole is "TextAnnotatorAdmin" or "TextAnnotator" or "SLPAnnotatorAdmin" or "SLPAnnotator" or "SystemAdmin") //clarion group
+                        @if (userRole is "TextAnnotatorAdmin" or "TextAnnotator" or "SLPAnnotatorAdmin" or "SLPAnnotator" or "SystemAdmin") //Heejin group
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="speechfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Speech Files</a>
@@ -71,22 +80,65 @@
                                 </div>
                             </li>
                         }
-                        
-                    
-                        @if (userRole is "TextAnnotator" or "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "LSVT" or "SystemAdmin") //Heejin group
+
+
+                        @if (userRole is "TextAnnotator" or "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "ExternalSLPAnnotator" or "SystemAdmin") //Clarion group
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="contributor" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Contributor</a>
                                 <div class="dropdown-menu" aria-labelledby="contributor">
-                                    @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "LSVT" or "SystemAdmin")
-                                    {
-                                        <a class="dropdown-item" href="@Url.Action("ContributorsWaitingForApproval", "Contributor")">Contributors Waiting For Approval</a>
+                                    @{
+
+                                        if (ViewBag.SubRoles == null)
+                                        {
+                                            ViewBag.SubRoles = CacheExtension.GetEtiologyList(SubRoleRepository);
+                                        }
+                                        List<UserSubRole> userSubroles = null;
+                                        if (hasSubRole=="Yes")
+                                        {
+                                            userSubroles = CacheExtension.GetSubRoles(UserSubRoleRepository, User.Identity.Name);
+                                        }
+
 
                                     }
+                                    @foreach (var etiology in (List<Etiology>)ViewBag.SubRoles)
+                                    {
+                                        if (hasSubRole=="Yes")
+                                        {
+                                            var matchRole = userSubroles.Any(r => r.SubRole.Etiology.Id == etiology.Id);
+                                            if (matchRole)
+                                            {
+                                                <span>@etiology.Name</span>
+                                                @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "ExternalSLPAnnotator" or "SystemAdmin")
+                                                {
+                                                    <a class="dropdown-item" href="@Url.Action("ContributorsWaitingForApproval", "Contributor", new{etiologyId= @etiology.Id})">Contributors Waiting For Approval</a>
+                                                    @*'@Url.Action("CreatePerson", "Person", new {id = id})'*@
+                                                }
 
-                                    <a class="dropdown-item" href="@Url.Action("Index", "Contributor")">Approved Contributors</a>
-                                    <a class="dropdown-item" href="@Url.Action("NonResponsiveContributors", "Contributor")">Non-Responsive Contributors</a>
-                                    <a class="dropdown-item" href="@Url.Action("DeniedContributors", "Contributor")">Denied Contributors</a>
+                                                <a class="dropdown-item" href="@Url.Action("Index", "Contributor", new{etiologyId= @etiology.Id})">Approved Contributors</a>
+                                                <a class="dropdown-item" href="@Url.Action("NonResponsiveContributors", "Contributor", new{etiologyId= @etiology.Id})">Non-Responsive Contributors</a>
+                                                <a class="dropdown-item" href="@Url.Action("DeniedContributors", "Contributor", new{etiologyId= @etiology.Id})">Denied Contributors</a>
+                                                <div class="dropdown-divider"></div>                                                
+                                            }
+
+                                        }
+                                        else
+                                        {
+                                            <span>@etiology.Name</span>
+                                            @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "ExternalSLPAnnotator" or "SystemAdmin")
+                                            {
+                                                <a class="dropdown-item" href="@Url.Action("ContributorsWaitingForApproval", "Contributor", new{etiologyId= @etiology.Id})">Contributors Waiting For Approval</a>
+
+                                            }
+
+                                            <a class="dropdown-item" href="@Url.Action("Index", "Contributor", new{etiologyId= @etiology.Id})">Approved Contributors</a>
+                                            <a class="dropdown-item" href="@Url.Action("NonResponsiveContributors", "Contributor", new{etiologyId= @etiology.Id})">Non-Responsive Contributors</a>
+                                            <a class="dropdown-item" href="@Url.Action("DeniedContributors", "Contributor", new{etiologyId= @etiology.Id})">Denied Contributors</a>
+                                            <div class="dropdown-divider"></div>
+                                        }
+                                        
+                                        
+                                    }
 
                                 </div>
                             </li>

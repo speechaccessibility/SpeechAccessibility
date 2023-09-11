@@ -19,16 +19,23 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IConfiguration _configuration;
         private readonly IRoleRepository _roleRepository;
+        private readonly IUserSubRoleRepository _userSubRoleRepository;
+        private readonly IEtiologyRepository _etiologyRepository;
+        private readonly ISubRoleRepository _subRoleRepository;
 
-        public AdminController(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration)
+        public AdminController(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration,  IUserSubRoleRepository userSubRoleRepository, IEtiologyRepository etiologyRepository, ISubRoleRepository subRoleRepository)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _configuration = configuration;
+            _userSubRoleRepository = userSubRoleRepository;
+            _etiologyRepository = etiologyRepository;
+            _subRoleRepository = subRoleRepository;
         }
 
         public IActionResult Index()
         {
+           
             return View();
         }
         public ActionResult ManageUsers()
@@ -39,12 +46,21 @@ namespace SpeechAccessibility.Annotator.Controllers
                 // can't add user to SystemAdmin group
                 Roles = _roleRepository.Find(r => r.InUsed == "Yes" && r.Id != 1).OrderBy(r => r.Name).Select(a => new SelectListItem()
                 {
-                    Value = a.Id.ToString(),
+                    Value = a.Id.ToString() + "_" + Convert.ToInt32(a.HasSubRole).ToString(),
                     Text = a.Name
                 })
                     .ToList(),
-
-
+                SubRoles = _subRoleRepository.Find(r => r.InUsed == "Yes" && r.Etiology.Active == "Yes" && r.Role.Name == "ExternalSLPAnnotator").Select(a => new SelectListItem()
+                {
+                    Value = a.Etiology.Id.ToString(),
+                    Text = a.Etiology.Name
+                })
+                .ToList()
+                //SubRoles = _etiologyRepository.Find(e => e.Active == "Yes").OrderBy(r => r.DisplayOrder).Select(a => new SelectListItem()
+                //{
+                //    Value = a.Id.ToString(),
+                //    Text = a.Name
+                //}).ToList()
             };
             return View(userVM);
         }
@@ -129,6 +145,25 @@ namespace SpeechAccessibility.Annotator.Controllers
                         _configuration["AppSettings:Domain"], _configuration["AppSettings:Container"], _configuration["AppSettings:Environment"]);
                 }
 
+                //remove all subroles and add them back if there are any
+                var existingSubRoles = _userSubRoleRepository.Find(s => s.UserId == userVM.Id);
+                if (existingSubRoles.Any())
+                    _userSubRoleRepository.RemoveRange(existingSubRoles);
+
+
+                //update SubRoles
+                if (userVM.HasSubRole)
+                {
+                    
+                    foreach (var subRole in userVM.AssignedSubRoles)
+                    {
+                        var newAssignedSubRole = new UserSubRole();
+                        newAssignedSubRole.UserId = userVM.Id;
+                        newAssignedSubRole.SubRoleId = subRole.Id;
+                        _userSubRoleRepository.Insert(newAssignedSubRole);
+                    }
+                }
+
                 existingUser.Active = "Yes";
                 _userRepository.Update(existingUser);
 
@@ -141,7 +176,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             {
 
                 //check for existing person, this should not happen but just in case
-                //userVM.NetID = "speyton";
+                //userVM.NetID = "";
                 var existingUser = _userRepository.Find(p => p.NetId == userVM.NetId).FirstOrDefault();
                 if (existingUser != null)
                     return Json(new { Success = false, Message = "This person is already in the Speech Accessibility application. Please try to Edit instead." });
@@ -157,6 +192,19 @@ namespace SpeechAccessibility.Annotator.Controllers
                     UpdateBy = User.Identity.Name
                 };
                 _userRepository.Insert(newPerson);
+
+                if (userVM.HasSubRole)
+                {
+                    foreach (var subRole in userVM.AssignedSubRoles)
+                    {
+                        var newAssignedSubRole = new UserSubRole
+                        {
+                            UserId = newPerson.Id,
+                            SubRoleId = subRole.Id
+                        };
+                        _userSubRoleRepository.Insert(newAssignedSubRole);
+                    }
+                }
 
                 var role = _roleRepository.Find(r => r.Id == newPerson.RoleId).FirstOrDefault();
                 var error = ActiveDirectoryService.AddMemberToADGroup(userVM.NetId, role.ADGroupName,

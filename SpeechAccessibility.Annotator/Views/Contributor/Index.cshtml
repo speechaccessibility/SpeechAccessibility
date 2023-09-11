@@ -1,4 +1,5 @@
 ﻿@using System.Security.Claims
+@using System.Collections
 @{
     ViewData["Title"] = "Approved Contributors";
 }
@@ -9,13 +10,14 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
 <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-<h1>Approved Contributors</h1>
+<h1>Approved Contributors: @ViewBag.SubRoleName</h1>
 @{
     var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 }
 <input type="hidden" id="UserRole" value="@userRole" />
+<input type="hidden" id="SubRole" value="@ViewBag.SubRole" />
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
-<div style="width: 1500px">
+<div style="width: 1800px">
     <table class="table table-striped table-bordered table-hover" id="ContributorTable" cellspacing="0" align="center"></table>
 </div>
 
@@ -49,7 +51,36 @@
 </textarea>
 
 </div>
+<div id="editInfo-dialog" style="display: none">
+    <label id="lblEditInfoMessage">Contributor:</label>
+    <input type="hidden" id="hidEditInfoContributorId" />
+    <br /><b>First Name:</b><label id="lblEditInfoFirstName" name="lblEditInfoFirstName"></label>
+    <br /><b>Last Name:</b><label id="lblEditInfoLastName" name="lblEditInfoLastName"></label>
+    <br /><b>Year of Birth:</b><input type="text" id="txtEditInfoBirthYear" name="txtEditInfoBirthYear" />
+    <br/><br /><b>Contributor Email:</b><input type="text" id="txtEditContributorEmail" name="txtEditContributorEmail" />
+    <br/><br/><b>Helper Email:</b><input type="text" id="txtEditHelperEmail" name="txtEditHelperEmail" />
+    &nbsp;&nbsp;&nbsp;<b>Helper Phone:</b><input type="text" id="txtEditHelperPhone" name="txtEditHelperPhone" />
+    <br />Comment:<br /><textarea id="txtEditInfoComment" name="txtEditInfoComment" rows="4" cols="50"></textarea>
+    <br /><b>Status:</b>
+    <select id="dlSubStatus" asp-items="@ViewBag.SubStatus"></select>
+</div>
 
+@*<div id="editSubStatus-dialog" style="display: none">
+    <label id="lblEditSubStatusMessage">Contributor:</label>
+    <input type="hidden" id="hidEditSubStatusContributorId" />
+    <br /><b>First Name:</b><label id="lblEditSubStatusFirstName" name="lblEditSubStatusFirstName"></label>
+    <br /><b>Last Name:</b><label id="lblEditSubStatusLastName" name="v"></label>
+    <br /><b>Status:</b>
+    <select id="SubStatus" asp-items="@ViewBag.SubStatus"></select>
+</div>
+*@
+<div class="spinner" style="display:none">
+    <div class="center-div">
+        <div class="inner-div">
+            <div class="loader"></div>
+        </div>
+    </div>
+</div>
 
 @section scripts {
     <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
@@ -73,12 +104,13 @@
                     "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
                         "<'row'<'col-sm-12'tr>>p",
                     "ajax": ({
-                        "url": '@Url.Action("LoadContributors", "Contributor", new { filter = 2 })',
+                        "url": '@Url.Action("LoadContributors", "Contributor")',
+                        "data": { "subRole": $("#SubRole").val(), "filter": 2 },
                         "type": "POST",
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[6, 'desc']],
+                    "aaSorting": [[8, 'desc']],
                     "columns": [
                          {
                              "title": "View Blocks",
@@ -86,7 +118,7 @@
                             "orderable": false,
                             "data": null,
                             "defaultContent": '',
-                            "width": "20px"
+                            "width": "10px"
                         },
                         {
                             "title": "ID",
@@ -94,7 +126,8 @@
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.Id"
+                            "name": "Contributor.Id",
+                            "width": "250px"
                         },
 
                         {
@@ -105,14 +138,7 @@
                             "visible": true,
                             "name": "Contributor.FirstName"
                         },
-                        //{
-                        //    "title": "MiddleName",
-                        //    "data": "contributor.middleName",
-                        //    "searchable": true,
-                        //    "orderable": true,
-                        //    "visible": true,
-                        //    "name": "Contributor.MiddleName"
-                        //},
+                      
                         {
                             "title": "LastName",
                             "data": "contributor.lastName",
@@ -121,30 +147,68 @@
                             "visible": true,
                             "name": "Contributor.LastName"
                         },
-                        //{
-                        //    "title": "Email Address",
-                        //    "data": "contributor.emailAddress",
-                        //    "searchable": true,
-                        //    "orderable": true,
-                        //    "visible": true,
-                        //    "name": "Contributor.EmailAddress"
-                        //},
-                        //{
-                        //    "title": "HelperAddress",
-                        //    "data": "contributor.helperEmail",
-                        //    "searchable": true,
-                        //    "orderable": true,
-                        //    "visible": true,
-                        //    "name": "Contributor.HelperEmail"
-                        //},
                         {
-                            "title": "ApprovedDate",
+                            "title": "BYear",
+                            "data": "contributor.birthYear",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.irthYear"
+                        },
+                        {
+                            "title": "Gender",
+                            "data": null,
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": null,
+                            "render": function (data, type, row) {
+                                if (data.contributor.contributorDetails.length>0) {
+                                    //return data.contributor.contributorDetails[0].gender;
+                                    return data.contributor.contributorDetails[0].gender; //data.contributor.contributorDetails.length;
+                                }
+                                else
+                                {
+                                    return '';
+                                }
+                                
+                            }
+                        },
+                        {
+                            "title": "HelperEmail",
+                            "data": "contributor.helperEmail",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.HelperEmail",
+                            "render": function (data, type, row) {
+                                if (row.contributor.helperInd == "Yes")
+                                    return row.contributor.helperEmail
+                                return '';
+                            }
+                        },
+
+                        {
+                            "title": "HelperPhone",
+                            "data": "contributor.helperPhoneNumber",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.HelperPhoneNumber",
+                            "render": function (data, type, row) {
+                                if (row.contributor.helperInd == "Yes")
+                                    return row.contributor.helperPhoneNumber
+                                return '';
+                            }
+                        },
+                        {
+                            "title": "AppDate",
                             "data": "contributor.approveTS",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
                             "name": "Contributor.ApproveTS",
-                            'render': function (data) {
+                            "render": function (data) {
                                 if(data != null){
                                     var date = new Date(data);
                                     var month = date.getMonth() + 1;
@@ -169,7 +233,7 @@
                             "orderable": true,
                             "visible": true,
                             "name": "LastRecording",
-                            'render': function (data) {
+                            "render": function (data) {
                                 if(data!= null)
                                 {
                                     var date = new Date(data);
@@ -179,10 +243,10 @@
                                 }
                                 return '';
                             
-                            },
+                            }
                         },
                         {
-                            "title": "AnnotatorAssigned ",
+                            "title": "AnnAssigned ",
                             "data": "annotatorAssigned",
                             "searchable": true,
                             "orderable": true,
@@ -190,13 +254,46 @@
                             "name": "AnnotatorAssigned"
                         },
                         {
-                            "title": "Sent FollowUp Date",
+                            "title": "SentFollowUpDate",
                             "data": "followUpDate",
                             "searchable": true,
                             "orderable": false,
                             "visible": true,
-                            "name": ""
+                            "name": "",
+                            "render": function (data) {
+                                if (data != "") {
+                                    var date = new Date(data);
+                                    var month = date.getMonth() + 1;
+                                    return (month.toString().length > 1 ? month : "0" + month) + "/" + date.getDate() + "/" + date.getFullYear() + "&nbsp;" + (date.getHours() < 10 ? ("0" + date.getHours()) : date.getHours()) + ":" + (date.getMinutes() < 10 ? ("0" + date.getMinutes()) : date.getMinutes());
+
+                                }
+                                return '';
+
+                            }
                         },
+                        {
+                            "title": "Status",
+                            "data": "approvedStatus",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "ApprovedStatus",
+                            //"render": function (data, type, row) {
+                            //    if (data.contributor.contributorSubStatus == null) {
+                            //        return '';
+                            //    }
+                            //    return data.contributor.contributorSubStatus.name;
+                            //}
+                        },
+                        {
+                            "title": "Comments",
+                            "data": "contributor.comments",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.Comments"
+                        },
+
                         {
                             "title": "Actions",
                             "data": "contributor.id",
@@ -210,10 +307,14 @@
                             "render": function (data, type, row) {
                                 var link="";
                                 if ($("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
-                                    link = '<a href="#" class="assignAnnotator" >Assign Annotators</a> | <a href="#" class="viewSITRating" >View SIT Rating</a><br>| <a href="#" class="sendFollowUp">Send Follow-up</a>';
+                                    link = '<a href="#" class="assignAnnotator" >Assign Annotators</a> | <a href="#" class="viewSITRating" >View SIT Rating</a><br>|'
+                                        + ' <a href="#" class="sendFollowUp">Send Follow-up </a>'
+                                        + '| <a href="#" class="editInfo">Edit Info</a> ';
                                     return link;
                                 }
-                                link = '<a href="#" class="viewSITRating" >View SIT Rating</a>';
+                                link = '<a href="#" class="viewSITRating" >View SIT Rating</a> '
+                                    + ' <a href="#" class="sendFollowUp">Send Follow-up </a>'
+                                    + '| <a href="#" class="editInfo">Edit Info</a> ';
                                 return link;
                                
                             }
@@ -262,7 +363,8 @@
                     url: '@Url.Action("LoadContributorAssignedBlocks", "SpeechFile")',
                     type: 'POST',
                     data: {
-                        'contributorId': contributorId
+                        'contributorId': contributorId,
+                        'subRole': $("#SubRole").val()
                     },
                     success: function (data) {
                         var recordingList = $("#AssignedBlocks_" + contributorId);
@@ -287,7 +389,7 @@
                 e.preventDefault();
                 var selectedRowData = oContributorTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
-                var getUrl = "@Url.Action("ViewSITRecordingRating", "SpeechFile")?contributorId=" + row.contributor.id;
+                var getUrl = "@Url.Action("ViewSITRecordingRating", "SpeechFile")?contributorId=" + row.contributor.id + "&subRole=" + $("#SubRole").val();
                 //$("#lblContributor").text(row.id);
                 getRecordingRating(getUrl);
                 $("#rating-dialog").dialog('open');
@@ -384,8 +486,47 @@
                     $("#sendFollowUp-dialog").dialog('open');
 
                 });
+           
+            
+             //Edit Info
+            $('#ContributorTable').on('click',
+                'a.editInfo',
+                function (e) {
+                    e.preventDefault();
+                    var selectedRowData = oContributorTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();
+                    $("#lblEdiInfoMessage").text("Update Contributor Information:");
+                    $("#hidEditInfoContributorId").val(row.contributor.id);
+                    $("#lblEditInfoFirstName").text(row.contributor.firstName);
+                    $("#lblEditInfoLastName").text(row.contributor.lastName);
+                    $("#txtEditContributorEmail").val(row.contributor.emailAddress);
+                    $("#txtEditHelperEmail").val(row.contributor.helperEmail);
+                    $("#txtEditInfoBirthYear").val(row.contributor.birthYear);
+                    //if (row.contributor.helperInd == "Yes")
+                    //    $("#txtEditHelperEmail").prop("disabled", false);
+                    //else
+                    //    $("#txtEditHelperEmail").prop("disabled", true);
+                    if (row.contributor.helperInd == "Yes") {
+                        $("#txtEditHelperEmail").prop("disabled", false);
+                        $("#txtEditHelperPhone").prop("disabled", false);
+                       
+                    }
+                        
+                    else
+                    {
+                        $("#txtEditHelperEmail").prop("disabled", true);
+                        $("#txtEditHelperPhone").prop("disabled", true);
+                        
+                    }
 
+                    $("#txtEditInfoComment").val(row.contributor.comments);
+                    $("#dlSubStatus").val(row.contributor.subStatusId).trigger("chosen:updated");
+                    editContributorInfo('@Url.Action("EditContributorInfo", "Contributor")', oContributorTable, "Edit Contributor Information",2);
+                    $("#editInfo-dialog").dialog('open');
 
+            });
+
+         
 
 
         });//End document ready

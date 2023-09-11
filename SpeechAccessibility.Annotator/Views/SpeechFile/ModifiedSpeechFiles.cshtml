@@ -16,7 +16,7 @@
 <input type="hidden" id="UserRole" value="@userRole" />
 
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
-<div style="width: 1500px">
+<div style="width: 1800px">
     <table class="table table-striped table-bordered table-hover" id="SpeechFileTable" cellspacing="0" align="center"></table>
 </div>
 
@@ -114,14 +114,6 @@
                     "bAutoWidth": false,
                     "aaSorting": [[5, 'desc']],
                     "columns": [
-                        {
-                            "title": "RecordingId",
-                            "data": "id",
-                            "searchable": true,
-                            "orderable": true,
-                            "visible": false,
-                            "name": "Id"
-                        },
                        
                         {
                             "title": "ContributorID",
@@ -129,7 +121,16 @@
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "ContributorId"
+                            "name": "ContributorId",
+                            "width": "280px"
+                        },
+                        {
+                            "title": "Etiology",
+                            "data": "etiologyName",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "EtiologyName"
                         },
                         {
                             "title": "RecordingID",
@@ -141,11 +142,12 @@
                         },
                         {
                             "title": "Transcript",
-                            "data": "modifiedTranscript",
+                            "data": "modifiedTranscript",                            
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
                             "name": "ModifiedTranscript"
+                            
                         },
                         {
                             "title": "Category",
@@ -174,9 +176,10 @@
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Comment"
+                            "name": "Comment",
+                            "width": "300px"
                         },
-                      
+                       
                         {
                             "title": "Actions",
                             "data": "id",                           
@@ -205,7 +208,7 @@
                             "data": "startTime",
                             "searchable": true,
                             "orderable": true,
-                            "visible": true,
+                            "visible": false,
                             "name": "StartTime"
                         },
                           {
@@ -213,16 +216,16 @@
                             "data": "endTime",
                             "searchable": true,
                             "orderable": true,
-                            "visible": true,
+                            "visible": false,
                             "name": "EndTime"
                         },
                     ],                  
-                    "createdRow": function (row, data) {
-                        //hide the Start and End Time column. if the columns are set to be invisible, the value of the columns are not available for listen dialog
-                        $('td', row).eq(7).hide();
-                        $('td', row).eq(8).hide();
+                    //"createdRow": function (row, data) {
+                    //    //hide the Start and End Time column. if the columns are set to be invisible, the value of the columns are not available for listen dialog
+                    //    $('td', row).eq(7).hide();
+                    //    $('td', row).eq(8).hide();
                        
-                    },
+                    //},
                     "ordering": true,
                     "paging": true,
                     "pageLength": 100,
@@ -231,8 +234,8 @@
                 });
                 
                 //hide the header for Start and End Time column
-                $('#SpeechFileTable th:nth-child(8)').hide();
-                $('#SpeechFileTable th:nth-child(9)').hide();
+                //$('#SpeechFileTable th:nth-child(8)').hide();
+                //$('#SpeechFileTable th:nth-child(9)').hide();
 
                  //listen the recording
             $('#SpeechFileTable').on('click', 'a.listen', function (e) {

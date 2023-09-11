@@ -1,6 +1,7 @@
 ﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
 for details on configuring this project to bundle and minify static web assets. */
 
+
 a.navbar-brand {
   white-space: normal;
   text-align: center;
@@ -287,7 +288,7 @@ div.small {
 
 
 /*/*format for datatable*/
-#UserTable th, #PromptTable th, #SpeechFileTable th, #BlockTable th, #ContributorTable th, #ContributorAssignedBlocksTable th, #ContributorRecordingsTable th, #view-recording-rating-table th, #WaitingForApprovalContributorTable th, #contributor-assigned-prompts-table th, #DigitalAssistantCommandsTable th, #NovelSentencesTable th, #SpontaneousSpeechPromptsTable th, #contributor-assigned-annotators-table th, #ContributorRecordingsForBlock-table th, #AssignedConntributorTable th, #CompensationHistoryTable th, #ContributorsProgressTable th, #NonResponsiveContributorTable th {
+#UserTable th, #PromptTable th, #SpeechFileTable th, #BlockTable th, #ContributorTable th, #ContributorAssignedBlocksTable th, #ContributorRecordingsTable th, #view-recording-rating-table th, #WaitingForApprovalContributorTable th, #contributor-assigned-prompts-table th, #DigitalAssistantCommandsTable th, #NovelSentencesTable th, #SpontaneousSpeechPromptsTable th, #contributor-assigned-annotators-table th, #ContributorRecordingsForBlock-table th, #AssignedConntributorTable th, #CompensationHistoryTable th, #ContributorsProgressTable th, #NonResponsiveContributorTable th, #AnnotationProgressTable th {
     background-color: #13294B !important;
     color: white;
     text-align: center;
@@ -298,7 +299,7 @@ div.small {
     background-color: #2da5fa !important;
 }
 
-#UserTable, #PromptTable, #SpeechFileTable, #BlockTable, #ContributorTable, #ContributorAssignedBlocksTable, #ContributorRecordingsTable, #view-recording-rating-table, #WaitingForApprovalContributorTable, #contributor-assigned-prompts-table, #DigitalAssistantCommandsTable, #NovelSentencesTable, #SpontaneousSpeechPromptsTable, #contributor-assigned-annotators-table, #ContributorRecordingsForBlock-table, #AssignedConntributorTable, #CompensationHistoryTable, #ContributorsProgressTable, #NonResponsiveContributorTable {
+#UserTable, #PromptTable, #SpeechFileTable, #BlockTable, #ContributorTable, #ContributorAssignedBlocksTable, #ContributorRecordingsTable, #view-recording-rating-table, #WaitingForApprovalContributorTable, #contributor-assigned-prompts-table, #DigitalAssistantCommandsTable, #NovelSentencesTable, #SpontaneousSpeechPromptsTable, #contributor-assigned-annotators-table, #ContributorRecordingsForBlock-table, #AssignedConntributorTable, #CompensationHistoryTable, #ContributorsProgressTable, #NonResponsiveContributorTable, #AnnotationProgressTable {
     font-size: small;
 }
 
@@ -382,7 +383,7 @@ tr.shown td.details-control {
 #ContributorsForFirstGiftCard tr:nth-child(even), #ContributorsForSecondGiftCard tr:nth-child(even), #ContributorsForThirdGiftCard tr:nth-child(even) {
     background-color: #f2f2f2;
 }
-#ContributorsForFirstGiftCard th, #ContributorsForSecondGiftCard th, #ContributorsForThirdGiftCard th, #DailyContributorRecordingReport th {
+#ContributorsForFirstGiftCard th, #ContributorsForSecondGiftCard th, #ContributorsForThirdGiftCard th, #DailyContributorRecordingReport th, #AnnotationProgressReport th {
     background-color: #13294B !important;
     color: white;
     padding: 0 10px 10px 10px;

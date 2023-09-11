@@ -10,5 +10,6 @@ namespace SpeechAccessibility.Annotator.Models
         public DateTime? LastRecording { get; set; }
         public  string AnnotatorAssigned { get; set; }
         public string FollowUpDate { get; set; }
+        public string ApprovedStatus { get; set; }
     }
 }

@@ -8,6 +8,7 @@ namespace SpeechAccessibility.Core.Models
         public User()
         {
             ContributorAssignedAnnotator = new HashSet<ContributorAssignedAnnotator>();
+            UserSubRole = new HashSet<UserSubRole>();
         }
 
         public int Id { get; set; }
@@ -20,5 +21,6 @@ namespace SpeechAccessibility.Core.Models
         public string Active { get; set; }
         public  Role Role { get; set; }
         public  ICollection<ContributorAssignedAnnotator> ContributorAssignedAnnotator { get; set; }
+        public  ICollection<UserSubRole> UserSubRole { get; set; }
     }
 }
