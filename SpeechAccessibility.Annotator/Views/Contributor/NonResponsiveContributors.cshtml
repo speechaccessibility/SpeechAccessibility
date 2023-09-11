@@ -8,13 +8,18 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
 <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-<h1>Non-Responsive Contributors</h1>
+<h1>Non-Responsive Contributors: @ViewBag.SubRoleName</h1>
 <div id="top"></div>
 @{
     var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 }
 <input type="hidden" id="UserRole" value="@userRole" />
+<input type="hidden" id="SubRole" value="@ViewBag.SubRole" />
 
+<form method="post" asp-controller="Contributor" asp-action="ExportNonResponsiveContributors">
+    <input type="hidden" id="subRole" name="subRole" value="@ViewBag.SubRole" />
+    <input type="submit" value="Export All Non-Responsive Contributors" class="btn btn-link" />
+</form>
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
 <div style="width: 1500px">
     <table class="table table-striped table-bordered table-hover" id="NonResponsiveContributorTable" cellspacing="0" align="center"></table>
@@ -52,6 +57,17 @@
         </tr>
     </table>
 </div>
+<div id="editInfo-dialog" style="display: none">
+    <label id="lblEditInfoMessage">Contributor:</label>
+    <input type="hidden" id="hidEditInfoContributorId" />
+    <br /><b>First Name:</b><label id="lblEditInfoFirstName" name="lblEditInfoFirstName"></label>
+    <br /><b>Last Name:</b><label id="lblEditInfoLastName" name="lblEditInfoLastName"></label>
+    <br /><b>Year of Birth:</b><input type="text" id="txtEditInfoBirthYear" name="txtEditInfoBirthYear" />
+    <br/><br /><b>Contributor Email:</b><input type="text" id="txtEditContributorEmail" name="txtEditContributorEmail" />
+    <br/><br/><b>Helper Email:</b><input type="text" id="txtEditHelperEmail" name="txtEditHelperEmail" />
+    &nbsp;&nbsp;&nbsp;<b>Helper Phone:</b><input type="text" id="txtEditHelperPhone" name="txtEditHelperPhone" />
+    <br />Comment:<br /><textarea id="txtEditInfoComment" name="txtEditInfoComment" rows="4" cols="50"></textarea>
+</div>
 
 <div class="spinner" style="display:none">
     <div class="center-div">
@@ -84,12 +100,13 @@
                     "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
                         "<'row'<'col-sm-12'tr>>p",
                     "ajax": ({
-                        "url": '@Url.Action("LoadContributors", "Contributor", new { filter = 4 })',
+                        "url": '@Url.Action("LoadContributors", "Contributor")',
+                        "data": { "subRole": $("#SubRole").val(), "filter": 4 },
                         "type": "POST",
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[4, 'desc']],
+                    "aaSorting": [[5, 'desc']],
                     "columns": [
                         {
                             "title": "ID",
@@ -97,7 +114,8 @@
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.Id"
+                            "name": "Contributor.Id",
+                            "width": "250px"
                         },
 
                         {
@@ -125,6 +143,14 @@
                             "visible": true,
                             "name": "Contributor.EmailAddress"
                         },
+                          {
+                            "title": "BirthYear",
+                            "data": "contributor.birthYear",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.BirthYear"
+                        },
                         {
                             "title": "Register Date",
                             "data": "contributor.createTS",
@@ -139,6 +165,33 @@
                                     return (month.toString().length > 1 ? month : "0" + month) + "/" + date.getDate() + "/" + date.getFullYear() + "&nbsp;" + (date.getHours() < 10 ? ("0" + date.getHours()) : date.getHours()) + ":" + (date.getMinutes() < 10 ? ("0" + date.getMinutes()) : date.getMinutes());
 
                                 }
+                                return '';
+                            }
+                        },
+                         {
+                            "title": "HelperEmail",
+                            "data": "contributor.helperEmail",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.HelperEmail",
+                            'render': function (data, type, row) {
+                                if (row.contributor.helperInd == "Yes")
+                                    return row.contributor.helperEmail
+                                return '';
+                            }
+                        },
+
+                        {
+                            "title": "HelperPhone",
+                            "data": "contributor.helperPhoneNumber",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Contributor.HelperPhoneNumber",
+                            'render': function (data, type, row) {
+                                if (row.contributor.helperInd == "Yes")
+                                    return row.contributor.helperPhoneNumber
                                 return '';
                             }
                         },
@@ -164,13 +217,15 @@
                             //"targets": 0,
                             "searchable": false,
                             "orderable": false,
-                            "width": '300px',
+                            "width": '180px',
                             "classDescription": 'dt-body-center',
                             "visible": true,
                             "name": "contributor.id",
                             "render": function (data, type, row) {
-                                if ($("#UserRole").val() === "SLPAnnotator" || $("#UserRole").val() === "SLPAnnotatorAdmin" || $("#UserRole").val() === "LSVT" || $("#UserRole").val() === "SystemAdmin") {
-                                    var link = '<a href="#" class="approve" >Approve</a>  | <a href="#" class="deny">Deny</a> | <a href="#" class="viewRating">View Rating</a> | <a href="#" class="sendFollowUp">Send Follow-up</a>';
+                                if ($("#UserRole").val() === "SLPAnnotator" || $("#UserRole").val() === "SLPAnnotatorAdmin" || $("#UserRole").val() === "ExternalSLPAnnotator" || $("#UserRole").val() === "SystemAdmin") {
+                                    var link = '<a href="#" class="approve" >Approve</a>  | <a href="#" class="deny">Deny</a> | <a href="#" class="viewRating">View Rating</a> '
+                                    + '<br>| <a href="#" class="sendFollowUp">Send Follow-up</a>'
+                                        + '| <a href="#" class="editInfo">Edit Info</a> ';
                                     return link;
                                 }
                                 else if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin") {
@@ -210,7 +265,7 @@
                 e.preventDefault();
                 var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
-                var getUrl = "@Url.Action("ViewSITRecordingRating", "SpeechFile")?contributorId=" + row.contributor.id;
+                var getUrl = "@Url.Action("ViewSITRecordingRating", "SpeechFile")?contributorId=" + row.contributor.id + "&subRole=" + $("#SubRole").val();
                 getRecordingRating(getUrl);
                 $("#rating-dialog").dialog('open');
                 return false;
@@ -259,6 +314,39 @@
 
                 });
 
+           
+            //Edit Info
+            $('#NonResponsiveContributorTable').on('click',
+                'a.editInfo',
+                function (e) {
+                    e.preventDefault();
+                    var selectedRowData = oContributorsTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();
+                    $("#lblEdiInfoMessage").text("Update Contributor Information:");
+                    $("#hidEditInfoContributorId").val(row.contributor.id);
+                    $("#lblEditInfoFirstName").text(row.contributor.firstName);
+                    $("#lblEditInfoLastName").text(row.contributor.lastName);
+                    $("#txtEditContributorEmail").val(row.contributor.emailAddress);
+                    $("#txtEditHelperEmail").val(row.contributor.helperEmail);
+                    $("#txtEditInfoBirthYear").val(row.contributor.birthYear);
+                    if (row.contributor.helperInd == "Yes")
+                    {
+                        $("#txtEditHelperEmail").prop("disabled", false);
+                        $("#txtEditHelperPhone").prop("disabled", false);
+                    }
+                       
+                    else
+                    {
+                        $("#txtEditHelperEmail").prop("disabled", true);
+                        $("#txtEditHelperPhone").prop("disabled", true);
+                    }
+
+                    $("#txtEditInfoComment").val(row.contributor.comments);
+
+                    editContributorInfo('@Url.Action("EditContributorInfo", "Contributor")', oContributorsTable, "Edit Contributor Information",4);
+                    $("#editInfo-dialog").dialog('open');
+
+                });
 
         });//End document ready
 

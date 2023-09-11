@@ -60,7 +60,7 @@
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[3, 'asc']],
+                    "aaSorting": [[4, 'asc']],
                     "columns": [
                         {
                             "className": 'details-control',
@@ -78,7 +78,14 @@
                             "visible": true,
                             "name": "Id"
                         },
-
+                        {
+                            "title": "Etiology",
+                            "data": "etiology.name",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Etiology.Name"
+                        },
                         {
                             "title": "FirstName",
                             "data": "firstName",
@@ -95,6 +102,8 @@
                             "visible": true,
                             "name": "LastName"
                         },
+                       
+
 
                     ],
                     "ordering": true,

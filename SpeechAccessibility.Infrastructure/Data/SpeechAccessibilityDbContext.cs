@@ -13,6 +13,8 @@ namespace SpeechAccessibility.Infrastructure.Data
 
         public DbSet<User> User { get; set; }
         public DbSet<Role> Role { get; set; }
+        public DbSet<SubRole> SubRole { get; set; }
+        public DbSet<UserSubRole> UserSubRole { get; set; }
         public DbSet<Block> Block { get; set; }
         public DbSet<BlockOfDigitalCommand> BlockOfDigitalCommand { get; set; }
         public DbSet<BlockOfPrompts> BlockOfPrompts { get; set; }
@@ -39,6 +41,8 @@ namespace SpeechAccessibility.Infrastructure.Data
         {
             builder.Entity<User>(ConfigureUser);
             builder.Entity<Role>(ConfigureRole);
+            builder.Entity<SubRole>(ConfigureSubRole);
+            builder.Entity<UserSubRole>(ConfigureUserSubRole);
             builder.Entity<Block>(ConfigureBlock);
             builder.Entity<BlockOfDigitalCommand>(ConfigureBlockOfDigitalCommand);
             builder.Entity<BlockOfDigitalCommandPrompts>(ConfigureBlockOfDigitalCommandPrompts);
@@ -60,6 +64,7 @@ namespace SpeechAccessibility.Infrastructure.Data
             builder.Entity<DimensionCategory>(ConfigureDimensionCategory);
 
         }
+        
 
         private void ConfigureBlockMasterOfPrompts(EntityTypeBuilder<BlockMasterOfPrompts> entity)
         {
@@ -381,13 +386,57 @@ namespace SpeechAccessibility.Infrastructure.Data
                 .HasDefaultValueSql("(getdate())");
         }
 
+        private void ConfigureSubRole(EntityTypeBuilder<SubRole> entity)
+        {
+            entity.Property(e => e.InUsed)
+                .IsRequired()
+                .HasMaxLength(3)
+                .IsFixedLength()
+                .HasDefaultValueSql("('Yes')");
+
+            entity.Property(e => e.UpdateTS)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Etiology)
+                .WithMany(p => p.SubRole)
+                .HasForeignKey(d => d.EtiologyId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_SubRole_Etiology");
+
+            entity.HasOne(d => d.Role)
+                .WithMany(p => p.SubRole)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_SubRole_Role");
+
+           
+        }
+
+        private void ConfigureUserSubRole(EntityTypeBuilder<UserSubRole> entity)
+        {
+            entity.Property(e => e.UpdateTS)
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.SubRole)
+                .WithMany(p => p.UserSubRole)
+                .HasForeignKey(d => d.SubRoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UserSubRole_SubRole");
+
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.UserSubRole)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UserSubRole_User");
+
+          
+
+        }
+
         private void ConfigureUser(EntityTypeBuilder<User> entity)
         {
-          
-            entity.Property(e => e.NetId)
-                .IsRequired()
-                .HasMaxLength(50);
-
             entity.Property(e => e.Active)
                 .HasMaxLength(3)
                 .IsFixedLength()
@@ -410,7 +459,8 @@ namespace SpeechAccessibility.Infrastructure.Data
             entity.HasOne(d => d.Role)
                 .WithMany(p => p.User)
                 .HasForeignKey(d => d.RoleId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_User_Role");
         }
 
 

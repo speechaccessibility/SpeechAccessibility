@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SpeechAccessibility.Annotator.Services;
 using SpeechAccessibility.Core.Interfaces;
@@ -64,10 +65,9 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             };
             bool inGroup = false;
-            var existInDatabase = _userRepository.Find(u => u.NetId == loggedInUser.NetId && u.Active == "Yes").FirstOrDefault();
+            var existInDatabase = _userRepository.Find(u => u.NetId == loggedInUser.NetId && u.Active == "Yes").Include(r=>r.Role).FirstOrDefault();
             if (existInDatabase != null)
             {
-               
                 foreach (var role in allRoles)
                 {
                     //user has to be in the database and AD group
@@ -78,6 +78,9 @@ namespace SpeechAccessibility.Annotator.Controllers
                         if (inGroup)
                         {  //Log.Debug($"User is in group {role.Description}");
                             userClaims.Add(new Claim(ClaimTypes.Role, role.Name));
+                            //we need to store extra information, so we use this exiting claim
+                            userClaims.Add( new Claim(ClaimTypes.OtherPhone, existInDatabase.Role.HasSubRole ? "Yes" : "No"));
+                          
                             break;
                         }
                     }

@@ -17,8 +17,6 @@
     <table class="table table-striped table-bordered table-hover" id="SpeechFileTable" cellspacing="0" align="center"></table>
 </div>
 
-
-
 <div id="listen-dialog" style="display: none">
     <p>
         <b>ContributorID:</b><label id="lblListenContributorId" name="lblListenContributorId"></label>
@@ -47,7 +45,7 @@
     <script type="text/javascript">
         $(document).ready(function () {
 
-            //bind datatable for Prompts
+            //bind datatable for Speech File
             var oSpeechFileTable = $("#SpeechFileTable").on('error.dt',
                 function(e, settings, techNote, message) {
                     alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
@@ -64,7 +62,7 @@
                     "datatype": "json"
                 }),
                 "bAutoWidth": false,
-                "aaSorting": [[3, 'asc']],
+                "aaSorting": [[4, 'asc']],
                 "columns": [
                         {
                             "className": 'details-control',
@@ -82,7 +80,15 @@
                             "visible": true,
                             "name": "Id"
                         },
-
+                        {
+                            "title": "Etiology",
+                            "data": "etiology.name",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Etiology.Name"
+                        },
+                  
                         {
                             "title": "FirstName",
                             "data": "firstName",
@@ -99,7 +105,8 @@
                             "visible": true,
                             "name": "LastName"
                         },
-                  
+                        
+                         
                 ],
                 "ordering": true,
                 "paging": true,

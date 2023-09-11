@@ -56,6 +56,25 @@
                 <td  colspan="3" ><select asp-for="RoleId" asp-items="@Model.Roles"></select></td>
                
             </tr>
+            <tr id="SubRole" style="display: none">
+                <th><label asp-for="SubRoleId"></label></th>
+                <td colspan="3">
+                @foreach (var subRole in Model.SubRoles)
+                    {
+                    <input id="SubRole_@subRole.Value" type="checkbox" name="SubRole" value="@subRole.Value" checked="@subRole.Selected" />
+                    <label for="@subRole.Value">@subRole.Text</label>
+                        <text>&nbsp;</text>
+
+                    }
+
+                </td>
+            </tr>
+          @*  <tr>
+                <th><label asp-for="SubRoleId"></label></th>
+            <td colspan="3"><select asp-for="RoleId" asp-items="@Model.SubRoles"></select></td>
+               
+            </tr>*@
+
 
             <tr>
                 <td colspan="4" style="text-align: center">
@@ -63,6 +82,7 @@
                     <input type="button" id="btnClear" name="btnClear" value="Clear" />
                 </td>
             </tr>
+
         </table>
 </div>
 
@@ -187,9 +207,13 @@
                     clearAllFields();
                     $("#divUserInfo").show();
                     var selectedRow = $(this).parents('tr');
-                    selectedRow.addClass("row-selected");
+                   
                     var selectedRowData = oUserTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
+                    
+                     oUserTable.rows('.row-selected').nodes().to$().removeClass('row-selected');
+                    selectedRow.addClass("row-selected");
+
                     /*var userId = row.id;      */              
                     $("#NetID").val(row.netId);
                     getUserInformation(row.netId);
@@ -219,6 +243,7 @@
                                 $('.spinner').css('display', 'none');
                                 if (response.success === true) {
                                     oUserTable.draw();
+                                    clearAllFields();
                                     $("#lblMessage").text(response.message);
                                     $("#lblMessage").removeClass("alert-warning");
                                     $("#lblMessage").addClass("alert-success");
@@ -267,10 +292,12 @@
                 $("#hidValidNetId").val("No");
                 $("#hidNetID").val("");
                 $("#Id").val("");
-                //$("#lblLastName").text("");
-                $("#lblName").text("");
+                $("#lblLastName").text("");
+                $("#RoleId").val("3_0").trigger("chosen:updated");
+                $("#lblFirstName").text("");
                 $("#NetID").val("");
                 $("#btnSave").prop('disabled', true);
+                $("#SubRole").css('display', 'none');
             }
 
 
@@ -283,14 +310,34 @@
                     alert('Valid NetID is required. Make sure you click "Get User Information" to validate NetID');
                     $("#NetID").focus();
                     return false;
-                }                
+                }                                
                 
+                var subRoles = [];
+                var roleArray = $("#RoleId").val().split("_");
+                if (roleArray[1]=="1") { //this role has subrole, so subrole is required
+                    $.each($("input[name='SubRole']:checked"), function () {
+                        var subRoleObject ={
+                            'Id': $(this).val()
+                        };
+                        subRoles.push(subRoleObject);
+                    });
+                    if(subRoles.length == 0)
+                    {
+                        $('.spinner').css('display', 'none');
+                        alert('This role requires at least one Etiology.');
+                        $("#NetID").focus();
+                        return false;
+                    }
+                }
+           
                 var jsonObject = {
                     "Id": $("#Id").val(),                    
                     "NetID": $("#NetID").val(),
                     "LastName": $("#lblLastName").text(),
-                    "FirstName": $("#lblFirstName").text(),                  
-                    "RoleId": $('#RoleId').val()                  
+                    "FirstName": $("#lblFirstName").text(),
+                    "RoleId": roleArray[0],
+                    "HasSubRole": roleArray[1] == "1",
+                    "AssignedSubRoles": subRoles
                 };
 
                 $.ajax({
@@ -336,8 +383,9 @@
                             $("#hidNetID").val(response.message.netId);
                             $("#lblLastName").text(response.message.lastName);
                             $("#lblFirstName").text(response.message.firstName);
-                            if (response.message.id === 0) {
-                                $("#RoleId").val(3).trigger("chosen:updated");                              
+                            
+                            if (response.message.id === 0 || response.message.active.trim() === "No") {
+                                $("#RoleId").val("3_0").trigger("chosen:updated");
                                 $("#btnSave").val("Add New");
                                 $("#btnSave").prop('disabled', false);                              
 
@@ -346,18 +394,35 @@
                                 {
                                     $("#spInvalidAccess").text("This person is a SystemAdmin. Updating is not available.");
                                     document.getElementById("spInvalidAccess").style.display = "inline";
-
                                     $("#btnSave").prop('disabled', true);
                                 }
                                 else 
                                 {
-
                                     //if (response.message.role.name === "") {
                                     //    $("#spInvalidAccess").text("This person was added in the database but was not added to the Speech Accessibility Active Directory group. Please click Update to give this user permission to the Portal.");
                                     //}
                                     var spanTag = document.getElementById("spInvalidAccess");
                                     spanTag.style.display = "none";
-                                    $("#RoleId").val(response.message.roleId).trigger("chosen:updated");   
+                                    var hasSubRole = response.message.hasSubRole ? 1 : 0;
+                                    $("#RoleId").val(response.message.roleId + "_" + hasSubRole).trigger("chosen:updated");
+                                    var subRole = document.getElementById("SubRole");
+
+                                    if (response.message.hasSubRole)//has subrole
+                                    {
+                                        resetSubRoles(response.message.availableSubRoles);
+                                        $.each($("input[name='SubRole']"), function () {
+                                            $(this).prop('checked', false);
+                                            //$(this).prop("disabled", false);
+                                            if (response.message.assignedSubRoles.some(role => role.id == $(this).val())) {                                               
+                                                $(this).prop('checked', true);
+                                            }
+                                        });
+                                        $("#SubRole").show();
+                                    }
+                                    else
+                                    {
+                                        $("#SubRole").css('display', 'none');
+                                    }
                                     $("#btnSave").val("Save");
                                     $("#btnSave").prop('disabled', false); 
                                 }                                                          
@@ -380,6 +445,7 @@
                             $("#btnSave").prop('disabled', true);
                             $("#divUserInfo").hide();
                             $('.spinner').css('display', 'none');
+                            $("#SubRole").css('display', 'none');
                         }
 
                     },
@@ -390,8 +456,60 @@
                 });
             }
 
+            
+            $("#RoleId").change(function () {
+                //var roleId = this.value;
+                //var hasSubRole = this.value.slice(-1);                
+                var roleArray = $("#RoleId").val().split("_");
 
-        });
+                if (roleArray[1] == "1") //has subrole
+                {
+                    //get available subroles
+                    getAvailableSubRoles(roleArray[0]);                    
+
+                    $("#SubRole").show();
+                }
+                else {
+                    $("#SubRole").css('display', 'none');
+                }
+            });
+    
+            function getAvailableSubRoles(roleId) {
+                $.ajax({
+                    url: '@Url.Action("GetAvailableSubRoles", "Extension")',
+                    type: "POST",
+                    data: { "roleId": roleId },
+                    success: function(response) {
+                        $('.spinner').css('display', 'none');
+                        if (response.success === true) {
+                            //set enable for available subroles
+                             resetSubRoles(response.message);
+                            
+                        } else {
+                          
+                        }
+
+                    },
+                    error: function() {
+                        alert("Error: get available subroles");
+                        $('.spinner').css('display', 'none');
+                    }
+                });
+            }
+
+             function resetSubRoles(availableSubRoles) {
+                $.each($("input[name='SubRole']"), function () {
+                    $(this).prop('checked', false);
+                    if (availableSubRoles.some(role => role.id == $(this).val())) {
+                        $(this).prop("disabled", false);
+                    }
+                    else {
+                        $(this).prop("disabled", true);
+                    }
+                });
+             }
+
+        }); //end document ready
 
     </script>
 }

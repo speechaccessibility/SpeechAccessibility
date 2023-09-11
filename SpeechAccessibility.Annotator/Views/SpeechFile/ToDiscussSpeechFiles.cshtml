@@ -17,7 +17,7 @@
 }
 <input type="hidden" id="UserRole" value="@userRole" />
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
-<div style="width: 1500px">
+<div style="width: 1800px">
     <table class="table table-striped table-bordered table-hover" id="SpeechFileTable" cellspacing="0" align="center"></table>
 </div>
 
@@ -95,7 +95,7 @@
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[5, 'desc']],
+                    "aaSorting": [[6, 'desc']],
                     "columns": [
                         {
                             "title": "FileId",
@@ -112,6 +112,14 @@
                             "orderable": true,
                             "visible": true,
                             "name": "ContributorId"
+                        },
+                        {
+                            "title": "Etiology",
+                            "data": "etiologyName",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "EtiologyName"
                         },
                         {
                             "title": "RecordingID",
@@ -159,7 +167,7 @@
                             "visible": true,
                             "name": "Comment"
                         },
-
+                       
                         {
                             "title": "Actions",
                             "data": "id",
@@ -190,7 +198,7 @@
                             "data": "startTime",
                             "searchable": true,
                             "orderable": true,
-                            "visible": true,
+                            "visible": false,
                             "name": "StartTime"
                         },
                         {
@@ -198,16 +206,16 @@
                             "data": "endTime",
                             "searchable": true,
                             "orderable": true,
-                            "visible": true,
+                            "visible": false,
                             "name": "EndTime"
                         },
                     ],
-                      "createdRow": function (row, data) {
-                        //hide the Start and End Time column. if the columns are set to be invisible, the value of the columns are not available for listen dialog
-                        $('td', row).eq(7).hide();
-                        $('td', row).eq(8).hide();
+                    //  "createdRow": function (row, data) {
+                    //    //hide the Start and End Time column. if the columns are set to be invisible, the value of the columns are not available for listen dialog
+                    //    $('td', row).eq(7).hide();
+                    //    $('td', row).eq(8).hide();
                        
-                    },
+                    //},
 
                     "ordering": true,
                     "paging": true,
@@ -217,8 +225,8 @@
                 });
                 
                   //hide the header for Start and End Time column
-                $('#SpeechFileTable th:nth-child(8)').hide();
-                $('#SpeechFileTable th:nth-child(9)').hide();
+                //$('#SpeechFileTable th:nth-child(8)').hide();
+                //$('#SpeechFileTable th:nth-child(9)').hide();
 
 
             //listen the recording

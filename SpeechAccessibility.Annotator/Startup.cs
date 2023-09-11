@@ -50,14 +50,14 @@ namespace SpeechAccessibility.Annotator
                 options.AddPolicy("SLPAnnotatorAdmin", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotatorAdmin", "SystemAdmin"));
                 options.AddPolicy("TextAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "TextAnnotator", "TextAnnotatorAdmin", "SystemAdmin"));
                 options.AddPolicy("SLPAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "SystemAdmin"));
-                options.AddPolicy("SLPAnnotatorAndLSVT", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin","LSVT", "SystemAdmin"));
+                options.AddPolicy("SLPAnnotatorAndExternalSLPAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "ExternalSLPAnnotator", "SystemAdmin"));
                 options.AddPolicy("SLPAnnotatorAndTextAnnotatorAdmin", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "TextAnnotatorAdmin", "SystemAdmin"));
-                options.AddPolicy("SLPAnnotatorAndTextAnnotatorAdminAndLSVT", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "TextAnnotatorAdmin","LSVT", "SystemAdmin"));
+                options.AddPolicy("SLPAnnotatorAndTextAnnotatorAdminAndExternalSLPAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "TextAnnotatorAdmin", "ExternalSLPAnnotator", "SystemAdmin"));
 
                 options.AddPolicy("AllAnnotator",
                     policy => policy.RequireClaim(ClaimTypes.Role, "TextAnnotator", "SLPAnnotator", "SystemAdmin", "TextAnnotatorAdmin", "SLPAnnotatorAdmin"));
-                options.AddPolicy("LSVT", policy => policy.RequireClaim(ClaimTypes.Role, "LSVT", "SystemAdmin"));
-                options.AddPolicy("AllAnnotatorAndLSVT", policy => policy.RequireClaim(ClaimTypes.Role, "TextAnnotator", "SLPAnnotator", "TextAnnotatorAdmin", "SLPAnnotatorAdmin","LSVT", "SystemAdmin"));
+                options.AddPolicy("ExternalSLPAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "ExternalSLPAnnotator", "SystemAdmin"));
+                options.AddPolicy("AllAnnotatorAndExternalSLPAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "TextAnnotator", "SLPAnnotator", "TextAnnotatorAdmin", "SLPAnnotatorAdmin", "ExternalSLPAnnotator", "SystemAdmin"));
                 options.AddPolicy("Compensator", policy => policy.RequireClaim(ClaimTypes.Role, "Compensator", "SystemAdmin"));
                 options.AddPolicy("CompensatorAndAnnotatorAdmin", policy => policy.RequireClaim(ClaimTypes.Role, "Compensator", "TextAnnotatorAdmin", "SLPAnnotatorAdmin", "SystemAdmin"));
 
@@ -94,17 +94,22 @@ namespace SpeechAccessibility.Annotator
             //services.AddScoped<IBlockOfDigitalCommandPromptsRepository, BlockOfDigitalCommandPromptsRepository>();
             services.AddScoped<IBlockMasterOfPromptsRepository, BlockMasterOfPromptsRepository>();
             services.AddScoped<IContributorRepository, ContributorRepository>();
+            services.AddScoped<IContributorStatusRepository, ContributorStatusRepository>();
+            services.AddScoped<IContributorSubStatusRepository, ContributorSubStatusRepository>();
             services.AddScoped<IContributorAssignedAnnotatorRepository, ContributorAssignedAnnotatorRepository>();
             services.AddScoped<IContributorAssignedBlockRepository, ContributorAssignedBlockRepository>();
             services.AddScoped<IContributorCompensationRepository, ContributorCompensationRepository>();
             services.AddScoped<IContributorFollowUpRepository, ContributorFollowUpRepository>();
+            services.AddScoped<IEtiologyRepository, EtiologyRepository>();
             services.AddScoped<IPromptRepository, PromptRepository>();
             services.AddScoped<IEmailLoggingRepository, EmailLoggingRepository>();
             services.AddScoped<IRecordingRepository, RecordingRepository>();
             services.AddScoped<IRecordingRatingRepository, RecordingRatingRepository>();
             services.AddScoped<IRecordingStatusRepository, RecordingStatusRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<ISubRoleRepository, SubRoleRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IUserSubRoleRepository, UserSubRoleRepository>();
             services.AddScoped<IDimensionRepository, DimensionRepository>();
             services.AddScoped<IDimensionCategoryRepository, DimensionCategoryRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();

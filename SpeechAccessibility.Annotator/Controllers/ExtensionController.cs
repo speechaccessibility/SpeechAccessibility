@@ -6,16 +6,15 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using MathNet.Numerics.Statistics;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SpeechAccessibility.Annotator.Services;
 using SpeechAccessibility.Core.Interfaces;
 using NAudio.Wave;
 using SpeechAccessibility.Annotator.Extensions;
-using System.Configuration;
-using System.Security.Cryptography.Xml;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using WebRtcVadSharp;
+using SpeechAccessibility.Annotator.Models;
+using SpeechAccessibility.Core.Models;
 
 
 namespace SpeechAccessibility.Annotator.Controllers
@@ -23,14 +22,16 @@ namespace SpeechAccessibility.Annotator.Controllers
     [Authorize(Policy = "CompensatorAndAnnotatorAdmin")]
     public class ExtensionController : Controller
     {
-        private readonly IRoleRepository _roleRepository;
         private readonly IConfiguration _configuration;
         private readonly IUserRepository _userRepository;
-        public ExtensionController(IRoleRepository roleRepository, IConfiguration configuration, IUserRepository userRepository)
+        private readonly IUserSubRoleRepository _userSubRoleRepository;
+        private readonly ISubRoleRepository _subRoleRepository;
+        public ExtensionController(IConfiguration configuration, IUserRepository userRepository, IUserSubRoleRepository userSubRoleRepository, ISubRoleRepository subRoleRepository)
         {
-            _roleRepository = roleRepository;
             _configuration = configuration;
             _userRepository = userRepository;
+            _userSubRoleRepository = userSubRoleRepository;
+            _subRoleRepository = subRoleRepository;
         }
 
         [HttpPost]
@@ -39,9 +40,10 @@ namespace SpeechAccessibility.Annotator.Controllers
         {
             //check to see if user is already in the system
             var existingUser = _userRepository.Find(u => u.NetId.Equals(netId)).Include(u=>u.Role).FirstOrDefault();
+            var user = new ADMemberViewModel();
             if (existingUser == null)
             {
-                var user = ActiveDirectoryService.GetUserInfoFromAD(netId, _configuration["AppSettings:Domain"]);
+                user = ActiveDirectoryService.GetUserInfoFromAD(netId, _configuration["AppSettings:Domain"]);
 
                 if (user != null && !string.IsNullOrEmpty(user.NetId))
                 {
@@ -50,7 +52,51 @@ namespace SpeechAccessibility.Annotator.Controllers
                 return Json(new { Success = false, Message = "NetID is not valid." });
             }
 
-            return Json(new { Success = true, Message = existingUser });
+
+            user.Id = existingUser.Id;
+            user.NetId = existingUser.NetId;
+            user.RoleId= existingUser.RoleId;
+            user.HasSubRole = existingUser.Role.HasSubRole;
+            user.LastName = existingUser.LastName;
+            user.FirstName=existingUser.FirstName;
+            user.Active = existingUser.Active;
+            user.AvailableSubRoles = _subRoleRepository.Find(r => r.RoleId == existingUser.RoleId)
+                .Include(r => r.Etiology)
+                //.Select(a => new SelectListItem()
+                //{
+                //    Value = a.Etiology.Id.ToString(),
+                //    Text = a.Etiology.Name
+                //})
+                //.ToList();
+                .Select(s => new SubRole() { Id = s.EtiologyId })
+                .ToList();
+
+            //get user's subrole
+            if (existingUser.Role.HasSubRole)
+            {
+                user.AssignedSubRoles = _userSubRoleRepository.Find(s => s.UserId == existingUser.Id)
+                    //.Select(a => new SelectListItem()
+                    //{
+                    //    Value = a.SubRole.Etiology.Id.ToString(),
+                    //    Text = a.SubRole.Etiology.Name
+                    //})
+                    //.ToList();
+                    .Select(s => new SubRole() { Id = s.SubRole.EtiologyId }).ToList(); 
+            }
+            return Json(new { Success = true, Message = user });
+
+        }
+
+        [HttpPost]
+        [Authorize(Policy = "AnnotatorAdmin")]
+        public ActionResult GetAvailableSubRoles(int roleId)
+        {
+            var subRoles = _subRoleRepository.Find(r => r.RoleId == roleId && r.Etiology.Active=="Yes").Include(r=>r.Etiology)
+                .Select(s => new Etiology() { Id = s.EtiologyId })
+                //.Select(s => new SubRole() { Id = s.Id })
+                .ToList();
+
+            return Json(new { Success = true, Message = subRoles });
 
         }
 

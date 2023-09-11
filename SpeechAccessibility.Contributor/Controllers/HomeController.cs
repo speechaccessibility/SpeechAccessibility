@@ -353,6 +353,7 @@ namespace SpeechAccessibility.Controllers
                                         //If there are no more blocks, route to complete page
                                         if (blockId == 0)
                                         {
+                                           
                                             return RedirectToAction("CompleteConfirmation");
                                         }
                                         //Select a prompt from the current block that has not already been recorded by the contributor
@@ -697,7 +698,7 @@ namespace SpeechAccessibility.Controllers
         [HttpPost]
         public IActionResult RecordPrompt(RecordPromptModel model)
         {
-            try 
+            try
             {
                 Guid contributorId = model.contributorId;
                 int promptId = model.prompt.Id;
@@ -706,10 +707,11 @@ namespace SpeechAccessibility.Controllers
 
                 //Once they go to the next prompt, set the retry count to the maximum value to prevent them from being able to rerecord the previous prompt
                 recording.RetryCount = retryMax;
-                _recordingContext.SaveChanges();              
+                _recordingContext.SaveChanges();
 
+                SendCompletionEmail(contributorId);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 string date = DateTime.Now.ToString("yyyy-MM-dd");
                 string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
@@ -724,6 +726,40 @@ namespace SpeechAccessibility.Controllers
             }
 
             return RedirectToAction("RecordPrompt");
+        }      
+
+        private void SendCompletionEmail(Guid contributorId)
+        {
+            int count = _recordingContext.Recording.Where(r => _recordingContext.Prompt.Where(p => p.Category.Id != 1).Select(p => p.Id).Contains(r.OriginalPrompt.Id)).Where(r => r.ContributorId == contributorId).Count();
+
+            int totalPromptMax = 450;
+
+            if (count == totalPromptMax)
+            {
+                Guid userId = (Guid)TempData["contributorId"];
+
+                string emailAddress = _identityContext.Contributor.Where(c => c.Id == userId).Select(c => c.EmailAddress).First();
+
+                string message = "<div>Congratulations! You’ve finished your recordings for the Speech Accessibility Project! We really appreciate all the time you spent participating.</div><br/>" +
+                    "<div><strong>Amazon eCode compensation.</strong></div>" +
+                    "<div>For your study participation, you will receive three $60 installments of Amazon eCodes, with each being sent every one-third of the way through the study. The eCodes are sent to the email address you provided when you signed up. Depending on how quickly you have completed the project, you may have received some eCodes already. It may take several days after you complete the study to receive your final eCodes in your email. If you haven’t received all three by a week from today, please contact <a href = 'mailto:speechaccessibility@beckman.illinois.edu'>speechaccessibility@beckman.illinois.edu </a> for assistance.</div><br/>" +
+                    "<div><strong>A caregiver assisted me.How will they be compensated?</strong></div>" +
+                    "<div>If a caregiver assisted you, their email address was entered at the start of the study. They will receive three $30 eCodes, with each being sent every one-third of the way through the study. If you didn’t enter your caregiver's email at the beginning of the study, please contact your mentor so they can assist you.</div><br/>" +
+                    "<div>Thank You!</div><div>The Speech Accessibility Project Team</div>";
+
+
+                string subject = "You’ve completed the Speech Accessibility Project!";
+
+                string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+                if (_config["DeveloperMode"].Equals("Yes") || !"Production".Equals(environment))
+                {
+                    emailAddress = _config["TestEmail"];
+                }
+
+                _emailSender.SendEmailAsync(emailAddress, subject, message);
+
+            }
         }
 
         [Authorize] [HttpGet]

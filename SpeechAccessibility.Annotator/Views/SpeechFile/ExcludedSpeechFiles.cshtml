@@ -20,10 +20,12 @@
     <br /><b>cut: </b>voice cut off, with voice less than one word.
     <br /><b>nod: </b>no data, with no sound and the play button disabled.
     <br /><b>otv: </b>other voice only, without the contributor's voice.
-    <br /><b>nov: </b>no voice, with or without noise.
+    <br /><b>nov: </b>no voice or no relevant speech, with or without noise.
+    <br><b>dis: </b>audio distortion
+
 </div>
 <div><label id="lblMessage" name="lblMessage" class="errorMessage"></label></div>
-<div style="width: 1500px">
+<div style="width: 1800px">
     <table class="table table-striped table-bordered table-hover" id="SpeechFileTable" cellspacing="0" align="center"></table>
 </div>
 
@@ -84,7 +86,7 @@
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[4, 'desc']],
+                    "aaSorting": [[5, 'desc']],
                     "columns": [
                         {
                             "title": "FileId",
@@ -101,6 +103,14 @@
                             "orderable": true,
                             "visible": true,
                             "name": "ContributorId"
+                        },
+                        {
+                            "title": "Etiology",
+                            "data": "etiologyName",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "EtiologyName"
                         },
                         {
                             "title": "Transcript",
@@ -139,7 +149,8 @@
                             "orderable": true,
                             "visible": true,
                             "name": "Comment"
-                        },                      
+                        },
+                        
                         {
                             "title": "Action",
                             "data": "id",

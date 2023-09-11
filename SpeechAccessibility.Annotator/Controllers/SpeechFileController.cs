@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace SpeechAccessibility.Annotator.Controllers
 {
-    [Authorize(Policy = "AllAnnotatorAndLSVT")]
+    [Authorize(Policy = "AllAnnotatorAndExternalSLPAnnotator")]
     public class SpeechFileController : Controller
     {
 
@@ -33,10 +33,11 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IBlockRepository _blockRepository;
         private readonly IUserRepository _userRepository;
         private readonly IConfiguration _configuration;
+        private readonly IUserSubRoleRepository _userSubRoleRepository;
 
         public SpeechFileController(IRecordingRepository recordingRepository, IRecordingRatingRepository recordingRatingRepository,IDimensionCategoryRepository dimensionCategoryRepository
             , IContributorRepository contributorRepository, IContributorAssignedBlockRepository contributorAssignedBlockRepository, IBlockOfPromptsRepository blockOfPromptsRepository
-            , IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository, IUserRepository userRepository, IBlockRepository blockRepository, IConfiguration configuration)
+            , IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository, IUserRepository userRepository, IBlockRepository blockRepository, IConfiguration configuration, IUserSubRoleRepository userSubRoleRepository)
         {
             _recordingRepository = recordingRepository;
             _recordingRatingRepository = recordingRatingRepository;
@@ -48,6 +49,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             _userRepository = userRepository;
             _blockRepository = blockRepository;
             _configuration = configuration;
+            _userSubRoleRepository = userSubRoleRepository;
         }
 
         public IActionResult Index()
@@ -96,8 +98,17 @@ namespace SpeechAccessibility.Annotator.Controllers
            
         }
         [HttpPost]
-        public PartialViewResult LoadContributorAssignedBlocks(Guid contributorId)
+        public PartialViewResult LoadContributorAssignedBlocks(Guid contributorId,int subRole)
         {
+            //if external SLP annotator, check to make sure the role is matched
+            var hasSubRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.OtherPhone)?.Value;
+            if (hasSubRole == "Yes")
+            {
+                if (UtilsExtension.IsMatchedRole(_userSubRoleRepository, subRole, User.Identity.Name) == false)
+                    return PartialView("_ContributorAssignedBlocks", null);
+
+            }
+
             //if this contributor is not assigned to current Annotator, return null
             var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
             var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
@@ -209,162 +220,13 @@ namespace SpeechAccessibility.Annotator.Controllers
                 BlockId = r.BlockId,
                 SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName,
                 StartTime = r.StartTime,
-                EndTime = r.EndTime
+                EndTime = r.EndTime,
+                EtiologyName = UtilsExtension.GetEtiologyName(_contributorRepository, r.ContributorId)
             });
-
+            //recordingList = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordings, Request.Form);
             return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = recordingList });
         }
-
-        //[HttpPost]
-        //public ActionResult LoadModifiedSpeechFiles()
-        //{
-        //    var draw = Request.Form["draw"].FirstOrDefault();
-        //    var start = Convert.ToInt32(Request.Form["start"].FirstOrDefault());
-        //    var length = Convert.ToInt32(Request.Form["length"].FirstOrDefault());
-        //    var searchValue = Request.Form["search[value]"].FirstOrDefault();
-
-        //    //int pageSize = length != null ? Convert.ToInt32(length) : 0;
-        //    //int skip = start != null ? Convert.ToInt32(start) : 0;
-
-        //    int pageSize = Convert.ToInt32(length);
-        //    int skip = Convert.ToInt32(start);
-
-        //    //return only recordings for approved contributors
-        //    var approvedContributors = _contributorRepository.Find(c => c.StatusId == 2).ToList();
-        //    Guid[] idList = approvedContributors.Select(c => c.Id).ToArray();
-          
-           
-        //    var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-        //    List<int> includeStatus = new List<int>() { 1, 2 }; //new or edited
-          
-        //    IQueryable<Recording> recordings;
-        //    if (userRole == "TextAnnotator")
-        //    {
-        //        var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
-        //        Guid[] annotatorAssignedContributorIdList = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == currentUser.Id)
-        //            .Select(u => u.ContributorId).ToArray();
-
-        //        recordings = _recordingRepository
-        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId)
-        //                       && annotatorAssignedContributorIdList.Contains(r.ContributorId))
-        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
-        //                || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Comment.Contains(searchValue)
-        //                || r.Id.ToString().Contains(searchValue))
-        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
-        //    }
-        //    else
-        //    {
-        //         recordings = _recordingRepository
-        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId))
-        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
-        //                || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Comment.Contains(searchValue)
-        //                || r.Id.ToString().Contains(searchValue))
-        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
-        //    }
-
-           
-
-        //    var recordsTotal = recordings.Count();
-        //    var appName = _configuration["AppSettings:Environment"] switch
-        //    {
-        //        "Development" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Dev/",
-        //        "Test" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Test/",
-        //        _ => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Prod/"
-        //    };
-
-        //    recordings = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordings, Request.Form);
-
-        //    var recordingList = recordings.Skip(skip).Take(pageSize).Select(r => new Recording()
-        //    {
-        //        Id = r.Id,
-        //        OriginalPrompt = r.OriginalPrompt,
-        //        ModifiedTranscript = r.ModifiedTranscript,
-        //        CreateTS = r.CreateTS,
-        //        RetryCount = r.RetryCount,
-        //        Comment = r.Comment,
-        //        ContributorId = r.ContributorId,
-        //        BlockId = r.BlockId,
-        //        OriginalPromptId = r.OriginalPromptId,
-        //        SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName,
-        //        StartTime = r.StartTime,
-        //        EndTime = r.EndTime
-
-        //    });
-
-        //  return Json(new { draw, data = recordingList, recordsFiltered = recordsTotal, recordsTotal = recordsTotal });
-
-        //}
-
-        ////Published files page code
-        //[HttpPost]
-        //public ActionResult LoadPublishedSpeechFiles()
-        //{
-        //    var draw = Request.Form["draw"].FirstOrDefault();
-        //    var start = Request.Form["start"].FirstOrDefault();
-        //    var length = Request.Form["length"].FirstOrDefault();
-        //    var searchValue = Request.Form["search[value]"].FirstOrDefault();
-        //    int pageSize = length != null ? Convert.ToInt32(length) : 0;
-        //    int skip = start != null ? Convert.ToInt32(start) : 0;
-
-        //    var appName = _configuration["AppSettings:Environment"] switch
-        //    {
-        //        "Development" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Dev/",
-        //        "Test" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Test/",
-        //        _ => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Prod/"
-        //    };
-
-        //    IQueryable<Recording> recordings;
-        //    var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-        //    //return only recordings for approved contributors
-        //    var approvedContributors = _contributorRepository.Find(c => c.StatusId == 2).ToList();
-        //    Guid[] idList = approvedContributors.Select(c => c.Id).ToArray();
-
-        //    if (userRole == "TextAnnotator")
-        //    {
-        //        var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
-        //        Guid[] annotatorAssignedContributorIdList = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == currentUser.Id)
-        //            .Select(u => u.ContributorId).ToArray();
-
-        //        recordings = _recordingRepository
-        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 &&  r.StatusId==3 && annotatorAssignedContributorIdList.Contains(r.ContributorId))
-        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
-        //                || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Id.ToString().Contains(searchValue))
-        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
-        //    }
-        //    else
-        //    {
-        //        recordings = _recordingRepository
-        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && r.StatusId==3)
-        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) 
-        //                || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Id.ToString().Contains(searchValue))
-        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
-        //    }
-
-
-        //    var recordsTotal = recordings.Count();
-        //    recordings = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordings, Request.Form);
-
-        //    var recordingList = recordings.Skip(skip).Take(pageSize).Select(r => new Recording()
-        //    {
-        //        Id = r.Id,
-        //        OriginalPromptId = r.OriginalPromptId,
-        //        ContributorId = r.ContributorId,
-        //        OriginalPrompt = r.OriginalPrompt,
-        //        Status = r.Status,
-        //        Comment = r.Comment,
-        //        CreateTS = r.CreateTS,
-        //        ModifiedTranscript = string.IsNullOrEmpty(r.ModifiedTranscript) ? r.OriginalPrompt.Transcript : r.ModifiedTranscript,
-        //        FileName = r.FileName,
-        //        BlockId=r.BlockId,
-        //        SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId +  "/modified/" + r.FileName,
-        //        StartTime = r.StartTime,
-        //        EndTime = r.EndTime
-        //    });
-
-        //    //recordingList = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordingList, Request.Form);
-
-        //    return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = recordingList });
-        //}
+        
 
         [HttpPost]
         public ActionResult AddCommentsForRecording(int recordingId, string comments)
@@ -383,10 +245,18 @@ namespace SpeechAccessibility.Annotator.Controllers
             return Json(new { Success = false, Message = "Error adding comments." });
         }
 
-        [Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdminAndLSVT")]
+        [Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdminAndExternalSLPAnnotator")]
         [HttpPost]
-        public PartialViewResult LoadContributorSITRecordings(Guid contributorId)
+        public PartialViewResult LoadContributorSITRecordings(Guid contributorId, int subRole)
         {
+            //if external SLP annotator, check to make sure the role is matched
+            var hasSubRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.OtherPhone)?.Value;
+            if (hasSubRole == "Yes")
+            {
+                if (UtilsExtension.IsMatchedRole(_userSubRoleRepository, subRole, User.Identity.Name) == false)
+                    return PartialView("_ContributorSITSpeechFiles", null);
+
+            }
             var recordingList = new List<Recording>();
             var recordings = _recordingRepository
                 .Find(r => r.ContributorId == contributorId && r.OriginalPrompt.CategoryId == 1).Include(r => r.OriginalPrompt)
@@ -626,8 +496,16 @@ namespace SpeechAccessibility.Annotator.Controllers
             }
             return PartialView("_ViewRatingSpeechFile", listOfRecordingRating);
         }
-        public ActionResult ViewSITRecordingRating(Guid contributorId)
+        public ActionResult ViewSITRecordingRating(Guid contributorId, int subRole)
         {
+            //if external SLP annotator, check to make sure the role is matched
+            var hasSubRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.OtherPhone)?.Value;
+            if (hasSubRole == "Yes")
+            {
+                if (UtilsExtension.IsMatchedRole(_userSubRoleRepository, subRole, User.Identity.Name) == false)
+                    return PartialView("_ViewRatingSpeechFile", null);
+
+            }
             var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
             ViewBag.RatingContributorId = contributor.Id;
             ViewBag.RatingContributorLastName = contributor.LastName;
@@ -698,7 +576,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         }
 
-        [Authorize(Policy = "SLPAnnotatorAndLSVT")] //clarion group and LSVT (listen only)
+        [Authorize(Policy = "SLPAnnotatorAndExternalSLPAnnotator")] //clarion group and ExternalSLPAnnotator (listen only)
         public ActionResult RateSpeechFiles(int recordingId)
         {
             //ViewBag.CameFrom = from;
