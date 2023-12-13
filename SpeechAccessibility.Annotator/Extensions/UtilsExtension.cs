@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
-using Microsoft.EntityFrameworkCore;
 using SpeechAccessibility.Core.Interfaces;
 
 namespace SpeechAccessibility.Annotator.Extensions
@@ -12,24 +11,21 @@ namespace SpeechAccessibility.Annotator.Extensions
     {
         public static bool IsMatchedRole(IUserSubRoleRepository userSubRoleRepository,int etiologyId, string netId)
         {
-            //var hasSubRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.OtherPhone)?.Value;
-            //if (hasSubRole == "Yes")
-            //{
-                var subRoleList = userSubRoleRepository.Find(s => s.User.NetId == netId).Include(s=>s.SubRole.Etiology);
-                var matchRole = subRoleList.Any(r => r.SubRole.Etiology.Id == etiologyId);
-                if (!matchRole)
-                {
-                    return false;
+            var subRoleList = userSubRoleRepository.Find(s => s.User.NetId == netId);
+            var matchRole = subRoleList.Any(r => r.SubRole.EtiologyId == etiologyId);
+            if (!matchRole)
+            {
+                return false;
 
-                }
-            //}
+            }
+
             return true;
         }
 
-        public static string GetEtiologyName(IContributorRepository contributorRepository, Guid contributorId)
+        public static string GetEtiologyName(IContributorViewRepository contributorViewRepository, Guid contributorId)
         {
-            var contributor = contributorRepository.Find(c => c.Id == contributorId).Include(c => c.Etiology).FirstOrDefault();
-            return contributor != null ? contributor.Etiology.Name : "";
+            return contributorViewRepository.Find(e => e.Id == contributorId).FirstOrDefault()?.EtiologyName;
+           
         }
         public static DataTable ToDataTable<T>(List<T> items)
         {

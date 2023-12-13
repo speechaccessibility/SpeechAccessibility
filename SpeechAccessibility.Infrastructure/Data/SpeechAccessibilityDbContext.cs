@@ -26,16 +26,24 @@ namespace SpeechAccessibility.Infrastructure.Data
         public DbSet<ContributorAssignedAnnotator> ContributorAssignedAnnotator { get; set; }
         public DbSet<ContributorAssignedBlock> ContributorAssignedBlock { get; set; }
         public DbSet<ContributorCompensation> ContributorCompensation { get; set; }
+        public DbSet<ContributorCompensationHistory> ContributorCompensationHistory { get; set; }
+        public DbSet<ContributorCompensationView> ContributorCompensationView { get; set; }
         public DbSet<ContributorFollowUp> ContributorFollowUp { get; set; }
         public  DbSet<EmailLogging> EmailLogging { get; set; }
         public DbSet<Recording> Recording { get; set; }
         public DbSet<RecordingRating> RecordingRating { get; set; }
         public DbSet<Prompt> Prompt { get; set; }
+        public DbSet<PromptEtiology> PromptEtiology { get; set; }
         public DbSet<RecordingStatus> RecordingStatus { get; set; }
         public DbSet<SubCategory> SubCategory { get; set; }
         public DbSet<Dimension> Dimension { get; set; }
         public DbSet<DimensionCategory> DimensionCategory { get; set; }
         public DbSet<List> List { get; set; }
+        public DbSet<ContributorView> Contributor { get; set; }
+        public DbSet<EtiologyView> Etiology { get; set; }
+        public DbSet<ApprovedDeniedContributor> ApprovedContributor { get; set; }
+        public DbSet<ViewSpeechFiles> ViewSpeechFiles { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -53,18 +61,25 @@ namespace SpeechAccessibility.Infrastructure.Data
             builder.Entity<ContributorAssignedAnnotator>(ConfigureContributorAssignedAnnotator);
             builder.Entity<ContributorAssignedBlock>(ConfigureContributorAssignedBlock);
             builder.Entity<ContributorCompensation>(ConfigureContributorCompensation);
+            builder.Entity<ContributorCompensationHistory>(ConfigureContributorCompensationHistory);
+            builder.Entity<ContributorCompensationView>(ConfigureContributorCompensationView);
             builder.Entity<ContributorFollowUp>(ConfigureContributorFollowUp);
             builder.Entity<EmailLogging>(ConfigureEmailLogging);
             builder.Entity<Recording>(ConfigureRecording);
             builder.Entity<RecordingRating>(ConfigureRecordingRating);
             builder.Entity<Prompt>(ConfigurePrompt);
+            builder.Entity<PromptEtiology>(ConfigurePromptEtiology);
             builder.Entity<RecordingStatus>(ConfigureRecordingStatus);
             builder.Entity<SubCategory>(ConfigureSubCategory);
             builder.Entity<Dimension>(ConfigureDimension);
             builder.Entity<DimensionCategory>(ConfigureDimensionCategory);
-
+            builder.Entity<ContributorView>(ConfigureContributorView);
+            builder.Entity<EtiologyView>(ConfigureEtiology);
+            builder.Entity<ApprovedDeniedContributor>(ConfigureApprovedDeniedContributor);
+            builder.Entity<ViewSpeechFiles>(ConfigureViewSpeechFiles);
         }
-        
+
+       
 
         private void ConfigureBlockMasterOfPrompts(EntityTypeBuilder<BlockMasterOfPrompts> entity)
         {
@@ -335,7 +350,16 @@ namespace SpeechAccessibility.Infrastructure.Data
 
         }
 
-        
+        private void ConfigurePromptEtiology(EntityTypeBuilder<PromptEtiology> entity)
+        {
+            entity.HasOne(d => d.Prompt)
+                .WithMany(p => p.PromptEtiology)
+                .HasForeignKey(d => d.PromptId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_PromptEtiology_ToPrompt");
+
+        }
+
         private void ConfigureRecording(EntityTypeBuilder<Recording> entity)
         {
             entity.Property(e => e.CreateTS)
@@ -398,19 +422,13 @@ namespace SpeechAccessibility.Infrastructure.Data
                 .HasColumnType("datetime")
                 .HasDefaultValueSql("(getdate())");
 
-            entity.HasOne(d => d.Etiology)
-                .WithMany(p => p.SubRole)
-                .HasForeignKey(d => d.EtiologyId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_SubRole_Etiology");
-
             entity.HasOne(d => d.Role)
                 .WithMany(p => p.SubRole)
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_SubRole_Role");
 
-           
+          
         }
 
         private void ConfigureUserSubRole(EntityTypeBuilder<UserSubRole> entity)
@@ -430,8 +448,6 @@ namespace SpeechAccessibility.Infrastructure.Data
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_UserSubRole_User");
-
-          
 
         }
 
@@ -526,6 +542,214 @@ namespace SpeechAccessibility.Infrastructure.Data
                 .WithMany(p => p.Dimension)
                 .HasForeignKey(d => d.DimensionCategoryId);
         }
+
+
+        private void ConfigureContributorView(EntityTypeBuilder<ContributorView> entity)
+        {
+            //entity.HasNoKey();
+            entity.HasKey(e => e.Id);
+
+            entity.ToView("v_Contributor");
+
+            entity.Property(e => e.ApproveDenyBy).HasMaxLength(20);
+
+
+            entity.Property(e => e.BirthYear).HasMaxLength(50);
+
+            entity.Property(e => e.Comments).HasMaxLength(2000);
+
+            entity.Property(e => e.EighteenOrOlderInd)
+                .IsRequired()
+                .HasMaxLength(3);
+
+            entity.Property(e => e.EmailAddress).HasMaxLength(256);
+
+            entity.Property(e => e.EtiologyName).HasMaxLength(30);
+
+            entity.Property(e => e.FirstName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.HelperEmail).HasMaxLength(175);
+
+            entity.Property(e => e.HelperFirstName).HasMaxLength(50);
+
+            entity.Property(e => e.HelperInd).HasMaxLength(3);
+
+            entity.Property(e => e.HelperLastName).HasMaxLength(50);
+
+            entity.Property(e => e.HelperPhoneNumber).HasMaxLength(10);
+
+            entity.Property(e => e.IdentityUserId).HasMaxLength(450);
+
+            entity.Property(e => e.LastName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.MiddleName).HasMaxLength(30);
+
+            entity.Property(e => e.OtherEtiologyText).HasMaxLength(50);
+
+            entity.Property(e => e.ParkinsonsInd).HasMaxLength(3);
+
+            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+
+            entity.Property(e => e.StateResidence)
+                .IsRequired()
+                .HasMaxLength(4);
+
+            entity.Property(e => e.StatusName).HasMaxLength(50);
+
+            entity.Property(e => e.SubStatusName).HasMaxLength(50);
+
+            entity.Property(e => e.UnderstandSpeechInd).HasMaxLength(3);
+
+
+            //entity.HasKey(e => e.Id);
+            //entity.Property(e => e.Id).ValueGeneratedNever();
+
+            //entity.Property(e => e.FirstName)
+            //    .IsRequired()
+            //    .HasMaxLength(50);
+
+            //entity.Property(e => e.LastName)
+            //    .IsRequired()
+            //    .HasMaxLength(50);
+
+            //entity.Property(e => e.MiddleName).HasMaxLength(30);
+
+            //entity.HasOne(d => d.Etiology)
+            //    .WithMany(p => p.Contributor)
+            //    .HasForeignKey(d => d.EtiologyId)
+            //    .OnDelete(DeleteBehavior.ClientSetNull)
+            //    .HasConstraintName("FK_Contributor_Etiology");
+
+
+            //entity.HasOne(d => d.ContributorStatus)
+            //    .WithMany(p => p.Contributor)
+            //    .HasForeignKey(d => d.StatusId)
+            //    .OnDelete(DeleteBehavior.ClientSetNull)
+            //    .HasConstraintName("FK_Contributor_ContributorStatus");
+
+
+            //entity.HasOne(d => d.ContributorSubStatus)
+            //    .WithMany(p => p.Contributor)
+            //    .HasForeignKey(d => d.SubStatusId)
+            //    .HasConstraintName("FK_Contributor_ContributorSubStatus");
+        }
+
+
+
+        private void ConfigureEtiology(EntityTypeBuilder<EtiologyView> entity)
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToView("v_Etiology");
+
+            entity.Property(e => e.Active)
+                .IsRequired()
+                .HasMaxLength(3);
+
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(30);
+
+        }
+
+        private void ConfigureApprovedDeniedContributor(EntityTypeBuilder<ApprovedDeniedContributor> entity)
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.ToView("v_ApprovedDeniedContributor");
+
+            entity.Property(e => e.ApproveDenyBy).HasMaxLength(20);
+
+            entity.Property(e => e.AssignedAnnotator)
+                .IsRequired()
+                .HasMaxLength(3)
+                .IsUnicode(false);
+
+            entity.Property(e => e.BirthYear).HasMaxLength(50);
+
+            entity.Property(e => e.Comments).HasMaxLength(2000);
+
+            entity.Property(e => e.EighteenOrOlderInd)
+                .IsRequired()
+                .HasMaxLength(3);
+
+            entity.Property(e => e.EmailAddress).HasMaxLength(256);
+
+            entity.Property(e => e.EtiologyName).HasMaxLength(30);
+
+            entity.Property(e => e.FirstName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.FollowUpDates)
+                .HasMaxLength(8000)
+                .IsUnicode(false);
+
+            entity.Property(e => e.HelperEmail).HasMaxLength(175);
+
+            entity.Property(e => e.HelperFirstName).HasMaxLength(50);
+
+            entity.Property(e => e.HelperInd).HasMaxLength(3);
+
+            entity.Property(e => e.HelperLastName).HasMaxLength(50);
+
+            entity.Property(e => e.HelperPhoneNumber).HasMaxLength(10);
+
+            entity.Property(e => e.IdentityUserId)
+                .IsRequired()
+                .HasMaxLength(450);
+
+            entity.Property(e => e.LastName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.LastRecordingDate).HasColumnType("datetime");
+
+            entity.Property(e => e.MiddleName).HasMaxLength(30);
+
+            entity.Property(e => e.OtherEtiologyText).HasMaxLength(50);
+
+            entity.Property(e => e.ParkinsonsInd).HasMaxLength(3);
+
+            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+
+            entity.Property(e => e.StateResidence)
+                .IsRequired()
+                .HasMaxLength(4);
+
+            entity.Property(e => e.StatusName).HasMaxLength(50);
+
+            entity.Property(e => e.SubStatusName).HasMaxLength(50);
+
+            entity.Property(e => e.UnderstandSpeechInd).HasMaxLength(3);
+
+           
+
+        }
+
+        private void ConfigureViewSpeechFiles(EntityTypeBuilder<ViewSpeechFiles> entity)
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.ToView("v_SpeechFiles");
+
+        }
+        private void ConfigureContributorCompensationView(EntityTypeBuilder<ContributorCompensationView> entity)
+        {
+            entity.HasNoKey();
+
+            entity.ToView("v_ContributorsCompensation");
+        }
+        private void ConfigureContributorCompensationHistory(EntityTypeBuilder<ContributorCompensationHistory> entity)
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.ToView("v_ContributorCompensationHistory");
+        }
+
 
 
     }

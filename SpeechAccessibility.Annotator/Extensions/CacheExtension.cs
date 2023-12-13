@@ -10,63 +10,51 @@ namespace SpeechAccessibility.Annotator.Extensions
 {
     public class CacheExtension
     {
-        //public static List<Etiology> GetEtiologyList(IEtiologyRepository etiologyRepository)
-        public static List<Etiology> GetEtiologyList(ISubRoleRepository subRoleRepository)
+       
+        public static List<EtiologyView> GetEtiologyList(IEtiologyViewRepository etiologyRepository)
         {
-            var cacheKey = "Etiologies";
-            var etiologies = CacheService.Get<List<Etiology>>(cacheKey);
-            if (etiologies != null)
-            {
-                return etiologies;
-            }
+            //remove cache since users will not get updated eitologies if we change their roles
+            //var cacheKey = "Etiologies";
+            //var etiologies = CacheService.Get<List<EtiologyView>>(cacheKey);
+            //if (etiologies != null)
+            //{
+            //    return etiologies;
+            //}
+            var etiologies = etiologyRepository.Find(e => e.Active == "Yes").OrderBy(r => r.DisplayOrder).ToList();
 
-            //etiologies = etiologyRepository.Find(e => e.Active == "Yes").OrderBy(r => r.DisplayOrder).ToList();
-            etiologies = subRoleRepository.Find(r => r.InUsed=="Yes" && r.Etiology.Active=="Yes")
-                 //.GroupBy(s => s.EtiologyId)
-                 // .Select(g => g.First())
-                 .Select(s => s.Etiology).Distinct()
-                 .ToList();
-            CacheService.Add(etiologies, cacheKey);
+            //CacheService.Add(etiologies, cacheKey);
             return etiologies;
         }
 
         public static List<UserSubRole> GetSubRoles(IUserSubRoleRepository userSubRoleRepository, string netId)
         {
-            var cacheKey = "UserSubRole";
-            var userSubRoles = CacheService.Get<List<UserSubRole>>(cacheKey);
-            if (userSubRoles != null)
-            {
-                return userSubRoles;
-            }
+            //remove cache
+            //var cacheKey = "UserSubRole";
+            //var userSubRoles = CacheService.Get<List<UserSubRole>>(cacheKey);
+            //if (userSubRoles != null)
+            //{
+            //    return userSubRoles;
+            //}
+            
+            var userSubRoles = userSubRoleRepository.Find(r => r.User.NetId == netId).Include(r => r.SubRole).ToList();
 
-           var temp = userSubRoleRepository.Find(r => r.User.NetId == netId).Include(r => r.SubRole)
-                .ThenInclude(sub => sub.Etiology);
-
-            userSubRoles = userSubRoleRepository.Find(r=>r.User.NetId== netId).Include(r=>r.SubRole).ThenInclude(sub=>sub.Etiology).ToList();
-            CacheService.Add(userSubRoles, cacheKey);
+            //CacheService.Add(userSubRoles, cacheKey);
             return userSubRoles;
         }
 
-
-        //public static IEnumerable<Prompt> GetPromptList(IPromptRepository promptRepository, int categoryId)
-        //{
-        //    var cacheKey = "PromptList" + categoryId;
-        //    var promptList = CacheService.Get<IEnumerable<Prompt>>(cacheKey);
-        //    if (promptList != null) return promptList;
-        //    //var promptList = new IEnumerable<Prompt>();
-        //    promptList =  promptRepository.Find(p => p.CategoryId == categoryId && p.Active == "Yes").OrderBy(p => p.Transcript).ToList();
-        //    CacheService.Add(promptList, cacheKey);
-        //    return promptList;
-        //}
-        //public static async Task<IEnumerable<Prompt>> GetPromptList(IPromptRepository promptRepository, int categoryId)
-        //{
-        //    var cacheKey = "PromptList" + categoryId;
-        //    var promptList = CacheService.Get<IEnumerable<Prompt>>(cacheKey);
-        //    if (promptList != null) return promptList;
-        //    promptList = await promptRepository.Find(p => p.CategoryId== categoryId && p.Active=="Yes").OrderBy(p => p.Transcript);
-        //    CacheService.Add(promptList, cacheKey);
-        //    return promptList;
-        //}
+        public static List<RegisterLink> GetRegisterLinks(IRegisterLinkRepository registerLinkRepository)
+        {
+            
+            var cacheKey = "RegisterLinks";
+            var registerLinks = CacheService.Get<List<RegisterLink>>(cacheKey);
+            if (registerLinks != null)
+            {
+                return registerLinks;
+            }
+            registerLinks = registerLinkRepository.GetAll().ToList();
+            CacheService.Add(registerLinks, cacheKey);
+            return registerLinks;
+        }
 
     }
 }

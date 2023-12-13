@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
-using SpeechAccessibility.Annotator.Models;
-using SpeechAccessibility.Core.Models;
 
 namespace SpeechAccessibility.Annotator.Extensions
 {

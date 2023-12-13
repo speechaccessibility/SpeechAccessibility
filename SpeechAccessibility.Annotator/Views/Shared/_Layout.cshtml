@@ -5,8 +5,7 @@
 @using SpeechAccessibility.Core.Interfaces
 @using SpeechAccessibility.Core.Models
 @inject IConfiguration Configuration
-@*@inject IEtiologyRepository EtiologyRepository*@
-@inject ISubRoleRepository SubRoleRepository
+@inject IEtiologyViewRepository EtiologyRepository
 @inject IUserSubRoleRepository UserSubRoleRepository
 <!DOCTYPE html>
 <html lang="en">
@@ -87,57 +86,52 @@
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="contributor" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Contributor</a>
                                 <div class="dropdown-menu" aria-labelledby="contributor">
+                                    
                                     @{
-
                                         if (ViewBag.SubRoles == null)
                                         {
-                                            ViewBag.SubRoles = CacheExtension.GetEtiologyList(SubRoleRepository);
+                                            ViewBag.SubRoles = CacheExtension.GetEtiologyList(EtiologyRepository);
                                         }
                                         List<UserSubRole> userSubroles = null;
                                         if (hasSubRole=="Yes")
                                         {
                                             userSubroles = CacheExtension.GetSubRoles(UserSubRoleRepository, User.Identity.Name);
                                         }
-
-
-                                    }
-                                    @foreach (var etiology in (List<Etiology>)ViewBag.SubRoles)
-                                    {
-                                        if (hasSubRole=="Yes")
+                                        foreach (var etiology in (List<EtiologyView>)ViewBag.SubRoles)
                                         {
-                                            var matchRole = userSubroles.Any(r => r.SubRole.Etiology.Id == etiology.Id);
-                                            if (matchRole)
+                                            if (hasSubRole == "Yes")
+                                            {
+                                                var matchRole = userSubroles.Any(r => r.SubRole.EtiologyId == etiology.Id);
+                                                if (matchRole)
+                                                {
+                                                    <span>@etiology.Name</span>
+                                                    @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "ExternalSLPAnnotator" or "SystemAdmin")
+                                                    {
+                                                        <a class="dropdown-item" href="@Url.Action("ContributorsWaitingForApproval", "Contributor", new{etiologyId= @etiology.Id})">Contributors Waiting For Approval</a>
+                                                    }
+
+                                                    <a class="dropdown-item" href="@Url.Action("Index", "Contributor", new{etiologyId= @etiology.Id})">Approved Contributors</a>
+                                                    <a class="dropdown-item" href="@Url.Action("NonResponsiveContributors", "Contributor", new{etiologyId= @etiology.Id})">Non-Responsive Contributors</a>
+                                                    <a class="dropdown-item" href="@Url.Action("DeniedContributors", "Contributor", new{etiologyId= @etiology.Id})">Denied Contributors</a>
+                                                    <div class="dropdown-divider"></div>
+                                                }
+
+                                            }
+                                            else
                                             {
                                                 <span>@etiology.Name</span>
                                                 @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "ExternalSLPAnnotator" or "SystemAdmin")
                                                 {
                                                     <a class="dropdown-item" href="@Url.Action("ContributorsWaitingForApproval", "Contributor", new{etiologyId= @etiology.Id})">Contributors Waiting For Approval</a>
-                                                    @*'@Url.Action("CreatePerson", "Person", new {id = id})'*@
+
                                                 }
 
                                                 <a class="dropdown-item" href="@Url.Action("Index", "Contributor", new{etiologyId= @etiology.Id})">Approved Contributors</a>
                                                 <a class="dropdown-item" href="@Url.Action("NonResponsiveContributors", "Contributor", new{etiologyId= @etiology.Id})">Non-Responsive Contributors</a>
                                                 <a class="dropdown-item" href="@Url.Action("DeniedContributors", "Contributor", new{etiologyId= @etiology.Id})">Denied Contributors</a>
-                                                <div class="dropdown-divider"></div>                                                
+                                                <div class="dropdown-divider"></div>
                                             }
-
                                         }
-                                        else
-                                        {
-                                            <span>@etiology.Name</span>
-                                            @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotator" or "SLPAnnotatorAdmin" or "ExternalSLPAnnotator" or "SystemAdmin")
-                                            {
-                                                <a class="dropdown-item" href="@Url.Action("ContributorsWaitingForApproval", "Contributor", new{etiologyId= @etiology.Id})">Contributors Waiting For Approval</a>
-
-                                            }
-
-                                            <a class="dropdown-item" href="@Url.Action("Index", "Contributor", new{etiologyId= @etiology.Id})">Approved Contributors</a>
-                                            <a class="dropdown-item" href="@Url.Action("NonResponsiveContributors", "Contributor", new{etiologyId= @etiology.Id})">Non-Responsive Contributors</a>
-                                            <a class="dropdown-item" href="@Url.Action("DeniedContributors", "Contributor", new{etiologyId= @etiology.Id})">Denied Contributors</a>
-                                            <div class="dropdown-divider"></div>
-                                        }
-                                        
-                                        
                                     }
 
                                 </div>
@@ -175,12 +169,21 @@
                         }
                         @if (userRole is "TextAnnotatorAdmin" or "SLPAnnotatorAdmin" or "SystemAdmin")
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("ManageUsers", "Admin")">Manage Users</a>
-
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="Administration" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Administration</a>
+                                <div class="dropdown-menu" aria-labelledby="Administration">
+                                    <a class="dropdown-item" href="@Url.Action("ManageUsers", "Admin")">Manage Users</a>
+                                    <a class="dropdown-item" href="@Url.Action("UpdateGiftCardAmount", "Admin")">Update Gift Cards Amount</a>
+                                     
+                                </div>
                             </li>
-                        }
 
+                          
+                        }
+                     @*  <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Index", "UserManual")">User Manual</a>
+                        </li>
+*@
                         <li class="nav-item">
                             <a class="nav-link" href="@Url.Action("Logout", "Auth")">Logout</a>
                         </li>

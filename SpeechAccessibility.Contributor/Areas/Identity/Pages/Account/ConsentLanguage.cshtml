@@ -1,0 +1,27 @@
+﻿@page
+@model SpeechAccessibility.Areas.Identity.Pages.Account.ConsentLanguageModel
+@{
+}
+
+
+<h1 hidden>Consent Language</h1>
+<div asp-validation-summary="All" class="text-danger">
+    <h2>Validation Errors:</h2>
+</div>
+<form method="post">
+    <div class="form-row">
+        <span style="color:red">*</span>
+        <div class="form-group col-md-10">
+            <div class="form-group">
+                <fieldset>
+                    <legend>Would you like to read the informed consent in English or Spanish?</legend>
+
+                    <label><input asp-for="language" type="radio" value="English" /> English</label>
+
+                    <label><input asp-for="language" type="radio" value="Spanish" /> Spanish</label>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Next</button>
+</form>

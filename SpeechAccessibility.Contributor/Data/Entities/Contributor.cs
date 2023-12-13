@@ -19,9 +19,13 @@ namespace SpeechAccessibility.Models
         [MaxLength(3)]      
         public string UnderstandSpeechInd { get; set; }
 
-        [MaxLength(3)]
-        [Required]
-        public string ParkinsonsInd { get; set; }
+        public Etiology Etiology { get; set; }
+
+        //[MaxLength(3)]
+        //[Required]
+        //public string ParkinsonsInd { get; set; }
+
+        public string OtherEtiologyText { get; set; }
 
         [MaxLength(3)]
         [Required]
@@ -63,11 +67,11 @@ namespace SpeechAccessibility.Models
         [MaxLength(4)]
         [Required]
         public string StateResidence { get; set; }
-        [Required]
+
         public IdentityUser IdentityUser { get; set; }
         public List<Consent> Consent { get; set; }
 
-        public ContributorStatus Status { get; set; }   
+        public int StatusId { get; set; }   
         
         public bool ChangePassword { get; set; }
 
@@ -80,5 +84,11 @@ namespace SpeechAccessibility.Models
         public DateTime UpdateTS { get; set; }
 
         public string BirthYear { get; set; }
+
+        public string CurrentAge { get; set; }
+
+        public string DiagnosisAge { get; set; }
+
+        public string LengthOfDiagnosis { get; set; }
     }
 }

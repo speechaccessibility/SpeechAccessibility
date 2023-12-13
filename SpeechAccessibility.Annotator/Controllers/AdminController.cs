@@ -20,17 +20,19 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IConfiguration _configuration;
         private readonly IRoleRepository _roleRepository;
         private readonly IUserSubRoleRepository _userSubRoleRepository;
-        private readonly IEtiologyRepository _etiologyRepository;
+        private readonly IEtiologyViewRepository _etiologyViewRepository;
         private readonly ISubRoleRepository _subRoleRepository;
+        private readonly IEtiologyRepository _etiologyRepository;
 
-        public AdminController(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration,  IUserSubRoleRepository userSubRoleRepository, IEtiologyRepository etiologyRepository, ISubRoleRepository subRoleRepository)
+        public AdminController(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration,  IUserSubRoleRepository userSubRoleRepository, IEtiologyViewRepository etiologyRepository, ISubRoleRepository subRoleRepository, IEtiologyRepository etiologyRepository1)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _configuration = configuration;
             _userSubRoleRepository = userSubRoleRepository;
-            _etiologyRepository = etiologyRepository;
+            _etiologyViewRepository = etiologyRepository;
             _subRoleRepository = subRoleRepository;
+            _etiologyRepository = etiologyRepository1;
         }
 
         public IActionResult Index()
@@ -50,17 +52,12 @@ namespace SpeechAccessibility.Annotator.Controllers
                     Text = a.Name
                 })
                     .ToList(),
-                SubRoles = _subRoleRepository.Find(r => r.InUsed == "Yes" && r.Etiology.Active == "Yes" && r.Role.Name == "ExternalSLPAnnotator").Select(a => new SelectListItem()
+               
+                SubRoles = _etiologyViewRepository.Find(e => e.Active == "Yes").OrderBy(r => r.DisplayOrder).Select(a => new SelectListItem()
                 {
-                    Value = a.Etiology.Id.ToString(),
-                    Text = a.Etiology.Name
-                })
-                .ToList()
-                //SubRoles = _etiologyRepository.Find(e => e.Active == "Yes").OrderBy(r => r.DisplayOrder).Select(a => new SelectListItem()
-                //{
-                //    Value = a.Id.ToString(),
-                //    Text = a.Name
-                //}).ToList()
+                    Value = a.Id.ToString(),
+                    Text = a.Name
+                }).ToList()
             };
             return View(userVM);
         }
@@ -77,10 +74,11 @@ namespace SpeechAccessibility.Annotator.Controllers
             int pageSize = length != null ? Convert.ToInt32(length) : 0;
             int skip = start != null ? Convert.ToInt32(start) : 0;
 
-            var users = _userRepository.Find(u => u.Active == "Yes").Include(u => u.Role).Where(r => r.Role.Name.Contains(searchValue) || r.FirstName.Contains(searchValue) || r.LastName.Contains(searchValue) || r.NetId.Contains(searchValue));
+            var users = _userRepository.Find(u => u.Active == "Yes").Include(u => u.Role).Where(r => r.Role.Name.Contains(searchValue.Trim()) 
+                || r.FirstName.Contains(searchValue.Trim()) || r.LastName.Contains(searchValue.Trim()) || r.NetId.Contains(searchValue.Trim()));
             var recordsTotal = users.Count();
 
-            var personsList = users.Skip(skip).Take(pageSize).Select(p => new ADMemberViewModel()
+            var personsList = users.Select(p => new ADMemberViewModel()
             {
                 Id = p.Id,
                 RoleId = p.RoleId,
@@ -89,8 +87,9 @@ namespace SpeechAccessibility.Annotator.Controllers
                 NetId = p.NetId,
                 RoleName = p.Role.Name
             });
-            personsList = DynamicSortingExtensions<ADMemberViewModel>.SetOrderByDynamic(personsList, Request.Form);
 
+            personsList = DynamicSortingExtensions<ADMemberViewModel>.SetOrderByDynamic(personsList, Request.Form);
+            personsList = personsList.Skip(skip).Take(pageSize);
             return Json(new { draw, recordsFiltered = recordsTotal, recordsTotal, data = personsList });
 
         }
@@ -98,7 +97,7 @@ namespace SpeechAccessibility.Annotator.Controllers
         [HttpPost]
         public ActionResult AddUpdateUser(ADMemberViewModel userVM)
         {
-            if (userVM.NetId == "")
+            if (userVM.NetId.Trim() == "")
             {
                 return Json(new { Success = false, Message = "NetID is required." });
             }
@@ -134,7 +133,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                 if (roleChanged)
                 {
                     //remove from old AD group
-                    error = ActiveDirectoryService.RemoveMemberFromADGroup(userVM.NetId, oldADGroupName,
+                    error = ActiveDirectoryService.RemoveMemberFromADGroup(userVM.NetId.Trim(), oldADGroupName,
                         _configuration["AppSettings:Domain"], _configuration["AppSettings:Container"], _configuration["AppSettings:Environment"]);
 
                 }
@@ -157,9 +156,12 @@ namespace SpeechAccessibility.Annotator.Controllers
                     
                     foreach (var subRole in userVM.AssignedSubRoles)
                     {
+                        var subRoleId = _subRoleRepository
+                            .Find(s => s.EtiologyId == subRole.Id && s.RoleId == userVM.RoleId)
+                            .FirstOrDefault()!.Id;
                         var newAssignedSubRole = new UserSubRole();
                         newAssignedSubRole.UserId = userVM.Id;
-                        newAssignedSubRole.SubRoleId = subRole.Id;
+                        newAssignedSubRole.SubRoleId = subRoleId;
                         _userSubRoleRepository.Insert(newAssignedSubRole);
                     }
                 }
@@ -177,13 +179,13 @@ namespace SpeechAccessibility.Annotator.Controllers
 
                 //check for existing person, this should not happen but just in case
                 //userVM.NetID = "";
-                var existingUser = _userRepository.Find(p => p.NetId == userVM.NetId).FirstOrDefault();
+                var existingUser = _userRepository.Find(p => p.NetId.Trim() == userVM.NetId.Trim()).FirstOrDefault();
                 if (existingUser != null)
                     return Json(new { Success = false, Message = "This person is already in the Speech Accessibility application. Please try to Edit instead." });
                 
                 var newPerson = new User
                 {
-                    NetId = userVM.NetId,
+                    NetId = userVM.NetId.Trim(),
                     LastName = userVM.LastName,
                     FirstName = userVM.FirstName,
                     RoleId = userVM.RoleId,
@@ -197,10 +199,14 @@ namespace SpeechAccessibility.Annotator.Controllers
                 {
                     foreach (var subRole in userVM.AssignedSubRoles)
                     {
+                        var subRoleId = _subRoleRepository
+                            .Find(s => s.EtiologyId == subRole.Id && s.RoleId == userVM.RoleId)
+                            .FirstOrDefault()!.Id;
+
                         var newAssignedSubRole = new UserSubRole
                         {
                             UserId = newPerson.Id,
-                            SubRoleId = subRole.Id
+                            SubRoleId = subRoleId
                         };
                         _userSubRoleRepository.Insert(newAssignedSubRole);
                     }
@@ -245,9 +251,6 @@ namespace SpeechAccessibility.Annotator.Controllers
                 return Json(new { Success = false, Message = "User is not found." });
             }
           
-            //todo: if this user has worked with the prompts, set in-active
-            //var userRecording = _recordingRepository.Find(r=>r.)
-           
             //remove from AD group
             //var netID =user.NetId;
             error = ActiveDirectoryService.RemoveMemberFromADGroup(user.NetId, user.Role.ADGroupName,
@@ -265,7 +268,54 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         }
 
+        public IActionResult UpdateGiftCardAmount()
+        {
 
+            return View();
+        }
+
+        public ActionResult LoadEtiologyGiftCardsAmount()
+        {
+
+            var draw = Request.Form["draw"].FirstOrDefault();
+            var start = Request.Form["start"].FirstOrDefault();
+            var length = Request.Form["length"].FirstOrDefault();
+            var searchValue = Request.Form["search[value]"].FirstOrDefault()?.ToLower();
+            int pageSize = length != null ? Convert.ToInt32(length) : 0;
+            int skip = start != null ? Convert.ToInt32(start) : 0;
+
+            var etiologies = _etiologyRepository.Find(e=>e.Active=="Yes");
+            var recordsTotal = etiologies.Count();
+            etiologies = DynamicSortingExtensions<Etiology>.SetOrderByDynamic(etiologies, Request.Form);
+            etiologies = etiologies.Skip(skip).Take(pageSize);
+
+
+            return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = etiologies });
+
+        }
+
+        [HttpPost]
+        public ActionResult UpdateGiftCardAmounts(int id, int firstGiftCard, int secondGiftCard, int thirdGiftCard)
+        {
+            //personId = 100;
+            if (id <= 0)
+                return Json(new { Success = false, Message = "No record is selected." });
+            var etiology = _etiologyRepository.Find(e => e.Id == id).FirstOrDefault();
+
+            var error = "";
+            if (etiology == null)
+            {
+                
+                return Json(new { Success = false, Message = "Etiology is not found." });
+            }
+
+           etiology.FirstGiftCard = firstGiftCard;
+           etiology.SecondGiftCard= secondGiftCard;
+           etiology.ThirdGiftCard=thirdGiftCard;
+           _etiologyRepository.Update(etiology);
+            return Json(new { Success = true, Message = "Amounts are updated." });
+
+        }
 
     }
 }

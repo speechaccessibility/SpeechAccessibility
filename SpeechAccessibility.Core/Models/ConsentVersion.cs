@@ -16,7 +16,7 @@ namespace SpeechAccessibility.Core.Models
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
-        public  Etiology Etiology { get; set; }
+        public  EtiologyView Etiology { get; set; }
         public  ICollection<Consent> Consent { get; set; }
     }
 }

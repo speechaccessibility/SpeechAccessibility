@@ -18,6 +18,7 @@ namespace SpeechAccessibility.Models
         public int assessmentMax { get; set; }
         public int digitalCommandMax { get; set; }
         public int novelSentenceMax { get; set; }
+        public int openEndedMax { get; set; }
         public int congratulationsCount { get; set; }
         public int assessmentCount { get; set; }
         public int currentBlockOfPromptsCount { get; set; }
@@ -27,6 +28,8 @@ namespace SpeechAccessibility.Models
         public int retryCount { get; set; }
         public int phonationPromptCount { get; set; }
         public List<Prompt> spontaneousSpeechList { get; set; }
+
+        public int etiologyId { get; set; }
 
         public class InputModel
         {

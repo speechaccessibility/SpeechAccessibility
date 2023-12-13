@@ -26,7 +26,7 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IRecordingRepository _recordingRepository;
         private readonly IRecordingRatingRepository _recordingRatingRepository;
         private readonly IDimensionCategoryRepository _dimensionCategoryRepository;
-        private readonly IContributorRepository _contributorRepository;
+        private readonly IContributorViewRepository _contributorViewRepository;
         private readonly IContributorAssignedBlockRepository _contributorAssignedBlockRepository;
         private readonly IBlockOfPromptsRepository _blockOfPromptsRepository;
         private readonly IContributorAssignedAnnotatorRepository _contributorAssignedAnnotatorRepository;
@@ -34,15 +34,18 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IConfiguration _configuration;
         private readonly IUserSubRoleRepository _userSubRoleRepository;
+        private readonly IViewSpeechFilesRepository _viewSpeechFilesRepository;
+
 
         public SpeechFileController(IRecordingRepository recordingRepository, IRecordingRatingRepository recordingRatingRepository,IDimensionCategoryRepository dimensionCategoryRepository
-            , IContributorRepository contributorRepository, IContributorAssignedBlockRepository contributorAssignedBlockRepository, IBlockOfPromptsRepository blockOfPromptsRepository
-            , IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository, IUserRepository userRepository, IBlockRepository blockRepository, IConfiguration configuration, IUserSubRoleRepository userSubRoleRepository)
+            , IContributorViewRepository contributorViewRepository, IContributorAssignedBlockRepository contributorAssignedBlockRepository, IBlockOfPromptsRepository blockOfPromptsRepository
+            , IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository, IUserRepository userRepository, IBlockRepository blockRepository, IConfiguration configuration
+            , IUserSubRoleRepository userSubRoleRepository, IViewSpeechFilesRepository viewSpeechFilesRepository)
         {
             _recordingRepository = recordingRepository;
             _recordingRatingRepository = recordingRatingRepository;
             _dimensionCategoryRepository = dimensionCategoryRepository;
-            _contributorRepository = contributorRepository;
+            _contributorViewRepository = contributorViewRepository;
             _contributorAssignedBlockRepository = contributorAssignedBlockRepository;
             _blockOfPromptsRepository = blockOfPromptsRepository;
             _contributorAssignedAnnotatorRepository = contributorAssignedAnnotatorRepository;
@@ -50,6 +53,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             _blockRepository = blockRepository;
             _configuration = configuration;
             _userSubRoleRepository = userSubRoleRepository;
+            _viewSpeechFilesRepository = viewSpeechFilesRepository;
         }
 
         public IActionResult Index()
@@ -90,7 +94,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                     RetryCount = recording.RetryCount,
                     Comment = recording.Comment,
                     ContributorId = recording.ContributorId,
-                    SpeechFilePath = appName + recording.ContributorId + "/" + recording.BlockId + "/modified/" + recording.FileName
+                    SpeechFilePath = appName + recording.ContributorId + "/" + recording.BlockId + "/raw/" + recording.FileName
                  };
                 recordingList.Add(r);
             }
@@ -158,7 +162,8 @@ namespace SpeechAccessibility.Annotator.Controllers
                 _ => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Prod/"
             };
 
-            IQueryable<Recording> recordings;
+            //IQueryable<Recording> recordings;
+            IQueryable<ViewSpeechFiles> recordings;
             var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
             List<int> includeStatus = new List<int>();
             //if recordingStatus=2, include the new recording
@@ -172,11 +177,6 @@ namespace SpeechAccessibility.Annotator.Controllers
                 includeStatus.Add(recordingStatus);
             }
 
-
-            //return only recordings for approved contributors
-            var approvedContributors = _contributorRepository.Find(c => c.StatusId == 2).ToList();
-            Guid[] idList = approvedContributors.Select(c => c.Id).ToArray();
-
             //for TextAnnotator, only return assigned recordings
             if (userRole == "TextAnnotator")
             {
@@ -185,46 +185,53 @@ namespace SpeechAccessibility.Annotator.Controllers
                     .Select(u => u.ContributorId).ToArray();
 
                 //get recordings that are not Dysarthria Assessment Sentences (categoryId=1)
-                recordings = _recordingRepository
-                    .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId)
-                               && annotatorAssignedContributorIdList.Contains(r.ContributorId))
+                recordings = _viewSpeechFilesRepository
+                    .Find(r => r.ContributorStatusId == 2 && includeStatus.Contains(r.StatusId)
+                                                          && annotatorAssignedContributorIdList.Contains(r.ContributorId))
                     .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue)
-                        || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue))
-                    .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
+                        || r.CategoryName.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue));
+
             }
             else
             {
                 //get recordings that are not Dysarthria Assessment Sentences (categoryId=1)
-                recordings = _recordingRepository
-                    .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && includeStatus.Contains(r.StatusId))
+                recordings = _viewSpeechFilesRepository
+                    .Find(r => r.ContributorStatusId == 2 && includeStatus.Contains(r.StatusId))
                     .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue)
-                        || r.OriginalPrompt.Category.Description.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue))
-                    .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
+                        || r.CategoryName.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue));
+
             }
 
+          
 
             var recordsTotal = recordings.Count();
-            recordings = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordings, Request.Form);
-
-            var recordingList = recordings.Skip(skip).Take(pageSize).Select(r => new Recording()
+            recordings = DynamicSortingExtensions<ViewSpeechFiles>.SetOrderByDynamic(recordings, Request.Form);
+            //recordings = recordings.Skip(skip).Take(pageSize);
+            recordings = recordings.Skip(skip).Take(pageSize).Select(r => new ViewSpeechFiles()
             {
-                Id = r.Id,
+                Id=r.Id,
+                SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName,
                 OriginalPromptId = r.OriginalPromptId,
+                ModifiedTranscript = r.ModifiedTranscript,
+                OriginalTranscript = r.OriginalTranscript,
                 ContributorId = r.ContributorId,
-                OriginalPrompt = r.OriginalPrompt,
-                Status = r.Status,
+                StatusId = r.StatusId,
+                BlockId = r.BlockId,
+                RatingBy = r.RatingBy,
                 Comment = r.Comment,
                 CreateTS = r.CreateTS,
-                ModifiedTranscript = string.IsNullOrEmpty(r.ModifiedTranscript) ? r.OriginalPrompt.Transcript : r.ModifiedTranscript,
-                FileName = r.FileName,
-                BlockId = r.BlockId,
-                SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName,
+                UpdateTS = r.UpdateTS,
                 StartTime = r.StartTime,
                 EndTime = r.EndTime,
-                EtiologyName = UtilsExtension.GetEtiologyName(_contributorRepository, r.ContributorId)
+                FileName = r.FileName,
+                EtiologyName = r.EtiologyName,
+                CategoryName = r.CategoryName,
+                IsContributorApproved =r.ContributorStatusId != 1
+
             });
-            //recordingList = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordings, Request.Form);
-            return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = recordingList });
+
+          
+            return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = recordings });
         }
         
 
@@ -261,7 +268,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             var recordings = _recordingRepository
                 .Find(r => r.ContributorId == contributorId && r.OriginalPrompt.CategoryId == 1).Include(r => r.OriginalPrompt)
                 .ToList();
-            var contributor = _contributorRepository.Find(r => r.Id == contributorId).FirstOrDefault();
+            var contributor = _contributorViewRepository.Find(r => r.Id == contributorId).FirstOrDefault();
             bool isApproved = contributor != null && contributor.StatusId != 1;
 
             var appName = _configuration["AppSettings:Environment"] switch
@@ -398,8 +405,6 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         public ActionResult ViewContributorRecordingsForBlock(Guid contributorId, int blockId)
         {
-
-           
             //if this contributor is not assigned to current Annotator, return null
             var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
             var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
@@ -462,7 +467,7 @@ namespace SpeechAccessibility.Annotator.Controllers
         }
         public ActionResult ViewBlockRecordingsRating(Guid contributorId, int blockId)
         {
-            var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+            var contributor = _contributorViewRepository.Find(c => c.Id == contributorId).FirstOrDefault();
             var block = _blockRepository.Find(b=>b.Id == blockId).FirstOrDefault();
             ViewBag.RatingContributorId = contributor.Id;
             ViewBag.RatingContributorLastName = contributor.LastName;
@@ -506,7 +511,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                     return PartialView("_ViewRatingSpeechFile", null);
 
             }
-            var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+            var contributor = _contributorViewRepository.Find(c => c.Id == contributorId).FirstOrDefault();
             ViewBag.RatingContributorId = contributor.Id;
             ViewBag.RatingContributorLastName = contributor.LastName;
             ViewBag.RatingContributorFirstName = contributor.FirstName;

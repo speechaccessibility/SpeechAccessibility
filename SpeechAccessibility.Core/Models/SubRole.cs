@@ -16,7 +16,6 @@ namespace SpeechAccessibility.Core.Models
         public DateTime UpdateTS { get; set; }
         public string InUsed { get; set; }
 
-        public  Etiology Etiology { get; set; }
         public  Role Role { get; set; }
         public  ICollection<UserSubRole> UserSubRole { get; set; }
     }

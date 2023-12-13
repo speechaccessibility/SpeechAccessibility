@@ -10,8 +10,8 @@ namespace SpeechAccessibility.Annotator.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly IEtiologyRepository _etiologyRepository;
-        public HomeController(ILogger<HomeController> logger, IEtiologyRepository etiologyRepository)
+        private readonly IEtiologyViewRepository _etiologyRepository;
+        public HomeController(ILogger<HomeController> logger, IEtiologyViewRepository etiologyRepository)
         {
             _logger = logger;
             _etiologyRepository = etiologyRepository;

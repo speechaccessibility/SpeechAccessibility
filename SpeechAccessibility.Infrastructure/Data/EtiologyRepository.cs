@@ -3,9 +3,9 @@ using SpeechAccessibility.Core.Models;
 
 namespace SpeechAccessibility.Infrastructure.Data
 {
-    public class EtiologyRepository : Repository<SpeechAccessibilityDbContext, Etiology>, IEtiologyRepository
+    public class EtiologyRepository : Repository<SpeechAccessibilityContributorDbContext, Etiology>, IEtiologyRepository
     {
-        public EtiologyRepository(SpeechAccessibilityDbContext speechAccessibilityDbContext) : base(speechAccessibilityDbContext)
+        public EtiologyRepository(SpeechAccessibilityContributorDbContext speechAccessibilityContributorDbContext) : base(speechAccessibilityContributorDbContext)
         {
         }
     }

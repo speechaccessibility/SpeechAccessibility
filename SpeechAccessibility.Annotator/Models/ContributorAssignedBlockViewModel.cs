@@ -8,7 +8,7 @@ namespace SpeechAccessibility.Annotator.Models
     public class ContributorAssignedBlockViewModel
     {
         public  Guid ContributorId { get; set; }
-        public  Contributor Contributor { get; set; }
+        public  ContributorView Contributor { get; set; }
         public  int BlockId { get; set; }
         public string InUsed { get; set; }
         public  List<Block> AssignedBlocks { get; set; }

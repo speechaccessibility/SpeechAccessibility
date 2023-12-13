@@ -1,0 +1,25 @@
+﻿@page
+@model SpeechAccessibility.Areas.Identity.Pages.Account.DSPreRegisterModel
+@{
+}
+<h1 hidden>DS PreRegister</h1>
+<div asp-validation-summary="All" class="text-danger">
+    <h2>Validation Errors:</h2>
+</div>
+<form method="post">
+<div class="form-row">
+    <span style="color:red">*</span>
+    <div class="form-group col-md-10">
+        <div class="form-group">
+            <fieldset>
+                <legend>Do you have Down syndrome? (If you are the caregiver, please select no.)</legend>
+
+                <label><input asp-for="Input.DownSyndromeInd" type="radio" value="Yes" /> Yes</label>
+
+                <label ><input asp-for="Input.DownSyndromeInd" type="radio" value="No"  /> No</label>
+            </fieldset>
+           </div>
+    </div>
+</div>
+<button type="submit" class="btn btn-primary">Next</button>
+</form>

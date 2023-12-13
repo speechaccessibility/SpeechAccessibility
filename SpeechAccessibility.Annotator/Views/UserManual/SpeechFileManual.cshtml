@@ -1,0 +1,329 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<p><b>Speech Files Tab</b></p>
+
+<p>Text Annotator will have access to the following sub tabs under Speech Files</p>
+
+<img src="/images/speech-files-dd-menu.png" />
+
+<p>
+    <b>SIT Speech Files</b></p>
+
+<p>It displays a Table with the columns</p>
+<ul>
+    <li>ContributorID</li>
+    <li>FirstName</li>
+    <li>LastName</li>
+</ul>
+<p>
+There is ‘Search’ option with a textbox for user to type in.
+As user types, the table is filtered on the go right when the user enters one letter..
+</p>
+<img src="/images/speech-files-sit-1.png" />
+
+<p>
+Upon clicking the + icon in green, user can see another table expanded below consisting of the columns
+<ul>
+<li>RecordingID</li>
+<li>Transcript</li>
+<li>RecordingDate</li>
+<li>Retry Count</li>
+<li>Comment</li>
+<li>Actions – only one action which is “Listen”</li>
+</ul>
+</p>
+<img src="/images/speech-files-sit-2.png" />
+<p>
+User can collapse this table by clicking on the – icon in red
+The Action, Listen is clickable. Upon clicking a pop-up window opens up as below
+</p>
+<p>
+    <ul>
+        <li>
+            A user can play the audio using the play button
+        </li>
+        <li>
+            User can alter the play back speed by clicking on the 3 dots
+        </li>
+        <li>
+            User can close this pop-up by either clicking the cross (x) button (OR) the ‘close’ button
+        </li>
+    </ul>
+</p>
+
+<p><b>Original Speech Files</b></p>
+<p>
+By selecting ‘Original Speech Files’ from dropdown list user will land on the page that looks like below
+
+It displays a Table with the columns
+<ul>
+    <li>ContributorID</li>
+    <li>FirstName</li>
+    <li>LastName</li>
+</ul>
+</p>
+<img src="/images/org-speech-files-1.png" />
+<p>
+There is ‘Search’ option with a textbox for user to type in.
+As user types, the table is filtered on the go right when the user enters one letter..
+</p>
+<img src="/images/org-speech-files-2.png" />
+<p>
+Upon clicking the + icon in green, user can see another table expanded below consisting of the columns
+<ul>
+<li>RecordingID</li>
+<li>Transcript</li>
+<li>RecordingDate</li>
+<li>Retry Count</li>
+<li>Comment</li>
+<li>Actions – only one action which is “Listen”
+    <ul>
+        <li>Listen</li>
+        <li>Download</li>
+    </ul>
+</li>
+</ul>
+<p>User can collapse this table by clicking on the – icon in red</p>
+<ul>
+    <li>
+        The Action, Listen is clickable. Upon clicking a pop-up window opens up as below
+        <ul>
+            <li>A user can play the audio using the play button</li>
+            <li>User can alter the play back speed by clicking on the 3 dots</li>
+            <li>User can close this pop-up by either clicking the cross (x) button (OR) the ‘close’ button</li>
+        </ul>
+    </li>
+    <li>Upon clicking “Download” button, the audio file will be downloaded in the .wav extension as it can be seen at the bottom left of the screenshot below.</li>
+</ul>
+</p>
+<img src="/images/org-speech-files-3.png" />
+<br />
+<h3>Excluded Speech Files</h3>
+<p>
+    This tab displays the excluded speech files and their associated information.
+</p>
+
+<h4>Abbreviations in Comments:</h4>
+<ul>
+    <li>
+        bgn: Voice present but loud background noise completely masking the voice.
+    </li>
+    <li>
+        cut: Voice cut off, with voice less than one word.
+    </li>
+    <li>
+        nod: No data, with no sound, and the play button disabled.
+    </li>
+    <li>
+        otv: Other voice only, without the contributor's voice.
+    </li>
+    <li>
+        nov: No voice, with or without noise.
+    </li>
+</ul>
+
+<h4>Show entries:</h4>
+<p>
+    Use this option to choose how many speech files you want to display per page.
+</p>
+
+<h4>Search:</h4>
+<p>
+    Use the search bar to find specific speech files based on their ContributorID, transcript, category, or recorded date.
+</p>
+
+<h4>Columns:</h4>
+<ul>
+    <li>ContributorID: Unique identifier for the contributor.</li>
+    <li>Transcript: The transcript associated with the speech file.</li>
+    <li>Category: The category of the speech file.</li>
+    <li>Recorded Date: Date and time when the speech file was recorded.</li>
+    <li>Comment: Additional comments or notes about the excluded speech file.</li>
+    <li>Action: Available actions for the speech file.</li>
+</ul>
+
+<h4>Actions:</h4>
+<p>
+    Depending on the context, the available actions may vary. Here are the actions explained for the 'Excluded Speech Files' page:
+</p>
+<ul>
+    <li>
+        Listen: Allows you to listen to the excluded speech file.
+    </li>
+    <li>
+        Un-Exclude: Allows you to un-exclude the speech file after providing relevant information in the comments.
+    </li>
+    <li>
+        Edit Comments: Enables you to edit the comments associated with the excluded speech file.
+    </li>
+</ul>
+
+<img src="/images/excluded-speechfiles.png" />
+<br />
+<h1>WIP (Work in Progress) Speech Files User Manual</h1>
+
+<h2>Introduction</h2>
+<p>
+    This page displays the speech files that are still in progress and their associated information.
+</p>
+
+<h3>Show entries:</h3>
+<p>
+    Use this option to choose how many speech files you want to display per page.
+</p>
+
+<h3>Search:</h3>
+<p>
+    Use the search bar to find specific speech files based on their ContributorID, RecordingID, transcript, category, or recorded date.
+</p>
+
+<h3>Columns:</h3>
+<ul>
+    <li>ContributorID: Unique identifier for the contributor.</li>
+    <li>RecordingID: Unique identifier for the speech recording.</li>
+    <li>Transcript: The transcript associated with the speech file.</li>
+    <li>Category: The category of the speech file.</li>
+    <li>Recorded Date: Date and time when the speech file was recorded.</li>
+    <li>Comment: Additional comments or notes about the speech file.</li>
+    <li>Actions: Available actions for the speech file.</li>
+</ul>
+
+<h3>Actions:</h3>
+<p>
+    Depending on the context, the available actions may vary. Here are the actions explained for the 'Work in Progress Speech Files' page:
+</p>
+<ul>
+    <li>
+        Listen: Allows you to listen to the speech file.
+    </li>
+    <li>
+        Download: Allows you to download the speech file.
+    </li>
+    <li>
+        Update Recording: Allows you to update the speech recording after providing relevant comments.
+    </li>
+    <li>
+        Exclude: Allows you to exclude the speech file after providing relevant comments.
+    </li>
+    <li>
+        Publish: Allows you to publish the speech file after providing relevant comments.
+    </li>
+    <li>
+        To Discuss: Allows you to mark the speech file for discussion after providing relevant comments.
+    </li>
+    <li>
+        Edit Comments: Enables you to edit the comments associated with the speech file.
+    </li>
+</ul>
+<img src="/images/wip-speechfiles-1.png" />
+<br />
+<h1>To Discuss Speech Files User Manual</h1>
+
+<h2>Introduction</h2>
+<p>
+    This page displays the speech files that are yet to be discussed about and their associated information.
+</p>
+
+<h3>Show entries:</h3>
+<p>
+    Use this option to choose how many speech files you want to display per page.
+</p>
+
+<h3>Search:</h3>
+<p>
+    Use the search bar to find specific speech files based on their ContributorID, RecordingID, transcript, category, or recorded date.
+</p>
+
+<h3>Columns:</h3>
+<ul>
+    <li>ContributorID: Unique identifier for the contributor.</li>
+    <li>RecordingID: Unique identifier for the speech recording.</li>
+    <li>Transcript: The transcript associated with the speech file.</li>
+    <li>Category: The category of the speech file.</li>
+    <li>Recorded Date: Date and time when the speech file was recorded.</li>
+    <li>Comment: Additional comments or notes about the speech file.</li>
+    <li>Actions: Available actions for the speech file.</li>
+</ul>
+
+<h3>Actions:</h3>
+<p>
+    Depending on the context, the available actions may vary. Here are the actions explained for the 'Work in Progress Speech Files' page:
+</p>
+<ul>
+    <li>
+        Listen: Allows you to listen to the speech file.
+    </li>
+    <li>
+        Download: Allows you to download the speech file.
+    </li>
+    <li>
+        Update Recording: Allows you to update the speech recording after providing relevant comments.
+    </li>
+    <li>
+        Exclude: Allows you to exclude the speech file after providing relevant comments.
+    </li>
+    <li>
+        Publish: Allows you to publish the speech file after providing relevant comments.
+    </li>
+    <li>
+        Edit Comments: Enables you to edit the comments associated with the speech file.
+    </li>
+</ul>
+<img src="/images/to-discuss-speech-files.png" />
+<br />
+
+<h1>Published Speech Files</h1>
+
+<h2>Introduction</h2>
+<p>
+    This page displays the speech files that have already been verified and published and their associated information.
+</p>
+
+<h3>Show entries:</h3>
+<p>
+    Use this option to choose how many speech files you want to display per page.
+</p>
+
+<h3>Search:</h3>
+<p>
+    Use the search bar to find specific speech files based on their ContributorID, RecordingID, transcript, category, or recorded date.
+</p>
+
+<h3>Columns:</h3>
+<ul>
+    <li>ContributorID: Unique identifier for the contributor.</li>
+    <li>RecordingID: Unique identifier for the speech recording.</li>
+    <li>Transcript: The transcript associated with the speech file.</li>
+    <li>Category: The category of the speech file.</li>
+    <li>Recorded Date: Date and time when the speech file was recorded.</li>
+    <li>Comment: Additional comments or notes about the speech file.</li>
+    <li>Actions: Available actions for the speech file.</li>
+</ul>
+
+<h3>Actions:</h3>
+<p>
+    Depending on the context, the available actions may vary. Here are the actions explained for the 'Work in Progress Speech Files' page:
+</p>
+<ul>
+    <li>
+        Listen: Allows you to listen to the speech file.
+    </li>
+    <li>
+        Exclude: Allows you to exclude the speech file after providing relevant comments.
+    </li>
+    <li>
+        To Discuss: Allows you to mark the speech file for discussion after providing relevant comments.
+    </li>
+    <li>
+        Un-Publish: Allows you to un-publish the speech file after providing relevant comments.
+    </li>
+    <li>
+        Edit Comments: Enables you to edit the comments associated with the speech file.
+    </li>
+</ul>
+<img src="/images/published-speech-files.png" />
+<br />
+

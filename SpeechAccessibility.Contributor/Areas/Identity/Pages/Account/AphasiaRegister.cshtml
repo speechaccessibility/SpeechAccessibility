@@ -1,0 +1,285 @@
+﻿@page
+@model SpeechAccessibility.Areas.Identity.Pages.Account.AphasiaRegisterModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<body onload="loadAphasiaPage()" class="largeFont">
+    <form method="post" id="aphasiaRegisterForm">
+    <hr/>
+      <div asp-validation-summary="All" class="text-danger">
+                    <h2>Register Errors:</h2>
+                </div>
+
+        <input hidden value="4" asp-for="Input.etiologyId" />
+        @{
+            if (Model.Input != null && "Yes".Equals(Model.AphasiaInd))
+            {
+                <div id="contributorDiv">
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label asp-for="Input.CurrentAge"><span style="color:red">*</span>How old are you?</label>
+                            <select id="age" asp-for="Input.CurrentAge" asp-items="@Model.ageList">
+                                <option value="" selected>Please Select</option>
+                            </select>
+                            <br>   <span asp-validation-for="Input.CurrentAge" class="text-danger"></span>
+
+                        </div>
+                     
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Input.LengthOfDiagnosis"><span style="color:red">*</span>How long have you had aphasia?</label>
+                            <select id="age" asp-for="Input.LengthOfDiagnosis">
+                                <option value="" selected>Please Select</option>
+                                <option value="Less than 1 year">Less than 1 year</option>
+                                <option value="2-5 years">2-5 years</option>
+                                <option value="6-9 years">6-9 years</option>
+                                <option value="10+ years">10+ years</option>
+                                <option value="I don't know">I don't know</option>
+                            </select><br/>
+                            <span asp-validation-for="Input.LengthOfDiagnosis" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <span style="color:red">*</span>
+                        <div class="form-group col-md-8">
+                            <div class="form-group">
+                                <label for="Input_state">What state do you currently live in?<br /><span style="font-size:x-large">(We are currently recruiting U.S. residents only.)</span></label>
+                                <select asp-for="Input.State" asp-items="@Model.stateList" data-dropup-auto="false">
+                                    <option value="" selected>Please Select</option>
+                                </select>
+                                <br /><span asp-validation-for="Input.State" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Input.FirstName"><span style="color:red">*</span>What is your First Name?</label>
+                            <input asp-for="Input.FirstName" class="form-control" />
+                            <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Input.LastName"><span style="color:red">*</span>What is your Last Name</label>
+                            <input asp-for="Input.LastName" class="form-control" />
+                            <span asp-validation-for="Input.LastName" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Input.PhoneNumber"><span style="color:red">*</span>What is your Phone Number?</label>
+                            <input asp-for="Input.PhoneNumber" class="form-control" />
+                            <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-7">
+                            <label asp-for="Input.Email"><span style="color:red">*</span>What is your Email?</label>
+                            <input id="contributorEmail" asp-for="Input.Email" class="form-control" onkeyup="compareEmails()" />
+                            <span asp-validation-for="Input.Email" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-7">
+                            <label asp-for="Input.ConfirmEmail"><span style="color:red">*</span>Please type your Email Address again.</label>
+                            <input id="compareEmail" asp-for="Input.ConfirmEmail" class="form-control" onkeyup="compareEmails()" />
+                            <span id="confirmEmailValidation" class="text-danger"></span>
+                        </div>
+                    </div>      
+                    
+                    </div>
+           
+
+            }
+            else
+            {
+                <div id="caregiverDiv">                   
+                        <div id="caregiverInfo">
+                        <div class="form-row">
+                            <div class="form-group col-md-5">
+                                <span style="color:red">*</span>
+                                <label id="helperFirstNameLabel">Your First Name</label>
+                                <input id="helperFirstName" asp-for="Input.HelperFirstName" class="form-control" />
+                                <span class="text-danger">@Html.ValidationMessage("helperFirstNameValidation")</span>
+                                </div>
+                        </div><br/>
+                        <div class="form-row">
+                            <div class="form-group col-md-5">
+                                <span style="color:red">*</span>
+                                <label id="helperLastNameLabel">Your Last Name</label>
+                                <input id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
+                                <span class="text-danger">@Html.ValidationMessage("helperLastNameValidation")</span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-8">
+                                <span style="color:red">*</span>
+                                <label id="helperPhoneNumberLabel">Your Phone Number</label>
+                                <input id="helperPhoneNumber" asp-for="Input.HelperPhoneNumber" class="form-control" />
+                                <span class="text-danger" asp-validation-for="Input.HelperPhoneNumber"></span>
+                                <span class="text-danger">@Html.ValidationMessage("helperPhoneNumberValidation")</span>
+                            </div>
+                        </div>
+                           
+                            <div class="form-row">
+                            <div class="form-group col-md-6">
+                            <span style="color:red">*</span>
+                                <label id="helperEmailLabel">Your Email</label>
+                                <input id="helperEmail" asp-for="Input.HelperEmail" class="form-control" onkeyup="compareHelperEmails()" />
+                                <span class="text-danger" asp-validation-for="Input.HelperEmail"></span>
+                                <span class="text-danger">@Html.ValidationMessage("helperEmailValidation")</span>
+                            </div>
+                            </div>
+                            <div class="form-row">
+                            <div class="form-group col-md-6">
+                            <span style="color:red">*</span>
+                                <label id="helperConfirmEmailLabel">Confirm Your Email Address Again</label>
+                                <input id="confirmHelperEmail" asp-for="Input.ConfirmHelperEmail" class="form-control" onkeyup="compareHelperEmails()" />
+                                <span id="confirmHelperEmailValidation" class="text-danger"></span>
+                            </div>
+                            </div>
+                        </div>
+                   
+                    <div class="form-row">
+                        <span style="color:red">*</span>
+                        <div class="form-group col-md-8">
+                            <div class="form-group">
+                                <fieldset>
+                                    <legend>How old is the individual with aphasia?</legend>
+                                    <label for="age"></label>
+                                    <select id="age" asp-for="Input.CurrentAge" asp-items="@Model.ageList">
+                                        <option value="" selected>Please Select</option>
+                                    </select>
+                                </fieldset>
+                                <br />   <span asp-validation-for="Input.CurrentAge" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-8">
+                            <label asp-for="Input.LengthOfDiagnosis"><span style="color:red">*</span>How long has the individual had aphasia?</label>
+                            <select id="age" asp-for="Input.LengthOfDiagnosis">
+                                <option value="" selected>Please Select</option>
+                                <option value="Less than 1 year">Less than 1 year</option>
+                                <option value="2-5 years">2-5 years</option>
+                                <option value="6-9 years">6-9 years</option>
+                                <option value="10+ years">10+ years</option>
+                                <option value="I don't know">I don't know</option>
+                            </select><br />
+                            <span asp-validation-for="Input.LengthOfDiagnosis" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <span style="color:red">*</span>
+                        <div class="form-group col-md-8">
+                            <div class="form-group">
+                                <label for="Input_state">What state does the individual currently live in?<br /><span style="font-size:x-large">(We are currently recruiting U.S. residents only.)</span></label>
+                                <select asp-for="Input.State" asp-items="@Model.stateList" data-dropup-auto="false">
+                                    <option value="" selected>Please Select</option>
+                                </select>
+                                <br /><span asp-validation-for="Input.State" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                   
+                        <div id="correspondenceDiv" class="form-row">                        
+                        <div class="form-group col-md-10">
+                            <div class="form-group">        
+                                <fieldset>
+                                    <legend id="correspondenceLabel"><span style="color:red">*</span>Would you like correspondence about this project to go to you, as the caregiver, or to the individual participating in the study?</legend>
+
+                                    <label><input id="correspondenceSelf" asp-for="Input.Correspondence" type="radio" value="Self" onchange="checkCorrespondence()" /> Self</label>
+
+                                    <label><input id="correspondenceIndividual" asp-for="Input.Correspondence" type="radio" value="Individual" onchange="checkCorrespondence()" /> Individual</label>
+                                </fieldset>
+                                <br /> <span class="text-danger">@Html.ValidationMessage("correspondenceValidation")</span>
+                            </div>
+                        </div>
+                    </div>
+                   
+                        <div id="contributorContactDiv">
+                        <div class="form-row">
+                            <div class="form-group col-md-12">
+                                <label><span style="color:red">*</span>Individual with aphasia - Email <br /><span style="font-size:x-large">(If the individual with aphasia does not have an email, please add the caregiver's email.)</span></label>
+                                <input id="contributorEmail" asp-for="Input.Email" class="form-control" onkeyup="compareEmails()" />
+                                <span class="text-danger" asp-validation-for="Input.Email"></span>
+                                </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label><span style="color:red">*</span>Confirm The Email Address Again.</label>
+                                <input id="compareEmail" asp-for="Input.ConfirmEmail" class="form-control" onkeyup="compareEmails()" />
+                                <span id="confirmEmailValidation" class="text-danger"></span> 
+                            </div>
+                        </div>
+                         <div class="form-row">
+                            <div class="form-group col-md-8">
+                                <label><span style="color:red">*</span>Individual with aphasia - Phone Number</label>
+                                <input id="individualPhoneNumber" asp-for="Input.PhoneNumber" class="form-control" />
+                                <span class="text-danger" asp-validation-for="Input.PhoneNumber"></span><br>
+                                <span class="text-danger">@Html.ValidationMessage("PhoneValidation")</span>
+                            </div>
+                        </div>
+                        </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label><span style="color:red">*</span>Individual with aphasia – First Name</label>
+                            <input asp-for="Input.FirstName" class="form-control" />
+                            <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label><span style="color:red">*</span>Individual with aphasia – Last Name </label>
+                            <input asp-for="Input.LastName" class="form-control" />
+                            <span asp-validation-for="Input.LastName" class="text-danger"></span>
+                        </div>
+                    </div>
+                  
+                </div>
+            
+            }
+        }    
+        <input hidden asp-for="AphasiaInd" id="aphasiaInd" />
+    <button class="btn btn-primary" id="AphasiaRegisterSubmit">Submit</button>
+</form>
+</body>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/js/site.js"></script>
+<script>
+
+    $(document).ready(function () {
+
+        $("#aphasiaRegisterForm").submit(function () {
+
+            //disable the submit button
+            $("#AphasiaRegisterSubmit").attr("disabled", true);
+            return true;
+        });
+    });
+
+    function enableSubmit() {
+        $("#AphasiaRegisterSubmit").attr("disabled", false);
+    }
+
+    const form = document.querySelector('form');
+    form.addEventListener('change', function () {
+        enableSubmit();
+    });
+    form.addEventListener('keyup', function () {
+        enableSubmit();
+    });
+
+</script>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

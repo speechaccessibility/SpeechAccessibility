@@ -1,15 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace SpeechAccessibility.Core.Models
 {
     public class Contributor
     {
-        public Contributor()
-        {
-            Consent = new HashSet<Consent>();
-            ContributorDetails = new HashSet<ContributorDetails>();
-        }
+
+        //public Contributor()
+        //{
+        //    Consent = new HashSet<Consent>();
+        //    ContributorDetails = new HashSet<ContributorDetails>();
+        //}
 
         public Guid Id { get; set; }
         //public string UnderstandSpeechInd { get; set; }
@@ -24,7 +24,7 @@ namespace SpeechAccessibility.Core.Models
         public string HelperFirstName { get; set; }
         public string HelperLastName { get; set; }
         //public string StateResidence { get; set; }
-        //public string IdentityUserId { get; set; }
+        public string IdentityUserId { get; set; }
         public int StatusId { get; set; }
         public int? SubStatusId { get; set; }
         public DateTime CreateTS { get; set; }
@@ -36,14 +36,13 @@ namespace SpeechAccessibility.Core.Models
         public DateTime? ApproveTS { get; set; }
         public string ApproveDenyBy { get; set; }
         public string OtherEtiologyText { get; set; }
-        public  string BirthYear { get; set; }
+        public string BirthYear { get; set; }
         public string HelperPhoneNumber { get; set; }
-        public  Etiology Etiology { get; set; }
-        public  ContributorStatus ContributorStatus { get; set; }
-        public ContributorSubStatus ContributorSubStatus { get; set; }
-        public  ICollection<Consent> Consent { get; set; }
-        public  ICollection<ContributorDetails> ContributorDetails { get; set; }
-       
+        public Etiology Etiology { get; set; }
+        //public  ContributorStatus ContributorStatus { get; set; }
+        //public ContributorSubStatus ContributorSubStatus { get; set; }
+        //public  ICollection<Consent> Consent { get; set; }
+        //public  ICollection<ContributorDetails> ContributorDetails { get; set; }
 
 
     }

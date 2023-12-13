@@ -40,7 +40,7 @@ function sendFollowUpContributor(postUrl, table) {
                             $("#lblFollowUpMessage").addClass("errorMessage");
                         }
                     },
-                    error: function () { alert('Error Exclude Contributor! It could be the timeout issue. Please try to reload your browser.'); }
+                    error: function () { alert('Error Send Follow Up! It could be the timeout issue. Please try to reload your browser.'); }
                 });
             },
             close: function () {
@@ -132,7 +132,7 @@ function changeContributor(postUrl, table,action, title) {
                             $("#lblMakeChangesMessage").addClass("errorMessage");
                         }
                     },
-                    error: function () { alert('Error Exclude Contributor! It could be the timeout issue. Please try to reload your browser.'); }
+                    error: function () { alert('Error Update Contributor! It could be the timeout issue. Please try to reload your browser.'); }
                 });
 
 
@@ -167,17 +167,26 @@ function editContributorInfo(postUrl, table,  title, status) {
         },
         buttons: {
             "Submit": function () {
-                $('.spinner').css('display', 'block');
+              
                 var subStatusId = status == 2 ? $("#dlSubStatus").val() : 0; //Sub Status is only for Approved Contributors
-                //if (status != null)
+                var helperInd = "No";
 
-                //var subStatusId = status;
+                if ($("#chkHasHelper").is(":checked")) {
+                    helperInd = "Yes";
+                    if ($("#txtEditHelperEmail").val() == "") {
+                        alert("Helper Email is required.");
+                        $("#txtEditHelperEmail").focus();
+                        return false;
+                    }
+                }
+                $('.spinner').css('display', 'block');
                 $.ajax({
                     url: postUrl,
                     type: "POST",
                     data: {
                         "contributorId": $("#hidEditInfoContributorId").val(),
                         "contributorEmail": $("#txtEditContributorEmail").val(),
+                        "helperInd": helperInd,
                         "helperEmail": $("#txtEditHelperEmail").val(),
                         "birthYear": $("#txtEditInfoBirthYear").val(),
                         "subStatusId": subStatusId, 

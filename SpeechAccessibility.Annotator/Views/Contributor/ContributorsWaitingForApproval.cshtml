@@ -1,5 +1,6 @@
 ﻿@using System.Security.Claims
 
+
 @{
     ViewBag.Title = "Contributors Waiting for Approval";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -15,6 +16,8 @@
 }
 <input type="hidden" id="UserRole" value="@userRole" />
 <input type="hidden" id="SubRole" value="@ViewBag.SubRole" />
+<input type="hidden" id="ContributorLink" value="@ViewBag.ContributorLink" />
+<input type="hidden" id="RegisterLink" value="@ViewBag.RegisterLink"/>
 
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
 <div style="width: 1500px">
@@ -76,6 +79,7 @@
     <br /><b>Last Name:</b><label id="lblEditInfoLastName" name="lblEditInfoLastName"></label>
     <br /><b>Year of Birth:</b><input type="text" id="txtEditInfoBirthYear" name="txtEditInfoBirthYear" />
     <br/><br /><b>Contributor Email:</b><input type="text" id="txtEditContributorEmail" name="txtEditContributorEmail" />
+    <br /><br /><b>Has Helper:</b> <input type="checkbox" id="chkHasHelper" name="chkHasHelper" />
     <br/><br/><b>Helper Email:</b><input type="text" id="txtEditHelperEmail" name="txtEditHelperEmail" />
     &nbsp;&nbsp;&nbsp;<b>Helper Phone:</b><input type="text" id="txtEditHelperPhone" name="txtEditHelperPhone" />
     <br />Comment:<br /><textarea id="txtEditInfoComment" name="txtEditInfoComment" rows="4" cols="50"></textarea>
@@ -228,15 +232,41 @@
                             //"targets": 0,
                             "searchable": false,
                             "orderable": false,
-                            "width": '250px',
+                            "width": '270px',
                             "classDescription": 'dt-body-center',
                             "visible": true,
                             "name": "Id",
                             "render": function (data, type, row) {
                                 if ($("#UserRole").val() === "SLPAnnotator" || $("#UserRole").val() === "SLPAnnotatorAdmin" || $("#UserRole").val() === "ExternalSLPAnnotator" || $("#UserRole").val() === "SystemAdmin") {
-                                    var link = '<a href="#" class="approve" >Approve</a>  | <a href="#" class="deny">Deny</a> | <a href="#" class="NonResponsive">Non-Responsive</a> ' 
+                                    var link = '<a href="#" class="deny">Deny</a> | <a href="#" class="NonResponsive">Non-Responsive</a> '
                                         + '<br>| <a href="#" class="viewRating">View Rating</a> | <a href="#" class="sendFollowUp">Send Follow-up</a>'
                                         + '| <a href="#" class="editInfo">Edit Info</a> ';
+
+                                    ////if DS and Contributor is not register, should not have the Approve button
+                                    // if ($("#SubRole").val() == 2) 
+                                    // { //this is DS, add Registration link
+                                    //    if (row.registerRequired == "Yes") {
+                                    //        var contributorLink = $("#RegisterLink").val() + "?contributorId=" + row.id;
+                                    //        link = '<a href="' + contributorLink + '" target="_blank">Register</a> | ' + link;
+                                    //    }
+                                    //    else
+                                    //    {
+                                    //        link = '<a href="#" class="approve" >Approve</a>  | ' + link;
+                                    //    }
+                                    //}
+                                    //else
+                                    //{
+                                    //    link = '<a href="#" class="approve" >Approve</a>  | ' + link;
+                                    //}
+                                    //if the Etiology requires register, add the register link
+                                    if (row.registerRequired == "Yes" &&  row.statusId == 5) {
+                                        var contributorLink = $("#ContributorLink").val() +  $("#RegisterLink").val() + "?contributorId=" + row.id;
+                                        link = '<a href="' + contributorLink + '" target="_blank">Register</a> | ' + link;
+                                    }
+                                    else
+                                    {
+                                        link = '<a href="#" class="approve" >Approve</a>  | ' + link;
+                                    }
                                     return link;
                                 }
                                 else if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin" ) {
@@ -412,6 +442,7 @@
                    
                     if (row.helperInd=="Yes")
                     {
+                        $("#chkHasHelper").prop('checked', true);
                         $("#txtEditHelperEmail").prop("disabled", false);
                         $("#txtEditHelperPhone").prop("disabled", false);
                         
@@ -419,6 +450,7 @@
                         
                     else
                     {
+                        $("#chkHasHelper").prop('checked', false);
                         $("#txtEditHelperEmail").prop("disabled", true);
                         $("#txtEditHelperPhone").prop("disabled", true);
                         
@@ -429,8 +461,19 @@
                     editContributorInfo('@Url.Action("EditContributorInfo", "Contributor")', oContributorsTable, "Edit Contributor Info",1);
                     $("#editInfo-dialog").dialog('open');
 
-            });
+            });            
+        
 
+            $('#chkHasHelper').change(function () {
+                if (this.checked) {
+                    $("#txtEditHelperEmail").prop("disabled", false);
+                    $("#txtEditHelperPhone").prop("disabled", false);
+                }
+                else {
+                    $("#txtEditHelperEmail").prop("disabled", true);
+                    $("#txtEditHelperPhone").prop("disabled", true);
+                }
+            });
           
 
          

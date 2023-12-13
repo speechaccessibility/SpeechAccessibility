@@ -1,0 +1,34 @@
+﻿@page
+@model SpeechAccessibility.Areas.Identity.Pages.Account.DiagnosisRegisterModel
+@{
+}
+
+<form method="post">
+    <hr />
+    <div asp-validation-summary="All" class="text-danger">
+    </div>
+
+    <div class="form-row">
+        <span style="color:red">*</span>
+        <div class="form-group col-md-10">
+            <div class="form-group">
+                <fieldset>
+                    <legend>Which of the following represents you or your loved one participating in this study? Please only select one option.</legend>
+                    <label for="parkinsons"><input id="parkinsons" asp-for="Input.etiologyId" type="radio" value="1" /> Parkinson's Disease (including PSP, CBD, MSA, LBD and post DBS)</label>
+                    <br />
+                    <label for="Down Syndrome"><input id="Down Syndrome" asp-for="Input.etiologyId" type="radio" value="2" /> Down syndrome</label>
+                    <br />
+                    <label for="ALS"><input id="ALS" asp-for="Input.etiologyId" type="radio" value="6" /> Amyotrophic Lateral Sclerosis, or ALS</label>
+                    <br />
+                    <label for="Stroke"><input id="Stroke" asp-for="Input.etiologyId" type="radio" value="4" /> Stroke or Aphasia</label>
+                    <br />
+                    <label for="CP"><input id="CP" asp-for="Input.etiologyId" type="radio" value="3" /> Cerebral Palsy</label>
+                    <br />
+                    <label for="None of the above"><input id="None of the above" asp-for="Input.etiologyId" type="radio" value="5" /> None of the above</label>
+                </fieldset>
+                <span asp-validation-for="Input.etiologyId" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-primary" id="preRegisterSubmit">Submit</button>
+</form>

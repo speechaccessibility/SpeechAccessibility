@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.VisualBasic;
 using SpeechAccessibility.Annotator.Extensions;
 using SpeechAccessibility.Annotator.Models;
 using SpeechAccessibility.Annotator.Services;
@@ -24,30 +23,41 @@ namespace SpeechAccessibility.Annotator.Controllers
     [Authorize(Policy = "AllAnnotatorAndExternalSLPAnnotator")]
     public class ContributorController : Controller
     {
-        private readonly IContributorRepository _contributorRepository;
+        private readonly IContributorViewRepository _contributorViewRepository;
         private readonly IContributorAssignedAnnotatorRepository _contributorAssignedAnnotatorRepository;
-        private  readonly IContributorAssignedBlockRepository _contributorAssignedBlockRepository;
         private readonly IUserRepository _userRepository;
         private readonly IConfiguration _configuration;
         private readonly IRecordingRepository _recordingRepository;
-        private  readonly  IContributorFollowUpRepository _contributorFollowUpRepository;
+        private readonly IContributorFollowUpRepository _contributorFollowUpRepository;
         private readonly IEmailLoggingRepository _emailLoggingRepository;
         private readonly IUserSubRoleRepository _userSubRoleRepository;
         private readonly ISubRoleRepository _subRoleRepository;
         private readonly IContributorSubStatusRepository _contributorSubStatusRepository;
-        public ContributorController(IContributorRepository contributorRepository, IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository, IUserRepository userRepository, IConfiguration configuration, IContributorAssignedBlockRepository contributorAssignedBlockRepository, IRecordingRepository recordingRepository, IContributorFollowUpRepository contributorFollowUpRepository, IEmailLoggingRepository emailLoggingRepository, IUserSubRoleRepository userSubRoleRepository, ISubRoleRepository subRoleRepository, IContributorSubStatusRepository contributorSubStatusRepository)
+        private readonly IEtiologyViewRepository _etiologyRepository;
+        private readonly IApprovedDeniedContributorRepository _aprovedDeniedContributorRepository;
+        private readonly IContributorRepository _contributorRepository;
+        private readonly IRegisterLinkRepository _registerLinkRepository;
+
+        public ContributorController(IContributorViewRepository contributorViewRepository, IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository
+            , IUserRepository userRepository, IConfiguration configuration, IRecordingRepository recordingRepository, IContributorFollowUpRepository contributorFollowUpRepository
+            , IEmailLoggingRepository emailLoggingRepository, IUserSubRoleRepository userSubRoleRepository, ISubRoleRepository subRoleRepository
+            , IContributorSubStatusRepository contributorSubStatusRepository, IEtiologyViewRepository etiologyRepository
+            , IApprovedDeniedContributorRepository aprovedDeniedContributorRepository, IContributorRepository contributorRepository, IRegisterLinkRepository registerLinkRepository)
         {
-            _contributorRepository = contributorRepository;
+            _contributorViewRepository = contributorViewRepository;
             _contributorAssignedAnnotatorRepository = contributorAssignedAnnotatorRepository;
             _userRepository = userRepository;
             _configuration = configuration;
-            _contributorAssignedBlockRepository = contributorAssignedBlockRepository;
             _recordingRepository = recordingRepository;
             _contributorFollowUpRepository = contributorFollowUpRepository;
             _emailLoggingRepository = emailLoggingRepository;
             _userSubRoleRepository = userSubRoleRepository;
             _subRoleRepository = subRoleRepository;
             _contributorSubStatusRepository = contributorSubStatusRepository;
+            _etiologyRepository = etiologyRepository;
+            _aprovedDeniedContributorRepository = aprovedDeniedContributorRepository;
+            _contributorRepository = contributorRepository;
+            _registerLinkRepository = registerLinkRepository;
         }
 
         //[Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdmin")]
@@ -63,16 +73,8 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             }
 
-            var subRoleName = _subRoleRepository.Find(s => s.EtiologyId == etiologyId).Include(e => e.Etiology).FirstOrDefault();
-
             ViewBag.SubRole = etiologyId;
-            if (subRoleName != null) ViewBag.SubRoleName = subRoleName.Etiology.Name;
-            //ViewBag.SubStatus = _contributorSubStatusRepository.Find(s => s.StatusId == 2).OrderBy(s=>s.DisplayOrder).Select(a => new SelectListItem()
-            //    {
-            //        Value = a.Id.ToString(),
-            //        Text = a.Name
-            //    })
-            //    .ToList();
+            ViewBag.SubRoleName = _etiologyRepository.Find(e => e.Id == etiologyId).FirstOrDefault()?.Name;
             ViewBag.SubStatus = GetSubStatus();
             return View();
         }
@@ -90,12 +92,13 @@ namespace SpeechAccessibility.Annotator.Controllers
             //select only contributors that has SIT recordings
             Guid[] SITRecordingContributorIdList = _recordingRepository.Find(r=>r.StatusId==1 && r.BlockId==null).Select(c => c.ContributorId).ToArray();
 
-           
-            var contributors = _contributorRepository.Find(c => SITRecordingContributorIdList.Contains(c.Id))
-                    .Include(c => c.Etiology)
-                    .Where(c => c.Id.ToString().Contains(searchValue) || c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Etiology.Name.Contains(searchValue));
+            var contributors = _contributorViewRepository.Find(c => SITRecordingContributorIdList.Contains(c.Id))
+               .Where(c => c.Id.ToString().Contains(searchValue) || c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue)
+               || c.EtiologyName.Contains(searchValue));
+
+
             var recordsTotal = contributors.Count();
-            contributors = DynamicSortingExtensions<Contributor>.SetOrderByDynamic(contributors, Request.Form);
+            contributors = DynamicSortingExtensions<ContributorView>.SetOrderByDynamic(contributors, Request.Form);
             contributors = contributors.Skip(skip).Take(pageSize);
             
 
@@ -103,9 +106,10 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         }
 
-        //[Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdmin")]
+        [Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdminAndExternalSLPAnnotator")]
         public IActionResult ContributorsWaitingForApproval(int etiologyId)
         {
+
             //if external SLP annotator, check to make sure the role is matched
             var hasSubRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.OtherPhone)?.Value;
             if (hasSubRole == "Yes")
@@ -114,31 +118,42 @@ namespace SpeechAccessibility.Annotator.Controllers
                     return RedirectToRoute(new { controller = "Home", action = "Error" });
 
             }
-            var subRoleName = _subRoleRepository.Find(s=>s.EtiologyId== etiologyId).Include(e=>e.Etiology).FirstOrDefault();
+           
             ViewBag.SubRole = etiologyId;
-            if (subRoleName != null) ViewBag.SubRoleName = subRoleName.Etiology.Name;
+            ViewBag.SubRoleName = _etiologyRepository.Find(e => e.Id == etiologyId).FirstOrDefault()?.Name;
+
             ViewBag.SubStatus = GetSubStatus();
+            ViewBag.ContributorLink = _configuration["AppSettings:ContributorWebLink"];
+
+            var registerLink = _registerLinkRepository.Find(l => l.EtiologyId == etiologyId).FirstOrDefault();
+            ViewBag.RegisterLink = registerLink == null ? "" : registerLink.RegisterName;
+          
             return View();
         }
 
-        //[Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdmin")]
+        [Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdminAndExternalSLPAnnotator")]
         [HttpPost]
         public ActionResult LoadContributorsForApproval(int etiologyId)
         {
+            ViewBag.ContributorLink = _configuration["AppSettings:ContributorWebLink"];
             var draw = Request.Form["draw"].FirstOrDefault();
             var searchValue = Request.Form["search[value]"].FirstOrDefault();
             var length = Convert.ToInt32(Request.Form["length"].FirstOrDefault());
             var start = Convert.ToInt32(Request.Form["start"].FirstOrDefault());
             int pageSize = length != null ? Convert.ToInt32(length) : 0;
             int skip = start != null ? Convert.ToInt32(start) : 0;
-           
-            var contributors = _contributorRepository.Find(c => c.StatusId == 1 && c.EtiologyId== etiologyId)
-                .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue)
-                            || c.EmailAddress.Contains(searchValue) || c.HelperEmail.Contains(searchValue));
 
+            List<int> includeStatus = new List<int>();
+            includeStatus.Add(1);
+            includeStatus.Add(5);
+
+            var contributors = _contributorViewRepository.Find(c => includeStatus.Contains(c.StatusId) && c.EtiologyId== etiologyId)
+            .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue)
+                        || c.EmailAddress.Contains(searchValue) || c.HelperEmail.Contains(searchValue));
+            
             var recordsTotal = contributors.Count();
             
-            contributors = DynamicSortingExtensions<Contributor>.SetOrderByDynamic(contributors, Request.Form);
+            contributors = DynamicSortingExtensions<ContributorView>.SetOrderByDynamic(contributors, Request.Form);
             contributors = contributors.Skip(skip).Take(pageSize);
 
             return Json(new { draw, data = contributors, recordsFiltered = recordsTotal, recordsTotal = recordsTotal });
@@ -155,10 +170,10 @@ namespace SpeechAccessibility.Annotator.Controllers
                     return RedirectToRoute(new { controller = "Home", action = "Error" });
 
             }
-            var subRoleName = _subRoleRepository.Find(s => s.EtiologyId == etiologyId).Include(e => e.Etiology).FirstOrDefault();
-
+           
             ViewBag.SubRole = etiologyId;
-            if (subRoleName != null) ViewBag.SubRoleName = subRoleName.Etiology.Name;
+            ViewBag.SubRoleName = _etiologyRepository.Find(e => e.Id == etiologyId).FirstOrDefault()?.Name;
+            
             return View();
         }
 
@@ -172,14 +187,15 @@ namespace SpeechAccessibility.Annotator.Controllers
                     return RedirectToRoute(new { controller = "Home", action = "Error" });
 
             }
-            var subRoleName = _subRoleRepository.Find(s => s.EtiologyId == etiologyId).Include(e => e.Etiology).FirstOrDefault();
+            //todo: use Etiology view here
+            //var subRoleName = _subRoleRepository.Find(s => s.EtiologyId == etiologyId).Include(e => e.Etiology).FirstOrDefault();
+            var subRoleName = _subRoleRepository.Find(s => s.EtiologyId == etiologyId).FirstOrDefault();
 
             ViewBag.SubRole = etiologyId;
-            if (subRoleName != null) ViewBag.SubRoleName = subRoleName.Etiology.Name;
+            ViewBag.SubRoleName = _etiologyRepository.Find(e => e.Id == etiologyId).FirstOrDefault()?.Name;
             return View();
         }
 
-        //[Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdmin")]
         [HttpPost]
         public ActionResult LoadContributors(int filter, int subRole)
         {
@@ -188,13 +204,13 @@ namespace SpeechAccessibility.Annotator.Controllers
             var start = Convert.ToInt32(Request.Form["start"].FirstOrDefault());
             var length = Convert.ToInt32(Request.Form["length"].FirstOrDefault());
             var searchValue = Request.Form["search[value]"].FirstOrDefault();
-            
+
             int pageSize = length != null ? Convert.ToInt32(length) : 0;
             int skip = start != null ? Convert.ToInt32(start) : 0;
 
             //only display Contributors that are assigned to logged in annotator
             //get assigned contributor list for annotator
-            IQueryable<Contributor> contributors = null;
+            IQueryable<ApprovedDeniedContributor> contributors = null;
             var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
             var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 
@@ -202,64 +218,30 @@ namespace SpeechAccessibility.Annotator.Controllers
             {
                 Guid[] annotatorAssignedContributorIdList = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == currentUser.Id)
                         .Select(u => u.ContributorId).ToArray();
+                contributors = _aprovedDeniedContributorRepository.Find(c => c.StatusId == filter && c.EtiologyId == subRole && annotatorAssignedContributorIdList.Contains(c.Id))
+                    .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue) || c.Comments.Contains(searchValue));
 
-                contributors = _contributorRepository.Find(c => c.StatusId == 2 && c.EtiologyId == subRole && annotatorAssignedContributorIdList.Contains(c.Id))
-                        .Include(s=>s.ContributorSubStatus).Include(c=>c.ContributorDetails)
-                        .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue) || c.Comments.Contains(searchValue));
             }
             else
             {
-                contributors = _contributorRepository.Find(c =>  c.EtiologyId == subRole && c.StatusId == filter )
-                    .Include(s => s.ContributorSubStatus).Include(c=>c.ContributorDetails)
-                    .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue) || c.Comments.Contains(searchValue));
+               contributors = _aprovedDeniedContributorRepository.Find(c => c.StatusId == filter && c.EtiologyId == subRole )
+                    .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) ||
+                                c.Id.ToString().Contains(searchValue) || c.Comments.Contains(searchValue));
+
             }
             var recordsTotal = contributors.Count();
+            contributors = DynamicSortingExtensions<ApprovedDeniedContributor>.SetOrderByDynamic(contributors, Request.Form);
+            contributors = contributors.Skip(skip).Take(pageSize);
+            return Json(new { draw, data = contributors, recordsFiltered = recordsTotal, recordsTotal = recordsTotal });
 
-            List<ApprovedDeniedContributorViewModel> contributorViewModels =
-                new List<ApprovedDeniedContributorViewModel>();
-
-
-            foreach (var contributor in contributors)
-            {
-                var numberAssignedBlocks = _contributorAssignedBlockRepository.Find(b => b.ContributorId == contributor.Id);
-                var lastRecording = _recordingRepository.Find(r => r.ContributorId == contributor.Id && r.BlockId != null)
-                    .OrderByDescending(r => r.CreateTS).FirstOrDefault();
-                var numberAssignedAnnotator = _contributorAssignedAnnotatorRepository.Find(b => b.ContributorId == contributor.Id);
-
-                var contributorVM = new ApprovedDeniedContributorViewModel
-                {
-                    Contributor = contributor,
-                    NumberAssignBlocks = numberAssignedBlocks.Any() ? numberAssignedBlocks.Count() : 0,
-                    ApprovedStatus = contributor.ContributorSubStatus != null ? contributor.ContributorSubStatus.Name : ""
-                };
-               
-                if (lastRecording != null)
-                    contributorVM.LastRecording = lastRecording.CreateTS;
-                else
-                    contributorVM.LastRecording = null;
-                contributorVM.AnnotatorAssigned = numberAssignedAnnotator.Any() ? "Yes" : "No";
-
-                if (filter is 2 or 4) //get the follow-up dates
-                {
-                    contributorVM.FollowUpDate = String.Join("; ", _contributorFollowUpRepository.Find(c => c.ContributorId == contributor.Id)
-                        .Select(f => f.SendTS));
-                }
-                contributorViewModels.Add(contributorVM);
-            }
-
-            var wrk = DynamicSortingExtensions<ApprovedDeniedContributorViewModel>.SetOrderByDynamic(contributorViewModels.AsQueryable(), Request.Form);
-            wrk = wrk.Skip(skip).Take(pageSize);
-
-            return Json(new { draw, data = wrk, recordsFiltered = recordsTotal, recordsTotal = recordsTotal });
-
-         
         }
 
+      
 
         [Authorize(Policy = "TextAnnotatorAdmin")]
         public ActionResult GetAssignContributorAnnotators(Guid contributorId)
         {
-            var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+            var contributor = _contributorViewRepository.Find(c => c.Id == contributorId).FirstOrDefault();
             ViewBag.ContributorId = contributor.Id;
             ViewBag.ContributorLastName = contributor.LastName;
             ViewBag.ContributorFirstName = contributor.FirstName;
@@ -334,15 +316,23 @@ namespace SpeechAccessibility.Annotator.Controllers
             }
 
             var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+            
             if (contributor == null)
             {
                 return Json(new { Success = false, Message = "Contributor is not found." });
             }
 
            
-            //if (action==2)
-            //    contributor.ChangePassword = passwordChange == "Yes";
-            contributor.StatusId = action;
+           
+            if (action == 1 && string.IsNullOrEmpty(contributor.IdentityUserId)) //un-deny and contributor is not registered
+            {
+                contributor.StatusId = 5;
+            }
+            else
+            {
+                contributor.StatusId = action;
+            }
+           
             contributor.Comments = comment;
 
             if (action == 2) //approve
@@ -361,7 +351,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             StringBuilder message = new StringBuilder();
             var emailSubject = "";
             var error = "";
-            if (action == 2) //approve
+            //sending email
+            if (action == 2 && subRole !=2) //approve
             {
                 //check for ExternalSLPAnnotator
                 //if ParkinsonsInd, this contributor was routed to ExternalSLPAnnotator Group
@@ -501,11 +492,11 @@ namespace SpeechAccessibility.Annotator.Controllers
             int pageSize = length != null ? Convert.ToInt32(length) : 0;
             int skip = start != null ? Convert.ToInt32(start) : 0;
 
-            var contributors = _contributorRepository.Find(c=>c.StatusId==2)
-                .Include(c=>c.Etiology)
-                .Where(c=>c.Id.ToString().Contains(searchValue) || c.FirstName.Contains(searchValue)||c.LastName.Contains(searchValue) || c.Etiology.Name.Contains(searchValue));
+            var contributors = _contributorViewRepository.Find(c => c.StatusId == 2)
+               .Where(c => c.Id.ToString().Contains(searchValue) || c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.EtiologyName.Contains(searchValue) );
+
             var recordsTotal = contributors.Count();
-            contributors = DynamicSortingExtensions<Contributor>.SetOrderByDynamic(contributors, Request.Form);
+            contributors = DynamicSortingExtensions<ContributorView>.SetOrderByDynamic(contributors, Request.Form);
             contributors = contributors.Skip(skip).Take(pageSize);
            
             
@@ -515,7 +506,8 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         [Authorize(Policy = "AllAnnotatorAndExternalSLPAnnotator")]
         [HttpPost]
-        public async Task<ActionResult> EditContributorInfo(Guid contributorId,string contributorEmail, string helperEmail,string birthYear,int subStatusId, int subRole, string comments, string helperPhone)
+        public async Task<ActionResult> EditContributorInfo(Guid contributorId,string contributorEmail, string helperInd, string helperEmail,string birthYear,int subStatusId
+            , int subRole, string comments, string helperPhone)
         {
             //make sure the External annotator has permission for this subrole
             var hasSubRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.OtherPhone)?.Value;
@@ -533,9 +525,18 @@ namespace SpeechAccessibility.Annotator.Controllers
             }
 
             contributor.EmailAddress = contributorEmail;
-            contributor.HelperEmail = helperEmail;
-            contributor.HelperPhoneNumber = helperPhone;
-            //if (!string.IsNullOrEmpty(birthYear))
+            contributor.HelperInd = helperInd;
+            if (helperInd.Trim() == "No")
+            {
+                contributor.HelperEmail = "";
+                contributor.HelperPhoneNumber = "";
+            }
+            else
+            {
+                contributor.HelperEmail = helperEmail;
+                contributor.HelperPhoneNumber = helperPhone;
+            }
+
             contributor.BirthYear = birthYear;
             if(subStatusId>0)
                 contributor.SubStatusId= subStatusId;
@@ -604,7 +605,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             
           
-            var contributors = _contributorRepository.Find(c => c.EtiologyId == subRole && c.StatusId == 4)
+            var contributors = _contributorViewRepository.Find(c => c.EtiologyId == subRole && c.StatusId == 4)
                  .Select(c => new { c.FirstName, c.LastName, c.EmailAddress,c.HelperFirstName,c.HelperLastName, c.HelperEmail }).ToList();
 
              using (XLWorkbook wb = new XLWorkbook())
@@ -621,7 +622,8 @@ namespace SpeechAccessibility.Annotator.Controllers
       
         private List<SelectListItem> GetSubStatus()
         {
-           return _contributorSubStatusRepository.Find(s => s.StatusId == 2).OrderBy(s => s.DisplayOrder).Select(a => new SelectListItem()
+           return _contributorSubStatusRepository.Find(s => s.StatusId == 2).OrderBy(s => s.DisplayOrder)
+               .Select(a => new SelectListItem()
                 {
                     Value = a.Id.ToString(),
                     Text = a.Name

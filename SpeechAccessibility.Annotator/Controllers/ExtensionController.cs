@@ -39,11 +39,11 @@ namespace SpeechAccessibility.Annotator.Controllers
         public ActionResult GetUserInfoFromAD(string netId)
         {
             //check to see if user is already in the system
-            var existingUser = _userRepository.Find(u => u.NetId.Equals(netId)).Include(u=>u.Role).FirstOrDefault();
+            var existingUser = _userRepository.Find(u => u.NetId.Equals(netId.Trim())).Include(u=>u.Role).FirstOrDefault();
             var user = new ADMemberViewModel();
             if (existingUser == null)
             {
-                user = ActiveDirectoryService.GetUserInfoFromAD(netId, _configuration["AppSettings:Domain"]);
+                user = ActiveDirectoryService.GetUserInfoFromAD(netId.Trim(), _configuration["AppSettings:Domain"]);
 
                 if (user != null && !string.IsNullOrEmpty(user.NetId))
                 {
@@ -60,14 +60,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             user.LastName = existingUser.LastName;
             user.FirstName=existingUser.FirstName;
             user.Active = existingUser.Active;
+
             user.AvailableSubRoles = _subRoleRepository.Find(r => r.RoleId == existingUser.RoleId)
-                .Include(r => r.Etiology)
-                //.Select(a => new SelectListItem()
-                //{
-                //    Value = a.Etiology.Id.ToString(),
-                //    Text = a.Etiology.Name
-                //})
-                //.ToList();
                 .Select(s => new SubRole() { Id = s.EtiologyId })
                 .ToList();
 
@@ -91,9 +85,8 @@ namespace SpeechAccessibility.Annotator.Controllers
         [Authorize(Policy = "AnnotatorAdmin")]
         public ActionResult GetAvailableSubRoles(int roleId)
         {
-            var subRoles = _subRoleRepository.Find(r => r.RoleId == roleId && r.Etiology.Active=="Yes").Include(r=>r.Etiology)
-                .Select(s => new Etiology() { Id = s.EtiologyId })
-                //.Select(s => new SubRole() { Id = s.Id })
+            var subRoles = _subRoleRepository.Find(r => r.RoleId == roleId)
+                .Select(s => new EtiologyView() { Id = s.EtiologyId })
                 .ToList();
 
             return Json(new { Success = true, Message = subRoles });

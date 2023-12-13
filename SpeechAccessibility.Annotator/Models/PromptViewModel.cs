@@ -8,8 +8,12 @@ namespace SpeechAccessibility.Annotator.Models
     {
         public Prompt Prompt { get; set; }
       
+        public int EtioglogyId { get; set; }
+        public List<int> ExistingEtioglogyIds { get; set; }
+        public string Action { get; set; }
         public List<SelectListItem> Categories { set; get; }
         public List<SelectListItem> SubCategories { set; get; }
+        public List<SelectListItem> Etiologies { set; get; }
 
     }
 }

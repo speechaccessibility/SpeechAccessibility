@@ -64,6 +64,7 @@
     <br /><b>Last Name:</b><label id="lblEditInfoLastName" name="lblEditInfoLastName"></label>
     <br /><b>Year of Birth:</b><input type="text" id="txtEditInfoBirthYear" name="txtEditInfoBirthYear" />
     <br/><br /><b>Contributor Email:</b><input type="text" id="txtEditContributorEmail" name="txtEditContributorEmail" />
+    <br /><br /><b>Has Helper:</b> <input type="checkbox" id="chkHasHelper" name="chkHasHelper" />
     <br/><br/><b>Helper Email:</b><input type="text" id="txtEditHelperEmail" name="txtEditHelperEmail" />
     &nbsp;&nbsp;&nbsp;<b>Helper Phone:</b><input type="text" id="txtEditHelperPhone" name="txtEditHelperPhone" />
     <br />Comment:<br /><textarea id="txtEditInfoComment" name="txtEditInfoComment" rows="4" cols="50"></textarea>
@@ -110,54 +111,54 @@
                     "columns": [
                         {
                             "title": "ID",
-                            "data": "contributor.id",
+                            "data": "id",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.Id",
-                            "width": "250px"
+                            "name": "Id",
+                            //"width": "250px"
                         },
 
                         {
                             "title": "FirstName",
-                            "data": "contributor.firstName",
+                            "data": "firstName",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.FirstName"
+                            "name": "FirstName"
                         },
                       
                         {
                             "title": "LastName",
-                            "data": "contributor.lastName",
+                            "data": "lastName",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.LastName"
+                            "name": "LastName"
                         },
                         {
                             "title": "Email Address",
-                            "data": "contributor.emailAddress",
+                            "data": "emailAddress",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.EmailAddress"
+                            "name": "EmailAddress"
                         },
                           {
                             "title": "BirthYear",
-                            "data": "contributor.birthYear",
+                            "data": "birthYear",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.BirthYear"
+                            "name": "BirthYear"
                         },
                         {
                             "title": "Register Date",
-                            "data": "contributor.createTS",
+                            "data": "createTS",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.CreateTS",
+                            "name": "CreateTS",
                             'render': function (data) {
                                 if (data != null) {
                                     var date = new Date(data);
@@ -170,42 +171,32 @@
                         },
                          {
                             "title": "HelperEmail",
-                            "data": "contributor.helperEmail",
+                            "data": "helperEmail",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.HelperEmail",
-                            'render': function (data, type, row) {
-                                if (row.contributor.helperInd == "Yes")
-                                    return row.contributor.helperEmail
-                                return '';
-                            }
+                            "name": "HelperEmail"                            
                         },
 
                         {
                             "title": "HelperPhone",
-                            "data": "contributor.helperPhoneNumber",
+                            "data": "helperPhoneNumber",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.HelperPhoneNumber",
-                            'render': function (data, type, row) {
-                                if (row.contributor.helperInd == "Yes")
-                                    return row.contributor.helperPhoneNumber
-                                return '';
-                            }
+                            "name": "HelperPhoneNumber"
                         },
                         {
                             "title": "Comments",
-                            "data": "contributor.comments",
+                            "data": "comments",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.Comments"
+                            "name": "Comments"
                         },
                          {
                             "title": "Sent FollowUp Date",
-                            "data": "followUpDate",
+                            "data": "followUpDates",
                             "searchable": true,
                             "orderable": false,
                             "visible": true,
@@ -213,14 +204,14 @@
                         },
                         {
                             "title": "Actions",
-                            "data": "contributor.id",
+                            "data": "id",
                             //"targets": 0,
                             "searchable": false,
                             "orderable": false,
-                            "width": '180px',
+                            "width": '200px',
                             "classDescription": 'dt-body-center',
                             "visible": true,
-                            "name": "contributor.id",
+                            "name": "id",
                             "render": function (data, type, row) {
                                 if ($("#UserRole").val() === "SLPAnnotator" || $("#UserRole").val() === "SLPAnnotatorAdmin" || $("#UserRole").val() === "ExternalSLPAnnotator" || $("#UserRole").val() === "SystemAdmin") {
                                     var link = '<a href="#" class="approve" >Approve</a>  | <a href="#" class="deny">Deny</a> | <a href="#" class="viewRating">View Rating</a> '
@@ -249,11 +240,11 @@
                     e.preventDefault();
                     var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
-                    $("#hidFollowUpContributorId").val(row.contributor.id);
-                    $("#lblFollowUpFirstName").text(row.contributor.firstName);
-                    $("#lblFollowUpLastName").text(row.contributor.lastName);
-                    $("#lblFollowUpEmail").text(row.contributor.emailAddress);
-                    var content = "Dear " + row.contributor.firstName + ",\n\nSincerely,\n Speech Accessibility Project Team\nUniversity of Illinois Urbana - Champaign";
+                    $("#hidFollowUpContributorId").val(row.id);
+                    $("#lblFollowUpFirstName").text(row.firstName);
+                    $("#lblFollowUpLastName").text(row.lastName);
+                    $("#lblFollowUpEmail").text(row.emailAddress);
+                    var content = "Dear " + row.firstName + ",\n\nSincerely,\n Speech Accessibility Project Team\nUniversity of Illinois Urbana - Champaign";
                     $("#txtFollowUpMessage").val(content);
                     sendFollowUpContributor('@Url.Action("SendFollowUpToContributor", "Contributor")', oContributorsTable);
                     $("#sendFollowUp-dialog").dialog('open');
@@ -265,29 +256,22 @@
                 e.preventDefault();
                 var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
-                var getUrl = "@Url.Action("ViewSITRecordingRating", "SpeechFile")?contributorId=" + row.contributor.id + "&subRole=" + $("#SubRole").val();
+                var getUrl = "@Url.Action("ViewSITRecordingRating", "SpeechFile")?contributorId=" + row.id + "&subRole=" + $("#SubRole").val();
                 getRecordingRating(getUrl);
                 $("#rating-dialog").dialog('open');
                 return false;
             });
 
             $('#NonResponsiveContributorTable').on('click', 'a.approve', function (e) {
-                e.preventDefault();
-                //var selectedRowData = oContributorsTable.row($(this).closest('tr'));
-                //var row = selectedRowData.data();
-                //$("#hidApproveContributorId").val(row.contributor.id);
-                //$("#lblApproveFirstName").text(row.contributor.firstName);
-                //$("#lblApproveLastName").text(row.contributor.lastName);
-                
-                //$("#approve-dialog").dialog('open');
+                e.preventDefault();              
                 $("#tableChangePassword").removeAttr('hidden');               
                 var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
                 $("#lblMakeChangesMessage").text("Approve Contributor:");
-                $("#hidMakeChangesContributorId").val(row.contributor.id);
-                $("#lblMakeChangesFirstName").text(row.contributor.firstName);
-                $("#lblMakeChangesLastName").text(row.contributor.lastName);
-                $("#txtMakeChangesComment").val(row.contributor.comments);
+                $("#hidMakeChangesContributorId").val(row.id);
+                $("#lblMakeChangesFirstName").text(row.firstName);
+                $("#lblMakeChangesLastName").text(row.lastName);
+                $("#txtMakeChangesComment").val(row.comments);
                 var postUrl = '@Url.Action("UpdateContributor", "Contributor")';
                 changeContributor(postUrl, oContributorsTable, 2, 'Approve Contributor');
                 $("#makeChanges-dialog").dialog('open');
@@ -304,10 +288,10 @@
                     var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
                     $("#lblMakeChangesMessage").text("Deny Contributor:");
-                    $("#hidMakeChangesContributorId").val(row.contributor.id);
-                    $("#lblMakeChangesFirstName").text(row.contributor.firstName);
-                    $("#lblMakeChangesLastName").text(row.contributor.lastName);
-                    $("#txtMakeChangesComment").val(row.contributor.comments);
+                    $("#hidMakeChangesContributorId").val(row.id);
+                    $("#lblMakeChangesFirstName").text(row.firstName);
+                    $("#lblMakeChangesLastName").text(row.lastName);
+                    $("#txtMakeChangesComment").val(row.comments);
                     var postUrl = '@Url.Action("UpdateContributor", "Contributor")';
                     changeContributor(postUrl, oContributorsTable, 3, 'Deny Contributor');
                     $("#makeChanges-dialog").dialog('open');
@@ -323,30 +307,45 @@
                     var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
                     $("#lblEdiInfoMessage").text("Update Contributor Information:");
-                    $("#hidEditInfoContributorId").val(row.contributor.id);
-                    $("#lblEditInfoFirstName").text(row.contributor.firstName);
-                    $("#lblEditInfoLastName").text(row.contributor.lastName);
-                    $("#txtEditContributorEmail").val(row.contributor.emailAddress);
-                    $("#txtEditHelperEmail").val(row.contributor.helperEmail);
-                    $("#txtEditInfoBirthYear").val(row.contributor.birthYear);
-                    if (row.contributor.helperInd == "Yes")
+                    $("#hidEditInfoContributorId").val(row.id);
+                    $("#lblEditInfoFirstName").text(row.firstName);
+                    $("#lblEditInfoLastName").text(row.lastName);
+                    $("#txtEditContributorEmail").val(row.emailAddress);
+                    $("#txtEditHelperEmail").val(row.helperEmail);
+                    $("#txtEditInfoBirthYear").val(row.birthYear);
+                    if (row.helperInd == "Yes")
                     {
+                        $("#chkHasHelper").prop('checked', true);
                         $("#txtEditHelperEmail").prop("disabled", false);
                         $("#txtEditHelperPhone").prop("disabled", false);
                     }
                        
                     else
                     {
+                        $("#chkHasHelper").prop('checked', false);
                         $("#txtEditHelperEmail").prop("disabled", true);
                         $("#txtEditHelperPhone").prop("disabled", true);
                     }
 
-                    $("#txtEditInfoComment").val(row.contributor.comments);
+                    $("#txtEditInfoComment").val(row.comments);
 
                     editContributorInfo('@Url.Action("EditContributorInfo", "Contributor")', oContributorsTable, "Edit Contributor Information",4);
                     $("#editInfo-dialog").dialog('open');
 
                 });
+
+
+
+            $('#chkHasHelper').change(function () {
+                if (this.checked) {
+                    $("#txtEditHelperEmail").prop("disabled", false);
+                    $("#txtEditHelperPhone").prop("disabled", false);
+                }
+                else {
+                    $("#txtEditHelperEmail").prop("disabled", true);
+                    $("#txtEditHelperPhone").prop("disabled", true);
+                }
+            });
 
         });//End document ready
 

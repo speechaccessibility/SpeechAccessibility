@@ -1,0 +1,237 @@
+﻿@page
+@model SpeechAccessibility.Areas.Identity.Pages.Account.DSCreateAccountModel
+@{
+}
+
+<body onload="loadDSCreateAccountPage()">
+    <h1>Account Registration</h1>
+    <div asp-validation-summary="All" class="text-danger">
+        <h2>Register Errors:</h2>
+    </div>
+
+    @if (Model.Input.ContributorStatus != 5)
+    {
+        <p>Account registration already completed. Please click <a href="./Login">here</a> to log in.</p>
+    }
+    else
+    {
+        <form method="post" id="dsAccountForm">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label asp-for="Input.FirstName"><span style="color:red">*</span>First Name</label>
+                    <input asp-for="Input.FirstName" class="form-control" />
+                    <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label asp-for="Input.LastName"><span style="color:red">*</span>Last Name</label>
+                    <input asp-for="Input.LastName" class="form-control" />
+                    <span asp-validation-for="Input.LastName" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-sm-4">
+                    <label asp-for="Input.PhoneNumber"><span style="color:red">*</span>Phone Number</label>
+                    <input asp-for="Input.PhoneNumber" placeholder="0123456789" class="form-control" />
+                    <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-sm-4">
+                    <label asp-for="Input.Email"><span style="color:red">*</span>Email</label>
+                    <input asp-for="Input.Email" class="form-control" />
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+            </div>  <div class="form-row">
+                <span style="color:red">*</span>
+                <div class="form-group col-md-8">
+                    <div class="form-group">
+                        <fieldset>
+                            <legend>Age</legend>
+                            <select id="age" asp-for="Input.CurrentAge" asp-items="@Model.ageList">
+                                <option value="">Please Select</option>
+                            </select>
+                        </fieldset>
+                        <span asp-validation-for="Input.CurrentAge" class="text-danger"></span>
+                    </div>
+                </div>
+                </div>
+                <div class="form-row">
+                <span style="color:red">*</span>
+                <div class="form-group col-md-8">
+                    <div class="form-group">
+                        <fieldset>
+                        <legend>Diagnosis Age</legend>
+                        <select id="age" asp-for="Input.DiagnosisAge" asp-items="@Model.ageList">
+                            <option value="">Please Select</option>
+                            <option value="Prenatally">Prenatally</option>
+                            <option value="At birth">At birth</option>
+                            <option value="Less than 1 year">Less than 1 year</option>
+                            <option value="I don't know">I don't know</option>
+                        </select>
+                        </fieldset>
+                        <span asp-validation-for="Input.DiagnosisAge" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-row">
+                <span style="color:red">*</span>
+                <div class="form-group col-md-10">
+                    <fieldset>
+                        <legend>State</legend>
+                        <select asp-for="Input.State" asp-items="@Model.stateList" data-dropup-auto="false" runat="server">
+                            <option value="">Please Select</option>
+                        </select>
+                    </fieldset>(We are currently recruiting U.S. residents only.)
+                    <br /><span asp-validation-for="Input.State" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <fieldset runat="server">
+                        <legend><span style="color:red">*</span>Will someone be helping you with this process? (caregiver, family, or friend)</legend>
+
+                        <label for="helperYes"><input id="helperYes" asp-for="Input.HelperInd" type="radio" value="Yes" onclick="checkHelperInd()" /> Yes</label>
+
+                        <label for="helperNo"><input id="helperNo" asp-for="Input.HelperInd" type="radio" value="No" onclick="checkHelperInd()" /> No</label>
+                    </fieldset>
+                    <br /> <span asp-validation-for="Input.HelperInd" class="text-danger"></span>
+                </div>
+            </div>
+            <div id="helperDiv" class="form-row">
+                <div class="form-group col-md-5">
+                    <label> <span style="color:red">*</span>Helper First Name</label>
+                    <input id="helperFirstName" asp-for="Input.HelperFirstName" class="form-control" />
+                    <span class="text-danger">@Html.ValidationMessage("helperFirstNameValidation")</span>
+                </div>
+                <div class="form-group col-md-5">
+                    <label> <span style="color:red">*</span>Helper Last Name</label>
+                    <input id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
+                    <span class="text-danger">@Html.ValidationMessage("helperLastNameValidation")</span>
+                </div>
+                <div class="form-group col-md-5">
+                    <label> <span style="color:red">*</span>Helper Phone Number</label>
+                    <input id="helperPhoneNumber" asp-for="Input.HelperPhoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
+                    <span class="text-danger" asp-validation-for="Input.HelperPhoneNumber"></span>
+                    <span class="text-danger">@Html.ValidationMessage("helperPhoneNumberValidation")</span>
+                </div>
+                <div class="form-group col-md-5">
+                    <label> <span style="color:red">*</span>Helper Email</label>
+                    <input id="helperEmail" asp-for="Input.HelperEmail" class="form-control" />
+                    <span class="text-danger" asp-validation-for="Input.HelperEmail"></span>
+                    <span class="text-danger">@Html.ValidationMessage("helperEmailValidation")</span>
+                </div>
+            </div>
+            <div class="form-row" id="legalGuardianInd">
+                <div class="form-group col-md-6">
+                    <div class="form-group">
+                        <span style="color:red">*</span>
+                        <label>Who is your legal guardian? </label>
+                        <select asp-for="Input.LegalGuardianInd" id="legalGuardianSelect" data-dropup-auto="false" onchange="checkLegalGuardian()" runat="server">
+                            <option value="">Please Select</option>
+                            <option value="I am my own legal guardian">I am my own legal guardian</option>
+                            <option value="Someone else is my legal guardian">Someone else is my legal guardian</option>
+                        </select>
+                        <br /><span asp-validation-for="Input.LegalGuardianInd" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-row" id="legalGuardianDiv" style="display:none">
+                <div class="form-group col-md-5">
+                    <label asp-for="Input.LegalGuardianFirstName"><span style="color:red">*</span>Legal Guardian First Name</label>
+                    <input asp-for="Input.LegalGuardianFirstName" class="form-control" />
+                    <span class="text-danger">@Html.ValidationMessage("lgFirstNameValidation")</span>
+                </div>
+                <div class="form-group col-md-5">
+                    <label asp-for="Input.LegalGuardianLastName"><span style="color:red">*</span>Legal Guardian Last Name</label>
+                    <input asp-for="Input.LegalGuardianLastName" class="form-control" />
+                    <span class="text-danger">@Html.ValidationMessage("lgLastNameValidation")</span>
+
+                </div>
+                <div class="form-group col-sm-5">
+                    <label asp-for="Input.LegalGuardianPhoneNumber"><span style="color:red">*</span>Legal Guardian Phone Number</label>
+                    <input asp-for="Input.LegalGuardianPhoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
+                    <span class="text-danger">@Html.ValidationMessage("lgPhoneValidation")</span><br />
+                    <span asp-validation-for="Input.LegalGuardianPhoneNumber" class="text-danger"></span>
+                </div>
+                <div class="form-group col-sm-5">
+                    <label asp-for="Input.LegalGuardianEmail"><span style="color:red">*</span>Legal Guardian Email</label>
+                    <input asp-for="Input.LegalGuardianEmail" class="form-control" onkeyup="compareEmails()" />
+                    <span class="text-danger">@Html.ValidationMessage("lgEmailValidation")</span>
+                    <span asp-validation-for="Input.LegalGuardianEmail" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-sm-4">
+                    <br />
+                    <details open>
+                        <summary>Password Requirements</summary>
+                        <ul>
+                            <li>Passwords must have at least one non alphanumeric character.</li>
+                            <li>Passwords must have at least one digit ('0'-'9').</li>
+                            <li>Passwords must have at least one uppercase ('A'-'Z').</li>
+                            <li>The Password must be at least 9 and at max 100 characters long.</li>
+                        </ul>
+                    </details>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-sm-4">
+                    <label asp-for="Input.Password"><span style="color:red">*</span>Password</label>
+                    <input id="password" asp-for="Input.Password" class="form-control" />
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-sm-4">
+                    <label asp-for="Input.ConfirmPassword"><span style="color:red">*</span>Confirm Password</label>
+                    <input id="confirmPassword" asp-for="Input.ConfirmPassword" class="form-control" />
+                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                </div>
+            </div>
+            <div>
+                <input type="checkbox" onclick="showHidePassword()"> Show Password
+            </div>
+            <br />
+            <input hidden asp-for="Input.ContributorStatus" />
+            <button type="submit" class="btn btn-primary" id="dsAccountSubmit">Submit</button>
+        </form>
+    }
+    
+</body>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/js/site.js"></script>
+
+<script>
+
+    $(document).ready(function () {
+
+        $("#dsAccountForm").submit(function () {
+
+            //disable the submit button
+            $("#dsAccountSubmit").attr("disabled", true);
+            return true;
+        });
+        const form = document.querySelector('form');
+        form.addEventListener('change', function () {
+            enableSubmit();
+        });
+        form.addEventListener('keyup', function () {
+            enableSubmit();
+        });
+    });
+
+    function enableSubmit() {
+        $("#dsAccountSubmit").attr("disabled", false);
+    }
+
+  
+
+</script>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

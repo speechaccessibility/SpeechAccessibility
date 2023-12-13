@@ -52,8 +52,8 @@ namespace SpeechAccessibility.Annotator
                 options.AddPolicy("SLPAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "SystemAdmin"));
                 options.AddPolicy("SLPAnnotatorAndExternalSLPAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "ExternalSLPAnnotator", "SystemAdmin"));
                 options.AddPolicy("SLPAnnotatorAndTextAnnotatorAdmin", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "TextAnnotatorAdmin", "SystemAdmin"));
-                options.AddPolicy("SLPAnnotatorAndTextAnnotatorAdminAndExternalSLPAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "TextAnnotatorAdmin", "ExternalSLPAnnotator", "SystemAdmin"));
-
+                options.AddPolicy("SLPAnnotatorAndTextAnnotatorAdminAndExternalSLPAnnotator", 
+                    policy => policy.RequireClaim(ClaimTypes.Role, "SLPAnnotator", "SLPAnnotatorAdmin", "TextAnnotatorAdmin", "ExternalSLPAnnotator", "SystemAdmin"));
                 options.AddPolicy("AllAnnotator",
                     policy => policy.RequireClaim(ClaimTypes.Role, "TextAnnotator", "SLPAnnotator", "SystemAdmin", "TextAnnotatorAdmin", "SLPAnnotatorAdmin"));
                 options.AddPolicy("ExternalSLPAnnotator", policy => policy.RequireClaim(ClaimTypes.Role, "ExternalSLPAnnotator", "SystemAdmin"));
@@ -93,15 +93,21 @@ namespace SpeechAccessibility.Annotator
             services.AddScoped<IBlockOfPromptsRepository, BlockOfPromptsRepository>();
             //services.AddScoped<IBlockOfDigitalCommandPromptsRepository, BlockOfDigitalCommandPromptsRepository>();
             services.AddScoped<IBlockMasterOfPromptsRepository, BlockMasterOfPromptsRepository>();
+            services.AddScoped<IApprovedDeniedContributorRepository, ApprovedDeniedContributorRepository>();
             services.AddScoped<IContributorRepository, ContributorRepository>();
+            services.AddScoped<IContributorViewRepository, ContributorViewRepository>();
             services.AddScoped<IContributorStatusRepository, ContributorStatusRepository>();
             services.AddScoped<IContributorSubStatusRepository, ContributorSubStatusRepository>();
             services.AddScoped<IContributorAssignedAnnotatorRepository, ContributorAssignedAnnotatorRepository>();
             services.AddScoped<IContributorAssignedBlockRepository, ContributorAssignedBlockRepository>();
             services.AddScoped<IContributorCompensationRepository, ContributorCompensationRepository>();
+            services.AddScoped<IContributorCompensationHistoryRepository, ContributorCompensationHistoryRepository>();
+            services.AddScoped<IContributorCompensationViewRepository, ContributorCompensationViewRepository>();
             services.AddScoped<IContributorFollowUpRepository, ContributorFollowUpRepository>();
             services.AddScoped<IEtiologyRepository, EtiologyRepository>();
+            services.AddScoped<IEtiologyViewRepository, EtiologyViewRepository>();
             services.AddScoped<IPromptRepository, PromptRepository>();
+            services.AddScoped<IPromptEtiologyRepository, PromptEtiologyRepository>();
             services.AddScoped<IEmailLoggingRepository, EmailLoggingRepository>();
             services.AddScoped<IRecordingRepository, RecordingRepository>();
             services.AddScoped<IRecordingRatingRepository, RecordingRatingRepository>();
@@ -114,6 +120,7 @@ namespace SpeechAccessibility.Annotator
             services.AddScoped<IDimensionCategoryRepository, DimensionCategoryRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
+            services.AddScoped<IViewSpeechFilesRepository, ViewSpeechFilesRepository>();
             services.AddScoped<DeleteFileAttribute>();
 
             services.AddControllersWithViews()

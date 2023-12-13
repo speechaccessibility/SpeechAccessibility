@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SpeechAccessibility.Data;
+using SpeechAccessibility.Data.Entities;
 using SpeechAccessibility.Models;
 using SpeechAccessibility.Services;
 using System;
@@ -97,6 +98,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                     new SelectListItem { Value = "OK", Text = "Oklahoma" },
                     new SelectListItem { Value = "OR", Text = "Oregon" },
                     new SelectListItem { Value = "PA", Text = "Pennsylvania" },
+                    new SelectListItem { Value = "PR", Text = "Puerto Rico" },
                     new SelectListItem { Value = "RI", Text = "Rhode Island" },
                     new SelectListItem { Value = "SC", Text = "South Carolina" },
                     new SelectListItem { Value = "SD", Text = "South Dakota" },
@@ -106,6 +108,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                     new SelectListItem { Value = "VT", Text = "Vermont" },
                     new SelectListItem { Value = "VA", Text = "Virginia" },
                     new SelectListItem { Value = "WA", Text = "Washington" },
+                    new SelectListItem { Value = "DC", Text = "Washington DC" },
                     new SelectListItem { Value = "WV", Text = "West Virginia" },
                     new SelectListItem { Value = "WI", Text = "Wisconsin" },
                     new SelectListItem { Value = "WY", Text = "Wyoming" },
@@ -133,9 +136,11 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
         public class InputModel
         {
-            [Required]
-            [Display(Name = "Parkinson's Disease Indicator")]
-            public string parkinsonsInd { get; set; }
+            //[Required]
+            //[Display(Name = "Parkinson's Disease Indicator")]
+            //public string parkinsonsInd { get; set; }
+
+            public string otherText { get; set; }
 
             [Required]
             [Display(Name ="EighteenOrOlder")]
@@ -176,7 +181,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             [EmailAddress]
             [Display(Name = "Helper's Email")]
-            public string HelperEmail { get; set; }
+            public string HelperEmail { get; set; }     
 
             [Display(Name ="Helper's First Name")]
             public string HelperFirstName { get; set; }
@@ -204,11 +209,21 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             [Display(Name ="Birth Year")]
             public string BirthYear { get; set; }
+
+            public int etiologyId { get; set; }
+
         }
 
-        public void OnGet()
+        public IActionResult OnGet(int etiology)
         {
+            Input = new InputModel();
+            Input.etiologyId = etiology;
 
+            if (etiology == 0)
+            {
+                return RedirectToPage("./DiagnosisRegister");
+            }
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -275,42 +290,45 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
                 if (result.Succeeded)
                 {
-                    Contributor contributor = PopulateContributor(user);
+                    string isActive = _context.Etiology.Where(e => e.Id == Input.etiologyId).Select(e => e.Active).First();
+
+                    Contributor contributor = PopulateContributor(user,isActive);
                     _context.Contributor.Add(contributor);
-                    _context.ContributorStatus.Remove(contributor.Status);
+         
+                    _context.Etiology.Remove(contributor.Etiology);
                     _context.SaveChanges();
 
-                    _logger.LogInformation("User created a new account with password.");
-
-                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    _logger.LogInformation("User created a new account with password.");                    
 
                     SendEnrollmentEmail(user.Email);
 
-                    if (Input.parkinsonsInd=="Yes")
-                    {
-                        string message = "<div>Hello,</div><br/><div>A potential Speech Accessibility Project participant, " + Input.firstName +  ", has requested an assessment. You may contact them at " + Input.Email + " or " + Input.phoneNumber + "</div><div><br/>The Speech Accessibility Project Team<br/>University of Illinois Urbana-Champaign</div>";
+                    await _signInManager.SignInAsync(user, isPersistent: false);
 
-                        string to = _config["LSVTEmail"];
-
-                        string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
-                        if (_config["DeveloperMode"].Equals("Yes") || !"Production".Equals(environment))
+                    if (Input.etiologyId != 0)
                         {
-                            to = _config["TestEmail"];
-                            string testMessage = "<p><strong>This email was sent in testing mode.</strong></p>";
-                            message = testMessage + message;
+                            string message = "<div>Hello,</div><br/><div>A potential Speech Accessibility Project participant, " + Input.firstName + ", has requested an assessment. You may contact them at " + Input.Email + " or " + Input.phoneNumber + "</div><div><br/>The Speech Accessibility Project Team<br/>University of Illinois Urbana-Champaign</div>";
+
+                            string to = _config["LSVTEmail"];
+
+                            string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+                            if (_config["DeveloperMode"].Equals("Yes") || !"Production".Equals(environment))
+                            {
+                                to = _config["TestEmail"];
+                                string testMessage = "<p><strong>This email was sent in testing mode.</strong></p>";
+                                message = testMessage + message;
+                            }
+
+                            await _emailSender.SendEmailAsync(to, "Assessment Request", message);
+
+
+                            return RedirectToAction("RecordPrompt");
                         }
-
-                        await _emailSender.SendEmailAsync(to, "Assessment Request", message);
-
-
-                        return RedirectToAction("RecordPrompt");
-                    }
-                    else
-                    {
-                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
-                    }
-
+                        else
+                        {
+                            return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
+                        }       
+                                     
 
                 }
                 foreach (var error in result.Errors)
@@ -330,7 +348,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
         private void SendEnrollmentEmail(string emailAddress)
         {
-       
+
             string message = "<div>Thank you for enrolling in the Speech Accessibility Project study! </div><br/>" +
                 "<div>Please find below answers to frequently asked questions about how you’ll be compensated. Please email <a href=mailto:speechaccessibility@beckman.illinois.edu>speechaccessibility@beckman.illinois.edu</a> if you have any questions.</div><br/>" +
                 "<div>Thank You!</div><div>The Speech Accessibility Project Team</div><br/>" +
@@ -364,7 +382,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             _emailSender.SendEmailAsync(emailAddress, subject, message);
         }
 
-        private Contributor PopulateContributor(IdentityUser user)
+        private Contributor PopulateContributor(IdentityUser user, string isActive)
         {
             Contributor contributor = new Contributor();
             contributor.HelperInd = Input.HelperInd;
@@ -375,14 +393,15 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             contributor.FirstName = Input.firstName;
             contributor.MiddleName = Input.middleName;
             contributor.LastName = Input.lastName;
-            contributor.StateResidence = Input.state;    
-            contributor.ParkinsonsInd = Input.parkinsonsInd;
+            contributor.StateResidence = Input.state;
+            contributor.Etiology = new Etiology { Id = Input.etiologyId };
             contributor.IdentityUser = user;
             contributor.EighteenOrOlderInd = Input.eighteenOrOlderInd;
-            contributor.Status = new ContributorStatus { Id = 1 };
+            contributor.StatusId =  1;
             contributor.ContactLSVT = Input.ContactLSVT;
             contributor.EmailAddress = Input.Email;
             contributor.PhoneNumber = Input.phoneNumber;
+            contributor.OtherEtiologyText = Input.otherText;
             contributor.BirthYear = Input.BirthYear;
             return contributor;
         }

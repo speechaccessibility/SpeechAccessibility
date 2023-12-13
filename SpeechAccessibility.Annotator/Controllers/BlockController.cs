@@ -78,7 +78,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             var recordsTotal = blockOnePrompts.Count();
 
-            var promptList = blockOnePrompts.Skip(skip).Take(pageSize).Select(p => new BlockMasterOfPrompts()
+            var promptList = blockOnePrompts.Select(p => new BlockMasterOfPrompts()
             {
                 Id = p.Id,
                Prompt = p.Prompt,
@@ -87,7 +87,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             });
             promptList = DynamicSortingExtensions<BlockMasterOfPrompts>.SetOrderByDynamic(promptList, Request.Form);
-
+            promptList = promptList.Skip(skip).Take(pageSize);
 
             return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = promptList });
 

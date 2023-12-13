@@ -1,0 +1,41 @@
+﻿@page
+@model SpeechAccessibility.Areas.Identity.Pages.Account.ALSIntroductoryModel
+@{
+}
+
+<div class="container">
+    <h1>Instructions</h1>
+    <p>
+        Welcome and thank you for participating in the Speech Accessibility Project. This is the first page you'll see when you log in. After this, you'll start recording phrases.
+    </p>
+    <p>If you're a participant or caregiver, you will use this website to make up to 450 speech recordings, totaling around 600 sentences. These recordings are organized into 10 groups, or "blocks." You can keep track of your progress in each block using the progress bar at the top of the page.</p>
+    
+    <p>
+        For each recording, you'll either read a sentence, repeat a sentence your caregiver says, or answer a question. You and your caregiver can do these recordings together whenever it's convenient for you.  We understand that this research study can be tiring, so you can record at your own pace when it suits you. You can start and stop recording as you like. You have up to three months to finish your recordings, and if you need more time, just let us know. If you leave the website and come back later, you'll pick up where you left off, starting with the last phrase you recorded. Just click "next" to move to the next phrase and continue recording.
+    </p>
+    
+    <p>
+        The words and prompts you need to record will be shown on the screen, and there will be a button that says "record" below it. Click the "record" button to start recording and click it again to stop. Click "next" to move to the next phrase and continue recording.  You can re-record each phrase up to three times. But don't worry about making it perfect – all your recordings are very important.
+    </p>
+    
+    <p>
+        If you have any questions regarding participation in the study or require further assistance, please do not hesitate to contact us at <a href="mailto:speechaccessibility@beckman.illinois.edu">speechaccessibility@beckman.illinois.edu</a>.
+</p>
+
+    <form id="introductionForm">
+        <button class="btn btn-primary" id="introductionSubmit" type="submit" asp-controller="Home" asp-action="RecordPrompt" onclick="disableSubmit()">Continue</button>
+    </form>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script>
+     $(document).ready(function () {
+
+        $("#introductionForm").submit(function () {
+
+            //disable the submit button
+            $("#introductionSubmit").attr("disabled", true);
+            return true;
+        });
+    });
+    </script>

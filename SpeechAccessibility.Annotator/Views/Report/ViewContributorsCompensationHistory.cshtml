@@ -41,43 +41,52 @@
                 "columns": [
                     {
                         "title": "ContributorID",
-                        "data": "contributor.id",
+                        "data": "id",
                         "searchable": true,
                         "orderable": true,
                         "visible": true,
-                        "name": "Contributor.Id"
+                        "name": "Id"
                     },
                     {
                         "title": "First Name",
-                        "data": "contributor.firstName",
+                        "data": "firstName",
                         "searchable": true,
                         "orderable": true,
                         "visible": true,
-                        "name": "Contributor.FirstName"
+                        "name": "FirstName"
                     },
                     {
                         "title": "Last Name",
-                        "data": "contributor.lastName",
+                        "data": "lastName",
                         "searchable": true,
                         "orderable": true,
                         "visible": true,
-                        "name": "Contributor.LastName"
+                        "name": "LastName"
                     },
                         {
                             "title": "EmailAddress",
-                            "data": "contributor.emailAddress",
+                            "data": "emailAddress",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.EmailAddress"
+                            "name": "EmailAddress"
                         },
+                        {
+                            "title": "Etiology",
+                            "data": "etiologyName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "EtiologyName"
+                        },
+                        
                     {
                         "title": "First Card",
-                        "data": "contributorCompensation.sendFirstCard",
+                        "data": "sendFirstCard",
                         "searchable": true,
                         "orderable": true,
                         "visible": true,                            
-                        "name": "ContributorCompensation.SendFirstCard",
+                        "name": "SendFirstCard",
                         'render': function (data) {
                             if (data != null)
                             {
@@ -91,11 +100,11 @@
                     },
                     {
                         "title": "Second Card",
-                        "data": "contributorCompensation.sendSecondCard",
+                        "data": "sendSecondCard",
                         "searchable": true,
                         "orderable": true,
                         "visible": true,                          
-                        "name": "ContributorCompensation.SendSecondCard",
+                        "name": "SendSecondCard",
                         'render': function (data) {
                             if (data != null)
                             {
@@ -109,11 +118,11 @@
                     },
                     {
                         "title": "Third Card",
-                        "data": "contributorCompensation.sendThirdCard",
+                        "data": "sendThirdCard",
                         "searchable": true,
                         "orderable": true,
                         "visible": true,                            
-                        "name": "ContributorCompensation.SendThirdCard",
+                        "name": "SendThirdCard",
                         'render': function (data) {
                             if(data !=null)
                             {
@@ -127,15 +136,14 @@
                     },
                     {
                         "title": "Paid Helper",
-                        "data": "contributor.helperInd",
+                        "data": "helperInd",
                         "searchable": true,
                         "orderable": true,
                         "visible": true,
-                        "name": "Contributor.HelperInd",
-                        'render': function (data,type,row) {
-                                //console.log(row.contributor.helperEmail);
+                        "name": "HelperInd",
+                        'render': function (data,type,row) {                               
                             if(data=='Yes')
-                                    return row.contributor.helperEmail;
+                                    return row.helperEmail;
                                     
                             return ''
                         },

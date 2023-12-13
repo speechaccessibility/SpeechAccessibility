@@ -93,6 +93,20 @@ function compareEmails() {
     }
 }
 
+function compareHelperEmails() {
+    var email = document.getElementById('helperEmail').value;
+    var compareEmail = document.getElementById('confirmHelperEmail').value;
+    var emailValidation = document.getElementById('confirmHelperEmailValidation');
+
+    if (email.toUpperCase() != compareEmail.toUpperCase()) {
+        emailValidation.innerHTML = "The email and confirmation email do not match."
+    }
+    else {
+        emailValidation.innerHTML = ""
+    }
+}
+
+
 function supports_dialog() {
     return document.createElement('dialog').getContext;
 }
@@ -134,6 +148,14 @@ function checkHelperInd()
     }
 }
 
+function clearHelperFields() {
+    document.getElementById("helperEmail").value = "";
+    document.getElementById("helperFirstName").value = "";
+    document.getElementById("helperLastName").value = "";
+    document.getElementById("helperPhoneNumber").value = "";
+    document.getElementById("confirmHelperEmail").value = "";
+}
+
 function checkEighteenInd() {
     if (document.getElementById("eighteenOrOlderYes").checked) {
         document.getElementById("birthYearDiv").style.display = "flex";
@@ -142,6 +164,27 @@ function checkEighteenInd() {
         document.getElementById("birthYearDiv").style.display = "none";
         document.getElementById("birthYear").value = "";
     }
+}
+
+function loadRegisterPage() {
+    checkEighteenInd();
+    checkHelperInd();
+}
+
+function loadAphasiaPage() {
+    checkCorrespondence();
+    checkHelperInd();
+}
+
+function loadDSCreateAccountPage() {
+
+    checkLegalGuardian();
+    checkHelperInd();
+}
+
+function loadCPRegisterPage() {
+    checkLegalGuardian();
+    checkHelperInd();
 }
 
 function checkOtherRaceInd()
@@ -205,4 +248,178 @@ function checkSpeechChange()
     }
 }
 
+function checkDiagnois() {
 
+    if (document.getElementById("Other").checked) {
+        document.getElementById("otherDiv").style.display = "flex";
+    }
+    else {
+        document.getElementById("otherDiv").style.display = "none";
+        document.getElementById("OtherText").value = "";
+    }
+}
+
+function checkCaregiverInd() {
+
+    if (document.getElementById("caregiverYes").checked) {
+        document.getElementById("caregiverDiv").style.display = "block";
+        document.getElementById("contributorDiv").style.display = "none";
+        document.getElementById("caregiverLegalGuardianInd").style.display = "block";
+        document.getElementBy("legalGuardianInd").style.display = "none";
+    }
+    else if(document.getElementById("caregiverNo").checked) {
+        document.getElementById("caregiverDiv").style.display = "none";
+        document.getElementById("contributorDiv").style.display = "block";
+        document.getElementById("legalGuardianInd").style.display = "block";
+        document.getElementById("caregiverLegalGuardianInd").style.display = "none";
+    }
+   
+}
+
+
+function checkLegalGuardian() {
+    if (document.getElementById("legalGuardianSelect").value == "Someone else is my legal guardian") {
+        document.getElementById("legalGuardianDiv").style.display = "flex";
+
+    }
+    else {
+        document.getElementById("legalGuardianDiv").style.display = "none";
+
+    }
+    
+}
+
+function checkCaregiverLegalGuardian() {
+
+    if (document.getElementById("caregiverLegalGuardianSelect").value == "Someone else is their legal guardian") {
+        document.getElementById("caregiverLegalGuardianDiv").style.display = "flex";
+
+    }
+    else {
+        if (document.getElementById("assistanceAvailableNo").checked) {
+        }
+        document.getElementById("caregiverLegalGuardianDiv").style.display = "none";
+
+    }
+
+}
+
+function checkAssistInd() {
+
+    if (document.getElementById("assistYes").checked) {
+        document.getElementById("assistanceAvailableDiv").style.display = "None";
+        document.getElementById("caregiverInfo").style.display = "block";
+        document.getElementById("correspondenceDiv").style.display = "block";
+        document.getElementById("correspondenceLabel").innerHTML = '<span style="color:red">*</span>Would you like correspondence about this project to go to you, as the caregiver, or to the individual participating in the study?'
+        document.getElementById("helperFirstNameLabel").innerHTML = "Your First Name";
+        document.getElementById("helperLastNameLabel").innerHTML = "Your Last Name";
+        document.getElementById("helperPhoneNumberLabel").innerHTML = "Your Phone Number";
+        document.getElementById("helperEmailLabel").innerHTML = "Your Email";
+        document.getElementById("helperConfirmEmailLabel").innerHTML = "Confirm Your Email Address Again";
+    }
+    else if (document.getElementById("assistNo").checked) {
+
+        clearHelperFields()
+
+        document.getElementById("assistanceAvailableDiv").style.display = "flex";
+        if (!document.getElementById("assistanceAvailableYes").checked) {
+            document.getElementById("caregiverInfo").style.display = "none";
+            document.getElementById("correspondenceDiv").style.display = "none";
+            document.getElementById("correspondenceSelf").checked = false;
+            document.getElementById("contributorContactDiv").style.display = "block";
+        }
+        document.getElementById("helperFirstNameLabel").innerHTML = "Helper's First Name";
+        document.getElementById("helperLastNameLabel").innerHTML = "Helper's Last Name";
+        document.getElementById("helperPhoneNumberLabel").innerHTML = "Helper's Phone Number";
+        document.getElementById("helperEmailLabel").innerHTML = "Helper's Email";
+        document.getElementById("helperConfirmEmailLabel").innerHTML = "Confirm Helper's Email";
+    }
+}
+
+function checkAssistanceAvailable() {
+
+    if (document.getElementById("assistanceAvailableYes").checked) {
+        document.getElementById("caregiverInfo").style.display = "block";
+        document.getElementById("helperFirstNameLabel").innerHTML = "Helper's First Name";
+        document.getElementById("helperLastNameLabel").innerHTML = "Helper's Last Name";
+        document.getElementById("helperPhoneNumberLabel").innerHTML = "Helper's Phone Number";
+        document.getElementById("helperEmailLabel").innerHTML = "Helper's Email";
+        document.getElementById("helperConfirmEmailLabel").innerHTML = "Confirm Helper's Email";
+        document.getElementById("correspondenceDiv").style.display = "block";
+        document.getElementById("correspondenceLabel").innerHTML = '<span style="color:red">*</span>Would you like correspondence about this project to go to the helper, or to the individual participating in the study?'
+    }
+    else if (document.getElementById("assistanceAvailableNo").checked) {
+        clearHelperFields()
+
+        document.getElementById("correspondenceDiv").style.display = "none";
+        document.getElementById("correspondenceSelf").checked = false;
+        document.getElementById("contributorContactDiv").style.display = "block";
+        document.getElementById("caregiverInfo").style.display = "none";
+        document.getElementById("helperFirstNameLabel").innerHTML = "Your First Name";
+        document.getElementById("helperLastNameLabel").innerHTML = "Your Last Name";
+        document.getElementById("helperPhoneNumberLabel").innerHTML = "Your Phone Number";
+        document.getElementById("helperEmailLabel").innerHTML = "Your Email";
+        document.getElementById("helperConfirmEmailLabel").innerHTML = "Confirm Your Email Address Again";
+    }
+}
+
+function checkCorrespondence() {
+
+    if (document.getElementById("correspondenceSelf").checked) {
+        document.getElementById("contributorContactDiv").style.display = "none";
+        document.getElementById("contributorEmail").value = "";
+        document.getElementById("compareEmail").value = "";
+        document.getElementById("individualPhoneNumber").value = "";
+    }
+    else {
+        document.getElementById("contributorContactDiv").style.display = "block";
+    }
+}
+
+function dsRegisterLoad() {
+    if (document.getElementById("downSyndromeInd").value == "Yes") {
+        checkLegalGuardian();
+    }
+    else {
+        checkAssistInd();
+        checkAssistanceAvailable();
+        checkCaregiverLegalGuardian();
+        checkCorrespondence();
+    }
+
+    }
+
+function speakPrompt() {
+    const synth = window.speechSynthesis;
+    var element = document.getElementById("speakerIcon");
+
+    if (synth.speaking) {
+        synth.cancel()
+        element.classList.remove("fa-beat");
+    }
+    else {
+        
+        element.classList.add("fa-beat");
+        var prompt = new SpeechSynthesisUtterance(document.getElementById("transcript").value);
+        prompt.lang = 'en-US';
+        prompt.text = document.getElementById("transcript").innerHTML
+        synth.speak(prompt);
+
+        prompt.addEventListener("end", (event) => {
+            document.getElementById("speakerIcon").classList.remove("fa-beat");
+        });
+    }
+   
+}
+
+function showHidePassword() {
+    var password = document.getElementById("password");
+    var confirmPassword = document.getElementById("confirmPassword");
+    if (password.type === "password") {
+        password.type = "text";
+        confirmPassword.type = "text";
+    } else {
+        password.type = "password";
+        confirmPassword.type = "password";
+    }
+}

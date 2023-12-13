@@ -1,6 +1,10 @@
-﻿@model List<SpeechAccessibility.Annotator.Models.DailyContributorSpeechFileReportViewModel>
+﻿@using SpeechAccessibility.Annotator.Extensions
+@using SpeechAccessibility.Core.Interfaces
+@inject IEtiologyViewRepository EtiologyRepository
+@model List<SpeechAccessibility.Annotator.Models.DailyContributorSpeechFileReportViewModel>
 @{
-    
+    var etiologies = CacheExtension.GetEtiologyList(EtiologyRepository);
+    var counter = etiologies.Count;
 }
 
 <h1>Daily Report For Contributors Speech Files </h1>
@@ -8,12 +12,61 @@ Only for the last 30 days
 <div style="width: 1500px">
     <table id="DailyContributorRecordingReport">
         <tr>
+            <th>&nbsp;</th>
+            <th colspan="@counter" style="text-align: center">Total # of approved contributors</th>
+            <th colspan="@counter" style="text-align: center">Total # of files</th>
+        </tr>
+        <tr>
             <th style="width: 150px">Date</th>
-            <th># of new contributors</th>
-            <th># of existing contributors</th>
-            <th># of files by new contributors</th>
-            <th># of files by existing contributors</th>
-            <th>Total # of files</th>
+            @{
+                foreach (var etiology in etiologies)
+                {
+                    <th>@etiology.Acronym</th>
+                }
+            } 
+            @{
+                foreach (var etiology in etiologies)
+                {
+                    <th>@etiology.Acronym</th>
+                }
+            } 
+        </tr>
+            @{
+                foreach (var report in Model)
+                {
+                    <tr>
+                        <td>@report.TodayDate.ToShortDateString()</td>
+                        @{
+                            foreach (var contributorNumber in report.ApprovedContributors)
+                            {
+                                <td>@contributorNumber</td>
+                            }
+
+                            foreach (var recordingNumber in report.ApprovedContributorRecordings)
+                            {
+                            <td>@recordingNumber</td>
+                            }
+                        }
+                    </tr>
+
+                }
+            }
+         
+        
+    </table>
+</div>
+
+
+
+@*<div style="width: 1500px">
+    <table id="DailyContributorRecordingReport">
+        <tr>
+            <th style="width: 150px">Date</th>
+            <th>ALS</th>
+            <th>CP</th>
+            <th>DS</th>
+            <th>PD</th>
+            <th>Stroke</th>
         </tr>
         @{
             foreach (var report in Model)
@@ -28,11 +81,58 @@ Only for the last 30 days
                         @(report.NewContributorRecordings + report.ExistingContributorRecordings)
                     </td>
                 </tr>
-        
+
             }
         }
     </table>
 </div>
 
+*@
+@*@model List<SpeechAccessibility.Annotator.Models.DailyContributorEtiologySpeechFileReportVM>
+@{
+    
+}
+
+<h1>Daily Report For Contributors Speech Files </h1>
+Only for the last 30 days
+@{
+    foreach (var etiology in Model)
+    {
+        //<p style="background-color: #13294B;">@etiology.EtiologyView.Name</p>
+        <div style="width: 1500px">
+            <table id="DailyContributorRecordingReport">
+                <caption style="display: table-caption;text-align: center;color: #13294B;font-weight: bold;font-size: 24px;">@etiology.EtiologyView.Name</caption>
+                <tr>
+                    <th style="width: 150px">Date</th>
+                    <th># of new contributors</th>
+                    <th># of existing contributors</th>
+                    <th># of files by new contributors</th>
+                    <th># of files by existing contributors</th>
+                    <th>Total # of files</th>
+                </tr>
+                @{
+                    foreach (var report in etiology.DailyContributorSpeechFileReportViewModel)
+                    {
+                        <tr>
+                            <td>@report.TodayDate.ToShortDateString()</td>
+                            <td style="text-align: center">@report.NewContributors</td>
+                            <td style="text-align: center">@report.ExistingContributors</td>
+                            <td style="text-align: center">@report.NewContributorRecordings</td>
+                            <td style="text-align: center">@report.ExistingContributorRecordings</td>
+                            <td style="text-align: center">
+                                @(report.NewContributorRecordings + report.ExistingContributorRecordings)
+                            </td>
+                        </tr>
+
+                    }
+                }
+            </table>
+        </div>
 
 
+    }
+}
+
+
+
+*@

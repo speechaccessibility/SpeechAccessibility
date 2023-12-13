@@ -13,9 +13,23 @@
     
     <div id="consentDiv"></div>
 
+    @if (Model.etiologyId == 2)
+    {
+        <p>Remember, there is no right or wrong answer. We only care about hearing you talk. If you are not happy with your first recording, you will have 2 additional opportunities.</p>
+        <p>Caregivers: If you are assisting an adult with Down syndrome, you may read the phrases or questions out loud. Please only speak at the beginning or end of a phrase without interrupting the adult’s speech.</p>
+
+    }
+    else if (Model.etiologyId ==4)
+    {
+        <p>Remember, there is no right or wrong answer. We only care about hearing you talk. If you are not happy with your first recording, you will have 2 additional opportunities.</p>
+        <p>Caregivers: If you are assisting an adult with aphasia, you may read the phrases or questions out loud. Please only speak at the beginning or end of a phrase without interrupting the adult’s speech.</p>
+
+    }
+
         <div id="messageDiv" class="text-danger">
-        <strong>Please do not mention your personal information in your recording. The recording will stop after two minutes.</strong>
+        <p><strong>Please do not mention your personal information in your recording. The recording will stop after two minutes.</strong></p>          
     </div>
+
 
     <dialog id="maxTimeDialog">
         <h1>Time limit met.</h1>
@@ -64,9 +78,30 @@
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <i class="fa-solid fa-star fa-bounce" style="padding-right:10px"></i>Congratulations! You completed Section 1 of Block @Model.totalBlockCount!
             </div>
+
+            if (Model.etiologyId == 2)
+            {
+                <input hidden id="showOpenEndedMessage" value="true" />
+                
+             <dialog id="openEndedMessage">
+                <h1>You have completed Section 1 of Block @Model.totalBlockCount!</h1>
+                <p>
+                    The next section will contain open-ended questions.<br />
+                     Please answer the questions aloud using several sentences.<br />
+                    </p>
+                    <p>
+                        Sometimes two questions in a row are related to each other.<br/>
+                        You will answer both questions on the same topic.
+                </p>
+
+                <form method="dialog">
+                    <button>OK</button>
+                </form>
+            </dialog>
+            }
         }
 
-        if (Model.currentBlockOfPromptsCount == categoryCount)
+        if (Model.currentBlockOfPromptsCount == categoryCount && Model.etiologyId!=2)
         {
 
             <div class="alert alert-success alert-dismissible" role="alert">
@@ -74,14 +109,16 @@
                 <i class="fa-solid fa-star fa-bounce" style="padding-right:10px"></i>Congratulations! You completed Section 2 of Block @Model.totalBlockCount!
             </div>
 
-             <input hidden id="showOpenEndedMessage" value="true" />
+            <input hidden id="showOpenEndedMessage" value="true" />
 
             <dialog id="openEndedMessage">
                 <h1>You have completed Section 2 of Block @Model.totalBlockCount!</h1>
                 <p>
-                    The next section will contain open-ended questions.<br />
-                    Please answer each question using several sentences.<br />
-                    Do not simply read the question out loud, but say your response.
+                    The next section will contain @if (Model.etiologyId == 6) { @Model.openEndedMax; } open-ended questions.<br />
+                    <strong>
+                        Please answer each question using several sentences.<br />
+                        Do not simply read the question out loud, but say your response.
+                    </strong>
                 </p>
 
                 <form method="dialog">
@@ -101,10 +138,26 @@
             
                 <dialog id="section1And2Message">
                 <h1>You have completed Block @Model.totalBlockCount!</h1>
-                <p>
-                    The next section will contain digital command prompts and novel sentences.<br/>
-                    Please record yourself speaking the prompts.
-                </p>
+                @if (Model.etiologyId == 2)
+                {
+                    <p>
+                        The next section will contain digital command prompts.<br />
+                        Please record yourself speaking the prompts.
+                    </p>
+                }
+                else if(Model.etiologyId==6)
+                {
+                    <p>The next section will contain @Model.digitalCommandMax digital command prompts and @Model.novelSentenceMax novel sentences.<br />
+                        Please record yourself speaking the prompts.</p>
+                }
+                else
+                {
+                    <p>
+                        The next section will contain digital command prompts and novel sentences.<br />
+                        <strong>Please record yourself speaking the prompts.</strong>
+                    </p>
+                }
+              
                     @if (Model.totalBlockCount == 9)
                     {
                     <p>The prompts in this next section may seem familiar to you. They’re designed to be the same as the first ones you encountered.</p>
@@ -130,12 +183,25 @@
 
     <br />
     <div>
-        @if(Model.prompt.SubCategory.Id == 3)
+      @if(Model.etiologyId==2 || Model.etiologyId==4)
         {
-            <p>Recording Prompt @Model.assessmentCount:</p>
+
+           <p>To record your speech, please follow these 3 steps:</p>
+            if (Model.prompt.Category.Id == 2)
+            {
+                <p>1. Press the record button.<br /><strong>2. Read the text.</strong><br/> 3. Press Stop Recording.</p>
+               <strong>Text</strong>
         }
-        else if (Model.prompt.SubCategory.Id==1)
+            else if (Model.prompt.Category.Id == 4)
+            {
+                <p>1. Press the record button.<br/> <strong>2. Answer the question.</strong><br/>3. Press Stop Recording.</p>              
+            <strong>Question</strong>
+            }
+
+        }
+        else if (Model.prompt.SubCategory.Id==1 || Model.prompt.SubCategory.Id==16 || Model.prompt.SubCategory.Id==17)
         {
+
             <p>Please speak your response to the prompt below. <strong>Do not simply read the question out loud, but say your response.</strong></p>
         }
         else if (Model.prompt.SubCategory.Id==2)
@@ -143,84 +209,24 @@
             <p>In this section, you will be explaining the steps to complete some tasks. Don’t worry if you haven’t actually done the task before. Imagine that you are teaching someone how to do the task.</p>
 
         }
-        else if(Model.prompt.SubCategory.Id==4)
-        {
-            <dialog id="subCategory4Message">
-                <h1>You have completed section 1!</h1>
-                <p>
-                    In the next section you will be given some instructions.<br />
-                    Don’t read the question out loud – just do as instructed!
-                </p>
-                <form method="dialog">
-                    <button>OK</button>
-                </form>
-            </dialog>
-            <p style="font-size:xx-large">@Model.prompt.Transcript</p>
-        }
-        else if (Model.prompt.SubCategory.Id==5)
-        {            
 
-            <p>Please choose one of the prompts below to talk about. Try to speak for about 30 seconds. Imagine that you are talking to a good friend or family member.</p>
-            <br />
-            int count = 0;
-                        <dialog id="subCategory5Message">
-                            <h1>You have completed section 2!</h1>
-                <p>
-                    In the next section you will select an open-ended question to answer.<br />
-                    Please answer the question using several sentences.<br />
-                    Don’t read the question out loud – just speak your answer!
-                </p>
-                <form method="dialog">
-                    <button>OK</button>
-                </form>
-            </dialog>
-            <fieldset style="font-size:xx-large">
-                @{
-                    foreach (Prompt prompt in Model.spontaneousSpeechList)
-                    {
-                        count++;
-                        string inputId = "option" + prompt.Id;
-                        string promptId = "promptDesc" + count;
-
-                        @if (count == 1)
-                        {
-                            <input id="@inputId" name="selectedPromptId" type="radio" value="@prompt.Id" aria-labelledby="@inputId @promptId" checked>
-                        }
-                        else
-                        {
-                            <input id="@inputId" name="selectedPromptId" type="radio" value="@prompt.Id" aria-labelledby="@inputId @promptId">
-                        }
-                        string label = "Option " + @count + ":";
-                        <label for="@inputId">@label</label>
-
-                        <div class="form-group col-md-8" id="@promptId">
-                            <p>@prompt.Transcript</p>
-                        </div>
-
-                    }
-                }
-            </fieldset>
-          
-
-        }
         else
         {
-            <p>Please record yourself speaking the prompt below:</p>
-        }
-
-        @if((Model.prompt.SubCategory.Id!=4 && Model.prompt.SubCategory.Id!=5))
-        {
-            if (Model.prompt.SubCategory.Id == 1 || Model.prompt.SubCategory.Id == 2)
-        {
-             <p style="font-size:xx-large">@Model.prompt.Transcript</p>            
-        }
-        else
-            {
-                 <p id="prompt">@Model.prompt.Transcript</p>
-                        
-    }
+           
+         <p>Please record yourself speaking the prompt below.</p>
            
         }
+
+        <p id="prompt" value="@Model.prompt.Transcript">
+            @if (Model.etiologyId == 6)
+            {
+                <button class="btn btn-primary" onclick="speakPrompt()">
+                    <i title="Click here to speak prompt aloud." id="speakerIcon" class="fa-solid fa-volume-high"></i>
+                </button>
+            }         
+            <span id="transcript">@Model.prompt.Transcript</span>
+        </p>
+
 
     </div>
     <div class="p-3">
@@ -241,6 +247,11 @@
             </div>
             <span>Recording Started...</span><br />
         </div>
+        @if (Model.etiologyId == 6)
+        {
+
+            <button id="recordButton" class="btn btn-primary">Record</button>
+        }
         <form style="display: inline-block;" method="post" id="recordForm">
             <input hidden id="contributorId" asp-for="@Model.contributorId" value="@Model.contributorId" />
             <input hidden id="promptId" asp-for="@Model.prompt.Id" value="@Model.prompt.Id" />
@@ -251,11 +262,19 @@
             <input hidden id="clientStartTS" />
             <button hidden type="submit" class="btn btn-primary" id="nextButton" style="margin-right:10px">Next</button>
         </form>
-            <button id="recordButton" class="btn btn-primary">Record</button>
+        @if (Model.etiologyId != 6)
+        {
+            
+             <button id="recordButton" class="btn btn-primary">Record</button>
+        }
             <button hidden id="playButton" class="btn btn-primary">Listen</button>
             <span style="padding-left:10px" id="rerecordMessage"></span>
        </div>
-
+    @if (Model.etiologyId == 2)
+    {
+        <p>After you press Stop Recording, you can press Next or Rerecord.</p>
+    }
+  
 </div>
 
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
@@ -273,7 +292,7 @@
 
             return true;
 
-    });
+        });
     });
 </script>
 <script src="~/lib/font-awesome/js/all.min.js"></script>
