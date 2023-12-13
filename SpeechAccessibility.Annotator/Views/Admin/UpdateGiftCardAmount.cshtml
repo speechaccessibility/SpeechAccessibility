@@ -1,0 +1,179 @@
+﻿@model SpeechAccessibility.Annotator.Models.ADMemberViewModel
+@{
+    ViewData["Title"] = "Change Gift Card Amount";
+}
+
+@{
+    ViewBag.Title = "Change Gift Card Amount";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<br/>
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+<div style="width: 800px">
+    <table class="table table-striped table-bordered table-hover" id="EtiologyGiftCardsTable" cellspacing="0" align="center"></table>
+</div>
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/rowgroup/1.3.0/js/dataTables.rowGroup.min.js"></script>
+
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            //bind datatable for Etiologies
+            var oEtiologyGiftCardsTable = $("#EtiologyGiftCardsTable").on('error.dt',
+                function (e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                    "serverSide": true,
+                    "processing": true,
+                    "responsive": true,
+                     "info": false,
+                    "ordering": false,
+                    "paging": false,
+                    "iDisplayLength": 100,
+                    "dom": "<'row'<'col-sm-4'><'col-sm-4'><'col-sm-4'>>" +
+                        "<'row'<'col-sm-12'tr>>", //'<"top"l>rift<"bottom"p><"clear">',
+                    "ajax": ({
+                        "url": '@Url.Action("LoadEtiologyGiftCardsAmount", "Admin")',
+                        "type": "POST",
+                        "datatype": "json"
+                    }),
+                    "bAutoWidth": false,
+                    "aaSorting": [[1, 'asc']],
+                    "columns": [
+                        {
+                            "title": "Id",
+                            "data": "id",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": false,
+                            "name": "Id"
+                        },
+                        {
+                            "title": "Etiology Name",
+                            "data": "name",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "Name"
+                        },
+                        {
+                            "title": "FirstGiftCard",
+                            "data": "firstGiftCard",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "FirstGiftCard",
+                            'render': function (data) {
+                                return '<input id="FirstGiftCard" name="FirstGiftCard" type="text" size="5" class="allownumeric"  value = ' + data + '>'
+                             
+                            }
+                        },
+                        {
+                            "title": "SecondGiftCard",
+                            "data": "secondGiftCard",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "SecondGiftCard",
+                            'render': function (data) {
+                                return '<input class="allownumeric id="SecondGiftCard" name="SecondGiftCard" type="text" size="5"  value = ' + data + '>'
+
+                            }
+                        },
+                        {
+                            "title": "ThirdGiftCard",
+                            "data": "thirdGiftCard",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "ThirdGiftCard",
+                            'render': function (data) {
+                                return '<input class="allownumeric" id="ThirdGiftCard" name="ThirdGiftCard" type="text" size="5"  value = ' + data + '>'
+
+                            }
+                        },
+                        {
+                            "title": "Actions",
+                            "data": "id",                         
+                            "searchable": false,
+                            "orderable": false,
+                            "width": '100px',
+                            "classDescription": 'dt-body-center',
+                            "visible": true,
+                            "name": "Id",
+                            "render": function (data, type, row) {                               
+                                var link = '<a href="#" class="saveAmount" >Save</a>';
+                                return link;
+                            
+                            }
+                        }
+                      
+                    ],
+                    "ordering": true,
+                    "paging": true,
+                    "pageLength": 100,
+                    "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+                });
+
+
+            //save the gift card amount
+            $('#EtiologyGiftCardsTable').on('click',
+                'a.saveAmount',
+                function (e) {
+                    e.preventDefault();                   
+                    var selectedRowData = oEtiologyGiftCardsTable.row($(this).closest('tr'));                   
+                                        
+                    var firstGiftCard = $(this).closest("tr").find("input[name='FirstGiftCard']").val();
+                    var secondGiftCard = $(this).closest("tr").find("input[name='SecondGiftCard']").val();
+                    var thirdGiftCard = $(this).closest("tr").find("input[name='ThirdGiftCard']").val();
+                    
+                 
+                    $.ajax({
+                        url: '@Url.Action("UpdateGiftCardAmounts", "Admin")',
+                        type: "POST",
+                        data: { "id": selectedRowData.data().id, "firstGiftCard": firstGiftCard, "secondGiftCard": secondGiftCard, "thirdGiftCard": thirdGiftCard, },
+                        success: function (response) {                            
+                            if (response.success === true) {                               
+                                $("#lblMessage").text(response.message);
+                                $("#lblMessage").removeClass("alert-warning");
+                                $("#lblMessage").addClass("alert-success");
+
+                            } else {
+                                alert(response.message);
+                                $("#lblMessage").text(response.message);
+                                $("#lblMessage").addClass("alert-warning");
+                                $("#lblMessage").removeClass("alert-success");
+                            }
+                        },
+                        error: function () {
+                            alert("Error: Update amounts");                            
+                        }
+                    });
+                 
+                  
+                    //return false;
+                    
+                    
+
+                });
+
+                
+            $(".allownumeric").on("keypress keyup blur", function (event) {
+                $(this).val($(this).val().replace(/[^\d].+/, ""));
+                if ((event.which < 48 || event.which > 57)) {
+                    event.preventDefault();
+                }
+            });
+
+        });//End document ready
+
+    </script>
+}

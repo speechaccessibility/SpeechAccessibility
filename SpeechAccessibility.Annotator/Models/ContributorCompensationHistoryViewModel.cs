@@ -4,7 +4,7 @@ namespace SpeechAccessibility.Annotator.Models
 {
     public class ContributorCompensationHistoryViewModel
     {
-        public Contributor Contributor { get; set; }
+        public ContributorView Contributor { get; set; }
         public  ContributorCompensation ContributorCompensation { get; set; }
     }
 }

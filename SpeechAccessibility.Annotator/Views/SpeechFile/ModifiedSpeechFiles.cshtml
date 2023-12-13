@@ -43,23 +43,6 @@
     <input type="file" id="recordingFile" name="recordingFile" accept="audio/wav" />
 </div>
 
-@*<div id="listen-dialog" style="display: none">
-    <p>
-        <b>ContributorID:</b><label id="lblListenContributorId" name="lblListenContributorId"></label>
-        <br />
-        <b>Transcript:</b><label id="lblListenTranscript" name="lblListenTranscript"></label>
-        <br /><b>Start: </b><label id="lblStartTime" name="lblStartTime"></label>&nbsp;&nbsp;
-        <b>End: </b><label id="lblEndTime" name="lblEndTime"></label>
-        <br />
-        <input type="hidden" id="hidFileName" />
-        <audio id="listenRecording" controls>
-            <source src="">
-        </audio>
-
-    </p>
-</div>
-*@
-
 <div id="listen-dialog" style="display: none">
     <p>
         <input type="hidden" id="hidUpdateTranscriptRecordingId" />
@@ -68,7 +51,7 @@
         <input type="hidden" id="hidFileName"/>
       
         <audio id="listenRecording" controls preload="none">
-            <source src="" type="audio/wav"/>
+            <source id="wav_src" src="" type="audio/wav"/>
         </audio>
 
         <br/>
@@ -128,7 +111,7 @@
                             "title": "Etiology",
                             "data": "etiologyName",
                             "searchable": true,
-                            "orderable": false,
+                            "orderable": true,
                             "visible": true,
                             "name": "EtiologyName"
                         },
@@ -151,11 +134,11 @@
                         },
                         {
                             "title": "Category",
-                            "data": "originalPrompt.category.description",
+                            "data": "categoryName",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "OriginalPrompt.Category.Description"
+                            "name": "CategoryName"
                         },                       
                         {
                             "title": "Recorded Date",
@@ -250,9 +233,15 @@
                 $("#txtTranscript").val(row.modifiedTranscript);
                 $("#txtStartTime").val(row.startTime);
                 $("#txtEndTime").val(row.endTime);
-                var audio = document.getElementById('listenRecording');
-                audio.setAttribute("src", row.speechFilePath);
-                 audio.load();
+                var audio = document.getElementById("listenRecording");
+               
+                audio.src = "";
+                audio.src = row.speechFilePath  + "?" + Date.now();
+                //audio.src = row.speechFilePath ;
+
+                audio.load();               
+              
+
                 var dialog = $("#listen-dialog");
                  if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
                     listenEditTanscriptRecording('@Url.Action("UpdateRecordingTranscript", "SpeechFile")', audio, dialog, oSpeechFileTable, $("#lblMessage"));

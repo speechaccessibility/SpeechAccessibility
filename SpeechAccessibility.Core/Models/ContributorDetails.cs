@@ -38,7 +38,7 @@ namespace SpeechAccessibility.Core.Models
         public DateTime CreateTS { get; set; }
         public DateTime UpdateTS { get; set; }
 
-        public Contributor Contributor { get; set; }
+        public ContributorView Contributor { get; set; }
         public  ICollection<ContributorRace> ContributorRace { get; set; }
     }
 }

@@ -11,6 +11,6 @@ namespace SpeechAccessibility.Core.Models
         public DateTime UpdateTS { get; set; }
         public Guid ContributorId { get; set; }
 
-        public  Contributor Contributor { get; set; }
+        public  ContributorView Contributor { get; set; }
     }
 }

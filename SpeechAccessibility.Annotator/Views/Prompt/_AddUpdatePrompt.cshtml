@@ -5,16 +5,21 @@
 
 <label id="lblAddUpdatePromptMessage"></label>
 <br />
-
+<input type="hidden" id="hidAction" value="@Model.Action" />
 <input type="hidden" id="hidPromptId" value="@Model.Prompt.Id" />
 <input type="hidden" id="hidCategoryId" value="@Model.Prompt.CategoryId" />
 <input type="hidden" id="hidSubCategoryId" value="@Model.Prompt.SubCategoryId" />
 <input type="hidden" id="hidQuestionType" value="@Model.Prompt.QuestionType.Trim()" />
-    @{
+<input type="hidden" id="hidExistingEtioglogyIds" value="@(string.Join(",", @Model.ExistingEtioglogyIds.ToList()))" />
+
+
+@{
+  
         if (Model.Prompt.Id >0)
         {
-        <b>Prompt ID: </b><label id="lblPromptId" name="lblPromptId"> @Model.Prompt.Id</label>
+            <b>Prompt ID: </b><label id="lblPromptId" name="lblPromptId"> @Model.Prompt.Id</label>
         }
+      
     }
 
 
@@ -22,6 +27,12 @@
 @Html.TextAreaFor(m => m.Prompt.Transcript,4,50, null)
 
 <table>
+    <tr>
+        <td><b>Etiology:</b></td>
+        <td>
+            <select asp-for="@Model.EtioglogyId" asp-items="@Model.Etiologies" ></select>
+        </td>
+    </tr>
     <tr>
         <td><b>Category: </b></td>
         <td><select asp-for="@Model.Prompt.CategoryId" asp-items="@Model.Categories"></select></td>
@@ -47,7 +58,7 @@
     </table>
 </div>
 <script language="javascript" type="text/javascript">
-
+   
     function getSubCategories(categoryId) {        
         $.ajax({
                 url: '@Url.Action("GetSubCategories", "Prompt")?categoryId=' + categoryId,
@@ -70,6 +81,36 @@
     }
 
     $(document).ready(function () {
+        
+        if ($("#hidPromptId").val() > 0){
+            if ($("#hidAction").val() == "copy")
+            {
+                //remove the exiting etiology so we don't copy the same one. 
+                var etiologyArr = $("#hidExistingEtioglogyIds").val().split(',');
+                $.each(etiologyArr, function (key, value) {
+                    $("#EtioglogyId option[value='" + value + "']").remove();
+                });
+
+                //$("#EtioglogyId option[value='" + $("#dropEtiologyId").val() + "']").remove();
+                $("#EtioglogyId").prop("disabled", false);
+                $("#Prompt_CategoryId").prop("disabled", true);
+                $("#Prompt_SubCategoryId").prop("disabled", true);
+                $("#Prompt_Transcript").attr("disabled","disabled");
+
+            }
+            else
+            {
+                $("#EtioglogyId").prop("disabled", true);
+                $("#Prompt_CategoryId").prop("disabled", false);
+                $("#Prompt_SubCategoryId").prop("disabled", false);
+                $("#Prompt_Transcript").removeAttr("disabled", "disabled");
+                
+               
+            }
+
+       }           
+
+
         var categoryId = $("#hidCategoryId").val();
         var subCategoryId = $("#hidSubCategoryId").val();
         var questionType = $("#hidQuestionType").val();

@@ -84,7 +84,6 @@ button.accept-policy {
 }
 
 
-
 body {
     /* Margin bottom by footer height */
     margin-bottom: 60px;
@@ -287,11 +286,18 @@ a {
 }
 
 
+
 #prompt {
 
     font-size: xx-large;
     border: 1px solid #13294B;
     padding:10px;
+}
+
+.prompt {
+    font-size: xx-large;
+    border: 1px solid #13294B;
+    padding: 10px;
 }
 
 label {
@@ -337,6 +343,10 @@ input[type=radio]
 option
 {
     font-size:x-large;
+}
+
+.largeFont label, .largeFont legend, .largeFont button, .largeFont input[type=text], .largeFont input[type=email], .largeFont input[type=radio], .largeFont input[type=password], .largeFont select, .largeFont, .largeFont details {
+    font-size: xx-large;
 }
 
 #emailMessage {

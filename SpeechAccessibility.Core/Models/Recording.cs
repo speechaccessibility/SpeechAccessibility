@@ -42,6 +42,8 @@ namespace SpeechAccessibility.Core.Models
 
         [NotMapped]
         public string EtiologyName { get; set; }
+        [NotMapped]
+        public int EtiologyId { get; set; }
 
 
     }

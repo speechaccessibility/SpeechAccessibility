@@ -12,6 +12,7 @@ namespace SpeechAccessibility.Core.Models
             BlockOfDigitalCommandPrompts = new HashSet<BlockOfDigitalCommandPrompts>();
             BlockOfPrompts = new HashSet<BlockOfPrompts>();
             Recording = new HashSet<Recording>();
+            PromptEtiology = new HashSet<PromptEtiology>();
         }
 
         public int Id { get; set; }
@@ -31,12 +32,16 @@ namespace SpeechAccessibility.Core.Models
         public  ICollection<BlockOfDigitalCommandPrompts> BlockOfDigitalCommandPrompts { get; set; }
         public  ICollection<BlockOfPrompts> BlockOfPrompts { get; set; }
         public  ICollection<Recording> Recording { get; set; }
+        public ICollection<PromptEtiology> PromptEtiology { get; set; }
 
         [NotMapped]
         public bool InUsed { get; set; }
 
         [NotMapped]
         public bool CanNotDelete { get; set; }
+
+        [NotMapped]
+        public int EtioglogyId { get; set; }
 
 
     }

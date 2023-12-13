@@ -25,5 +25,7 @@ namespace SpeechAccessibility.Data.Entities
         [Required]
         public Contributor Contributor { get; set; }
 
+        public string ConsentType { get; set; }
+
     }
 }

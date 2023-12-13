@@ -1,5 +1,4 @@
 ﻿@using System.Security.Claims
-@using System.Collections
 @{
     ViewData["Title"] = "Approved Contributors";
 }
@@ -17,6 +16,16 @@
 <input type="hidden" id="UserRole" value="@userRole" />
 <input type="hidden" id="SubRole" value="@ViewBag.SubRole" />
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+
+<div>
+    <b>Toggle column: </b>
+    <a class="toggle-vis" data-column="4" style="color: #0366d6 !important; cursor: pointer;">Birth Year</a>
+    - <a class="toggle-vis" data-column="5" style="color: #0366d6 !important; cursor: pointer;">Gender</a>
+    - <a class="toggle-vis" data-column="6" style="color: #0366d6 !important; cursor: pointer;">Helper Email</a>
+    - <a class="toggle-vis" data-column="7" style="color: #0366d6 !important; cursor: pointer;">Helper Phone</a>
+    - <a class="toggle-vis" data-column="12" style="color: #0366d6 !important; cursor: pointer;">SentFollowUpDate</a>
+    - <a class="toggle-vis" data-column="14" style="color: #0366d6 !important; cursor: pointer;">Comments</a>
+</div>
 <div style="width: 1800px">
     <table class="table table-striped table-bordered table-hover" id="ContributorTable" cellspacing="0" align="center"></table>
 </div>
@@ -58,6 +67,7 @@
     <br /><b>Last Name:</b><label id="lblEditInfoLastName" name="lblEditInfoLastName"></label>
     <br /><b>Year of Birth:</b><input type="text" id="txtEditInfoBirthYear" name="txtEditInfoBirthYear" />
     <br/><br /><b>Contributor Email:</b><input type="text" id="txtEditContributorEmail" name="txtEditContributorEmail" />
+    <br /><br /><b>Has Helper:</b> <input type="checkbox" id="chkHasHelper" name="chkHasHelper" />
     <br/><br/><b>Helper Email:</b><input type="text" id="txtEditHelperEmail" name="txtEditHelperEmail" />
     &nbsp;&nbsp;&nbsp;<b>Helper Phone:</b><input type="text" id="txtEditHelperPhone" name="txtEditHelperPhone" />
     <br />Comment:<br /><textarea id="txtEditInfoComment" name="txtEditInfoComment" rows="4" cols="50"></textarea>
@@ -65,15 +75,7 @@
     <select id="dlSubStatus" asp-items="@ViewBag.SubStatus"></select>
 </div>
 
-@*<div id="editSubStatus-dialog" style="display: none">
-    <label id="lblEditSubStatusMessage">Contributor:</label>
-    <input type="hidden" id="hidEditSubStatusContributorId" />
-    <br /><b>First Name:</b><label id="lblEditSubStatusFirstName" name="lblEditSubStatusFirstName"></label>
-    <br /><b>Last Name:</b><label id="lblEditSubStatusLastName" name="v"></label>
-    <br /><b>Status:</b>
-    <select id="SubStatus" asp-items="@ViewBag.SubStatus"></select>
-</div>
-*@
+
 <div class="spinner" style="display:none">
     <div class="center-div">
         <div class="inner-div">
@@ -122,92 +124,72 @@
                         },
                         {
                             "title": "ID",
-                            "data": "contributor.id",
+                            "data": "id",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.Id",
+                            "name": "Id",
                             "width": "250px"
                         },
 
                         {
                             "title": "FirstName",
-                            "data": "contributor.firstName",
+                            "data": "firstName",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.FirstName"
+                            "name": "FirstName"
                         },
                       
                         {
                             "title": "LastName",
-                            "data": "contributor.lastName",
+                            "data": "lastName",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.LastName"
+                            "name": "LastName"
                         },
                         {
                             "title": "BYear",
-                            "data": "contributor.birthYear",
+                            "data": "birthYear",
                             "searchable": true,
                             "orderable": true,
-                            "visible": true,
-                            "name": "Contributor.irthYear"
+                            "visible": false,
+                            "name": "BirthYear"
                         },
                         {
                             "title": "Gender",
-                            "data": null,
+                            "data": "gender",
                             "searchable": true,
                             "orderable": false,
-                            "visible": true,
-                            "name": null,
-                            "render": function (data, type, row) {
-                                if (data.contributor.contributorDetails.length>0) {
-                                    //return data.contributor.contributorDetails[0].gender;
-                                    return data.contributor.contributorDetails[0].gender; //data.contributor.contributorDetails.length;
-                                }
-                                else
-                                {
-                                    return '';
-                                }
-                                
-                            }
+                            "visible": false,
+                            "name": "Gender",                         
                         },
                         {
                             "title": "HelperEmail",
-                            "data": "contributor.helperEmail",
+                            "data": "helperEmail",
                             "searchable": true,
                             "orderable": true,
-                            "visible": true,
-                            "name": "Contributor.HelperEmail",
-                            "render": function (data, type, row) {
-                                if (row.contributor.helperInd == "Yes")
-                                    return row.contributor.helperEmail
-                                return '';
-                            }
+                            "visible": false,
+                            "name": "HelperEmail"
                         },
 
                         {
                             "title": "HelperPhone",
-                            "data": "contributor.helperPhoneNumber",
+                            "data": "helperPhoneNumber",
                             "searchable": true,
                             "orderable": true,
-                            "visible": true,
-                            "name": "Contributor.HelperPhoneNumber",
-                            "render": function (data, type, row) {
-                                if (row.contributor.helperInd == "Yes")
-                                    return row.contributor.helperPhoneNumber
-                                return '';
-                            }
+                            "visible": false,
+                            "name": "HelperPhoneNumber"                           
                         },
                         {
                             "title": "AppDate",
-                            "data": "contributor.approveTS",
+                            "data": "approveTS",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.ApproveTS",
+                            "width": "50px",
+                            "name": "ApproveTS",
                             "render": function (data) {
                                 if(data != null){
                                     var date = new Date(data);
@@ -220,19 +202,20 @@
                         },
                         {
                             "title": "#BLocks",
-                            "data": "numberAssignBlocks",
+                            "data": "assignedBlocksCnt",
                             "searchable": true,
                             "orderable": false,
                             "visible": true,
-                            "name": "NumberAssignBlocks"
+                            "name": "AssignedBlocksCnt"
                         },
                         {
                             "title": "LastRecording",
-                            "data": "lastRecording",
+                            "data": "lastRecordingDate",
                             "searchable": true,
                             "orderable": true,
+                            "width": "50px",
                             "visible": true,
-                            "name": "LastRecording",
+                            "name": "LastRecordingDate",
                             "render": function (data) {
                                 if(data!= null)
                                 {
@@ -246,75 +229,71 @@
                             }
                         },
                         {
-                            "title": "AnnAssigned ",
-                            "data": "annotatorAssigned",
+                            "title": "AnnAsg",
+                            "data": "assignedAnnotator",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "AnnotatorAssigned"
+                            "name": "AssignedAnnotator"
                         },
                         {
                             "title": "SentFollowUpDate",
-                            "data": "followUpDate",
+                            "data": "followUpDates",
                             "searchable": true,
                             "orderable": false,
-                            "visible": true,
-                            "name": "",
-                            "render": function (data) {
-                                if (data != "") {
-                                    var date = new Date(data);
-                                    var month = date.getMonth() + 1;
-                                    return (month.toString().length > 1 ? month : "0" + month) + "/" + date.getDate() + "/" + date.getFullYear() + "&nbsp;" + (date.getHours() < 10 ? ("0" + date.getHours()) : date.getHours()) + ":" + (date.getMinutes() < 10 ? ("0" + date.getMinutes()) : date.getMinutes());
+                            "visible": false,
+                            "name": "FollowUpDates",
+                            //"render": function (data) {
+                            //    if (data != "") {
+                            //        var date = new Date(data);
+                            //        var month = date.getMonth() + 1;
+                            //        return (month.toString().length > 1 ? month : "0" + month) + "/" + date.getDate() + "/" + date.getFullYear() + "&nbsp;" + (date.getHours() < 10 ? ("0" + date.getHours()) : date.getHours()) + ":" + (date.getMinutes() < 10 ? ("0" + date.getMinutes()) : date.getMinutes());
 
-                                }
-                                return '';
-
-                            }
-                        },
-                        {
-                            "title": "Status",
-                            "data": "approvedStatus",
-                            "searchable": true,
-                            "orderable": true,
-                            "visible": true,
-                            "name": "ApprovedStatus",
-                            //"render": function (data, type, row) {
-                            //    if (data.contributor.contributorSubStatus == null) {
-                            //        return '';
                             //    }
-                            //    return data.contributor.contributorSubStatus.name;
+                            //    return '';
+
                             //}
                         },
                         {
-                            "title": "Comments",
-                            "data": "contributor.comments",
+                            "title": "Status",
+                            "data": "subStatusName",
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "Contributor.Comments"
+                            "name": "SubStatusName"                          
+                        },
+                        {
+                            "title": "Comments",
+                            "data": "comments",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Comments"
                         },
 
                         {
                             "title": "Actions",
-                            "data": "contributor.id",
+                            "data": "id",
                             //"targets": 0,
                             "searchable": false,
                             "orderable": false,
-                            "width": '250px',
+                            "width": '200px',
                             "classDescription": 'dt-body-center',
                             "visible": true,
-                            "name": "Contributor.Id",
+                            "name": "Id",
                             "render": function (data, type, row) {
                                 var link="";
                                 if ($("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
-                                    link = '<a href="#" class="assignAnnotator" >Assign Annotators</a> | <a href="#" class="viewSITRating" >View SIT Rating</a><br>|'
-                                        + ' <a href="#" class="sendFollowUp">Send Follow-up </a>'
-                                        + '| <a href="#" class="editInfo">Edit Info</a> ';
+                                    link = '<a href="#" class="assignAnnotator" >Assign Annotators</a>'
+                                        + ' | <a href="#" class="editInfo">Edit Info</a> '
+                                        + '<br><a href="#" class="viewSITRating" >View SIT Rating</a>'
+                                        + ' | <a href="#" class="sendFollowUp">Send Follow-up </a>'
+                                        ;
                                     return link;
                                 }
                                 link = '<a href="#" class="viewSITRating" >View SIT Rating</a> '
-                                    + ' <a href="#" class="sendFollowUp">Send Follow-up </a>'
-                                    + '| <a href="#" class="editInfo">Edit Info</a> ';
+                                    + '<br><a href="#" class="sendFollowUp">Send Follow-up </a>'
+                                    + '<br><a href="#" class="editInfo">Edit Info</a> ';
                                 return link;
                                
                             }
@@ -326,13 +305,24 @@
                     "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
                 });
 
+            document.querySelectorAll('a.toggle-vis').forEach((el) => {
+                el.addEventListener('click', function (e) {
+                    e.preventDefault();
+ 
+                    let columnIdx = e.target.getAttribute('data-column');
+                    let column = oContributorTable.column(columnIdx);
+ 
+                    // Toggle the visibility
+                    column.visible(!column.visible());
+                });
+            });
 
             $('#ContributorTable tbody').on('click',
                 'td.details-control',
                 function() {
                     var tr = $(this).closest('tr');
                     var row = oContributorTable.row(tr);
-                    var contributorId = oContributorTable.row(this).data().contributor.id;
+                    var contributorId = oContributorTable.row(this).data().id;
                                        
 
                     if (row.child.isShown()) {
@@ -389,8 +379,8 @@
                 e.preventDefault();
                 var selectedRowData = oContributorTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
-                var getUrl = "@Url.Action("ViewSITRecordingRating", "SpeechFile")?contributorId=" + row.contributor.id + "&subRole=" + $("#SubRole").val();
-                //$("#lblContributor").text(row.id);
+                var getUrl = "@Url.Action("ViewSITRecordingRating", "SpeechFile")?contributorId=" + row.id + "&subRole=" + $("#SubRole").val();
+               
                 getRecordingRating(getUrl);
                 $("#rating-dialog").dialog('open');
                 return false;
@@ -432,7 +422,7 @@
                 e.preventDefault();
                 var selectedRowData = oContributorTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
-                var getUrl = "@Url.Action("GetAssignContributorAnnotators", "Contributor")?contributorId=" + row.contributor.id;
+                var getUrl = "@Url.Action("GetAssignContributorAnnotators", "Contributor")?contributorId=" + row.id;
                 //$("#lblContributor").text(row.id);
                 getAnnotators(getUrl);
                 $("#assignedAnnotators-dialog").dialog('open');
@@ -459,7 +449,6 @@
 
                     },
                     buttons: {
-
                         close: function () {
 
                             $(this).dialog('close');
@@ -476,11 +465,11 @@
                     e.preventDefault();
                     var selectedRowData = oContributorTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
-                    $("#hidFollowUpContributorId").val(row.contributor.id);
-                    $("#lblFollowUpFirstName").text(row.contributor.firstName);
-                    $("#lblFollowUpLastName").text(row.contributor.lastName);
-                    $("#lblFollowUpEmail").text(row.contributor.emailAddress);
-                    var content = "Dear " + row.contributor.firstName + ",\n\nSincerely,\n Speech Accessibility Project Team\nUniversity of Illinois Urbana - Champaign";
+                    $("#hidFollowUpContributorId").val(row.id);
+                    $("#lblFollowUpFirstName").text(row.firstName);
+                    $("#lblFollowUpLastName").text(row.lastName);
+                    $("#lblFollowUpEmail").text(row.emailAddress);
+                    var content = "Dear " + row.firstName + ",\n\nSincerely,\n Speech Accessibility Project Team\nUniversity of Illinois Urbana - Champaign";
                     $("#txtFollowUpMessage").val(content);
                     sendFollowUpContributor('@Url.Action("SendFollowUpToContributor", "Contributor")', oContributorTable);
                     $("#sendFollowUp-dialog").dialog('open');
@@ -496,37 +485,43 @@
                     var selectedRowData = oContributorTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
                     $("#lblEdiInfoMessage").text("Update Contributor Information:");
-                    $("#hidEditInfoContributorId").val(row.contributor.id);
-                    $("#lblEditInfoFirstName").text(row.contributor.firstName);
-                    $("#lblEditInfoLastName").text(row.contributor.lastName);
-                    $("#txtEditContributorEmail").val(row.contributor.emailAddress);
-                    $("#txtEditHelperEmail").val(row.contributor.helperEmail);
-                    $("#txtEditInfoBirthYear").val(row.contributor.birthYear);
-                    //if (row.contributor.helperInd == "Yes")
-                    //    $("#txtEditHelperEmail").prop("disabled", false);
-                    //else
-                    //    $("#txtEditHelperEmail").prop("disabled", true);
-                    if (row.contributor.helperInd == "Yes") {
+                    $("#hidEditInfoContributorId").val(row.id);
+                    $("#lblEditInfoFirstName").text(row.firstName);
+                    $("#lblEditInfoLastName").text(row.lastName);
+                    $("#txtEditContributorEmail").val(row.emailAddress);
+                    $("#txtEditHelperEmail").val(row.helperEmail);
+                    $("#txtEditInfoBirthYear").val(row.birthYear);       
+                    
+                    if (row.helperInd == "Yes") {
+                        $("#chkHasHelper").prop('checked', true);
                         $("#txtEditHelperEmail").prop("disabled", false);
-                        $("#txtEditHelperPhone").prop("disabled", false);
-                       
-                    }
-                        
+                        $("#txtEditHelperPhone").prop("disabled", false);                       
+                    }                        
                     else
                     {
+                        $("#chkHasHelper").prop('checked', false);
                         $("#txtEditHelperEmail").prop("disabled", true);
-                        $("#txtEditHelperPhone").prop("disabled", true);
-                        
+                        $("#txtEditHelperPhone").prop("disabled", true);                        
                     }
 
-                    $("#txtEditInfoComment").val(row.contributor.comments);
-                    $("#dlSubStatus").val(row.contributor.subStatusId).trigger("chosen:updated");
+                    $("#txtEditInfoComment").val(row.comments);
+                    $("#dlSubStatus").val(row.subStatusId).trigger("chosen:updated");
                     editContributorInfo('@Url.Action("EditContributorInfo", "Contributor")', oContributorTable, "Edit Contributor Information",2);
                     $("#editInfo-dialog").dialog('open');
 
             });
 
-         
+
+            $('#chkHasHelper').change(function () {
+                if (this.checked) {
+                    $("#txtEditHelperEmail").prop("disabled", false);
+                    $("#txtEditHelperPhone").prop("disabled", false);
+                }
+                else {
+                    $("#txtEditHelperEmail").prop("disabled", true);
+                    $("#txtEditHelperPhone").prop("disabled", true);
+                }
+            });         
 
 
         });//End document ready

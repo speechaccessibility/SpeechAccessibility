@@ -1,0 +1,206 @@
+﻿@page
+@model ALSRegisterModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<body onload="loadRegisterPage()">
+<h1>@ViewData["Title"]</h1>
+
+<form asp-route-returnUrl="@Model.ReturnUrl" method="post" id="registerForm">
+    <hr />
+
+
+    <div asp-validation-summary="All" class="text-danger">
+                    <h2>Register Errors:</h2>
+                </div>
+
+    <input hidden value="6" asp-for="Input.etiologyId" />
+  
+    <div class="form-row">
+        <span style="color:red">*</span>
+        <div class="form-group col-md-8">
+            <div class="form-group">
+                <fieldset>
+                    <legend>Are you 18 years of age or older?</legend>
+
+                    <label for="eighteenOrOlderYes"><input  id="eighteenOrOlderYes" asp-for="Input.eighteenOrOlderInd" type="radio" value="Yes"  onclick="checkEighteenInd()"/> Yes</label>
+
+                    <label for="eighteenOrOlderNo"><input  id="eighteenOrOlderNo" asp-for="Input.eighteenOrOlderInd" type="radio" value="No" onclick="checkEighteenInd()" /> No</label>
+                </fieldset>
+                <br /><span asp-validation-for="Input.eighteenOrOlderInd" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+        <div class="form-row" id="birthYearDiv">
+            <span style="color:red">*</span>
+        <div class="form-group col-md-8">
+            <div class="form-group">
+                <fieldset>
+                    <legend>What is your year of birth?</legend>
+                    <label for="birthYear"></label> <select id="birthYear" asp-for="Input.BirthYear" asp-items="@Model.yearList"> <option value="" selected>Please Select</option></select>           
+                </fieldset>
+                    <br /> <span class="text-danger">@Html.ValidationMessage("birthYearValidation")</span>
+            </div>
+        </div>
+        </div>
+    <div class="form-row">
+        <span style="color:red">*</span>
+        <div class="form-group col-md-6">
+            <div class="form-group">
+                <label for="Input_state">What state do you live in?<br /> (We are currently recruiting U.S. residents only.)</label>
+                <select  asp-for="Input.state" asp-items="@Model.stateList" data-dropup-auto="false">
+                    <option value="" selected>Please Select</option>
+                </select>
+                <br /><span asp-validation-for="Input.state" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col-md-3">
+            <label asp-for="Input.firstName"><span style="color:red">*</span>First Name</label>
+            <input  asp-for="Input.firstName" class="form-control" />
+            <span asp-validation-for="Input.firstName" class="text-danger"></span>
+        </div>
+        <div class="form-group col-md-3">
+            <label asp-for="Input.middleName">Middle Name</label>
+            <input  asp-for="Input.middleName" class="form-control" />
+            <span asp-validation-for="Input.middleName" class="text-danger"></span>
+        </div>
+        <div class="form-group col-md-3">
+            <label asp-for="Input.lastName"><span style="color:red">*</span>Last Name</label>
+            <input  asp-for="Input.lastName" class="form-control" />
+            <span asp-validation-for="Input.lastName" class="text-danger"></span>
+        </div>
+            </div>
+        <div class="form-row">
+            <div class="form-group col-sm-4">
+            <label asp-for="Input.phoneNumber"><span style="color:red">*</span>Phone Number</label>
+            <input  asp-for="Input.phoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
+            <span asp-validation-for="Input.phoneNumber" class="text-danger"></span>
+        </div>
+        </div>
+    <div class="form-row">
+        <div class="form-group col-sm-4">
+
+            <label asp-for="Input.Email"><span style="color:red">*</span>Email</label>
+            <input id="contributorEmail" asp-for="Input.Email" class="form-control" onkeyup="compareEmails()" />
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-sm-4">
+
+            <label asp-for="Input.ConfirmEmail"><span style="color:red">*</span>Confirm Email</label>
+            <input id="compareEmail" asp-for="Input.ConfirmEmail" class="form-control" onkeyup="compareEmails()" />
+            <span id="confirmEmailValidation" asp-validation-for="Input.ConfirmEmail" class="text-danger"></span>
+        </div>
+
+    </div>
+    <div class="form-row">
+              <div class="form-group col-sm-4">
+            <br/>
+            <details open>
+                <summary>Password Requirements</summary>
+                <ul>
+                    <li>Passwords must have at least one non alphanumeric character.</li>
+                    <li>Passwords must have at least one digit ('0'-'9').</li>
+                    <li>Passwords must have at least one uppercase ('A'-'Z').</li>
+                    <li>The Password must be at least 9 and at max 100 characters long.</li>
+                </ul>
+            </details></div>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-sm-4">
+            <label asp-for="Input.Password"><span style="color:red">*</span>Password</label>
+            <input id="password"  asp-for="Input.Password" class="form-control" />
+            <span asp-validation-for="Input.Password" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group col-sm-4">           
+            <label asp-for="Input.ConfirmPassword"><span style="color:red">*</span>Confirm Password</label>
+            <input id="confirmPassword" asp-for="Input.ConfirmPassword" class="form-control" />
+            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+        </div>
+    </div>
+        <div>
+            <input type="checkbox" onclick="showHidePassword()"> Show Password          
+        </div>
+        <br />
+
+    <div class="form-row">
+        <div class="form-group">
+            <fieldset>               
+                <legend><span style="color:red">*</span>Will someone be helping you with this process? (caregiver, family, or friend)</legend>
+                
+                <label for="helperYes"><input  id="helperYes" asp-for="Input.HelperInd" type="radio" value="Yes" onclick="checkHelperInd()" /> Yes</label>
+                
+                <label for="helperNo"><input  id="helperNo" asp-for="Input.HelperInd" type="radio" value="No" onclick="checkHelperInd()" /> No</label>
+            </fieldset>
+            <br /> <span asp-validation-for="Input.HelperInd" class="text-danger"></span>
+        </div>
+    </div>
+        <div class="form-row" id="helperDiv">
+            <div class="form-group col-md-3">
+                <label for="helperEmail"><span style="color:red">*</span>Assistant's Email</label>
+                <input  id="helperEmail" asp-for="Input.HelperEmail" class="form-control" />
+                <span class="text-danger">@Html.ValidationMessage("helperEmailValidation")</span>
+            </div>
+            <div class="form-group col-md-3">
+                <label for="helperFirstName"><span style="color:red">*</span>Assistant's First Name</label>
+                <input  id="helperFirstName" asp-for="Input.HelperFirstName" class="form-control" />
+                <span class="text-danger">@Html.ValidationMessage("helperFirstNameValidation")</span>
+            </div>
+            <div class="form-group col-md-3">
+                <label for="helperLastName"><span style="color:red">*</span>Assistant's Last Name</label>
+                <input  id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
+                <span class="text-danger">@Html.ValidationMessage("helperLastNameValidation")</span>
+            </div>
+                <div class="form-group col-sm-4">
+                <label asp-for="Input.HelperPhoneNumber"><span style="color:red">*</span>Assistant's Phone Number</label>
+                <input id="helperPhoneNumber" asp-for="Input.HelperPhoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
+                   <span class="text-danger">@Html.ValidationMessage("helperPhoneNumberValidation")</span><br/>
+                         <span asp-validation-for="Input.HelperPhoneNumber" class="text-danger"></span>
+            </div>
+        </div>
+
+    <button class="btn btn-primary" id="registerSubmit">Submit</button>
+
+</form>
+</body>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script>
+
+    $(document).ready(function () {
+
+        $("#registerForm").submit(function(){
+            
+            //disable the submit button
+            $("#registerSubmit").attr("disabled", true);
+            return true;
+    });
+    });
+
+    function enableSubmit()
+    {
+            $("#registerSubmit").attr("disabled", false);
+    }
+
+    const form = document.querySelector('form');
+    form.addEventListener('change', function () {
+        enableSubmit();
+    });
+    form.addEventListener('keyup', function () {
+        enableSubmit();
+    });
+
+</script>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

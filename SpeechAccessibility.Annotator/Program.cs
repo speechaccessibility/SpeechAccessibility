@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -24,6 +25,8 @@ namespace SpeechAccessibility.Annotator
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.ConfigureKestrel(o => { o.Limits.KeepAliveTimeout = TimeSpan.FromHours(8); });
                 });
+
     }
 }

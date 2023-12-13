@@ -30,6 +30,10 @@ namespace SpeechAccessibility
         public DbSet<Maintenance> Maintenance { get; set; }
 
         public DbSet<BlockMasterOfPrompts> BlockMasterOfPrompts {get;set;}
+
+        public DbSet<PromptEtiology> PromptEtiology { get; set; }
+
+        public DbSet<FollowupPrompt> FollowupPrompt { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);

@@ -29,6 +29,13 @@ namespace SpeechAccessibility.Data
         public DbSet<ContributorRace> ContributorRace { get; set; }
 
         public DbSet<LoginSession> LoginSession { get; set; }  
+        
+        public DbSet<Etiology> Etiology { get; set; }  
+        
+        public DbSet<LegalGuardian> LegalGuardian { get; set; }
+
+        public DbSet<Assent> Assent { get; set; }
+        
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
@@ -66,6 +73,22 @@ namespace SpeechAccessibility.Data
            .HasDefaultValueSql("GETDATE()");
 
             builder.Entity<Consent>()
+           .Property(s => s.UpdateTS)
+            .HasDefaultValueSql("GETDATE()");
+
+            builder.Entity<LegalGuardian>()
+              .Property(c => c.CreateTS)
+          .HasDefaultValueSql("GETDATE()");
+
+            builder.Entity<LegalGuardian>()
+           .Property(s => s.UpdateTS)
+            .HasDefaultValueSql("GETDATE()");
+
+            builder.Entity<Assent>()
+              .Property(c => c.CreateTS)
+          .HasDefaultValueSql("GETDATE()");
+
+            builder.Entity<Assent>()
            .Property(s => s.UpdateTS)
             .HasDefaultValueSql("GETDATE()");
 

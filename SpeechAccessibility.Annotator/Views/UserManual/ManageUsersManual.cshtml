@@ -1,0 +1,52 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<p><b>Manager User</b></p>
+<p>The Manage Users tab allows users to assign and modify roles to the users using their NetID. The page on click displays the below view:
+It contains the table with following columns:</p>
+<ul>
+<li>Last Name</li>
+<li>First Name</li>
+<li>NetID</li>
+<li>Role</li> 
+<li>Actions
+    <ul>
+        <li>Edit</li>
+        <li>Delete</li>
+    </ul>
+</li>
+</ul>
+<p>It also has the Search bar to filter the table results using:</p>
+<ul>
+<li>Last Name</li>
+<li>First Name</li>
+<li>NetID</li>
+<li>Role</li>
+</ul>
+<img src="/images/manageusers-1.png" />
+<p>The following section allows users to search for specific user with their “NetID”</p>
+<img src="/images/manageusers-2.png" />
+<p>Upon entering NetID and clicking the “Check NetID” a new section appears below </p>
+<img src="/images/manageusers-3.png" />
+<p>Rules of Add/Update roles:</p>
+<ul>
+    <li>Only Admin can add or modify user roles</li>
+    <li>The role of the user who is already admin cannot be modified (hence the message in Red is displayed in the above screenshot and the Add button is disabled)</li>
+</ul>
+<p>For a non-admin user, the message does not appear and roles can be modified.</p>
+<img src="/images/manageusers-4.png" />
+<p><b>Actions:</b></p>
+<p>Edit:</p>
+<p>Upon clicking Edit hyperlink in the table, the user details are opened up in a section above the table</p>
+<img src="/images/manageusers-5.png" />
+<p>A user can now modify the roles of that user using this section and click save.</p>
+<p>Clicking ‘Clear’ will clear/reset the user NetID from the text box</p>
+<img src="/images/manageusers-2.png" />
+<p>Upon clicking the ‘Delete’ hyperlink the below prompt is requested for the user.</p>
+<img src="/images/manageusers-6.png" />
+<p>On clicking ‘OK’ user id will be removed and a success message appears in green as shown below</p>
+<img src="/images/manageusers-7.png" />
+
+

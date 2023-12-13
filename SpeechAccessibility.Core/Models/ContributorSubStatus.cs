@@ -10,7 +10,7 @@ namespace SpeechAccessibility.Core.Models
     {
         public ContributorSubStatus()
         {
-            Contributor = new HashSet<Contributor>();
+            Contributor = new HashSet<ContributorView>();
         }
 
         public int Id { get; set; }
@@ -18,6 +18,6 @@ namespace SpeechAccessibility.Core.Models
         public string Name { get; set; }
         public int? DisplayOrder { get; set; }
         public  ContributorStatus Status { get; set; }
-        public  ICollection<Contributor> Contributor { get; set; }
+        public  ICollection<ContributorView> Contributor { get; set; }
     }
 }

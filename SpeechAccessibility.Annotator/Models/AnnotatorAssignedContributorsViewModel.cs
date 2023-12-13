@@ -6,7 +6,7 @@ namespace SpeechAccessibility.Annotator.Models
     public class AnnotatorAssignedContributorsViewModel
     {
         public int AnnotatorId { get; set; }
-        public List<Contributor> AssignedContributors { get; set; }
+        public List<ContributorView> AssignedContributors { get; set; }
         
     }
 }

@@ -44,6 +44,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xabe.FFmpeg;
+using System.Speech.Synthesis;
+using Prompt = SpeechAccessibility.Models.Prompt;
 
 namespace SpeechAccessibility.Controllers
 {
@@ -58,7 +60,7 @@ namespace SpeechAccessibility.Controllers
         private readonly IConfiguration _config;
 
         public HomeController(ILogger<HomeController> logger, IdentityContext identityContext, RecordingContext recordingContext, IMailService emailSender, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration config)
-        {         
+        {
             _logger = logger;
             _identityContext = identityContext;
             _recordingContext = recordingContext;
@@ -71,7 +73,7 @@ namespace SpeechAccessibility.Controllers
         public IActionResult Index()
         {
             DateTime currentDate = DateTime.Now;
-            ViewBag.MaintenanceMessage = _recordingContext.Maintenance.Where(m => m.StartDate <= currentDate && m.EndDate >= currentDate).Where(m=>m.ContributorInd==true).Select(m=>m.Message).FirstOrDefault();
+            ViewBag.MaintenanceMessage = _recordingContext.Maintenance.Where(m => m.StartDate <= currentDate && m.EndDate >= currentDate).Where(m => m.ContributorInd == true).Select(m => m.Message).FirstOrDefault();
             return View();
         }
 
@@ -83,7 +85,7 @@ namespace SpeechAccessibility.Controllers
         [HttpPost]
         public void LogError(IFormCollection form)
         {
-            string errorMessage = form["error"]; 
+            string errorMessage = form["error"];
             string date = DateTime.Now.ToString("yyyy-MM-dd");
             string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
 
@@ -99,13 +101,13 @@ namespace SpeechAccessibility.Controllers
         [HttpPost]
         public void SaveRecording(IFormCollection form)
         {
-            try 
+            try
             {
-                  SaveToDB(form);
-                  SaveToDisk(form);
+                SaveToDB(form);
+                SaveToDisk(form);
 
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 string date = DateTime.Now.ToString("yyyy-MM-dd");
                 string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
@@ -181,14 +183,14 @@ namespace SpeechAccessibility.Controllers
                         _recordingContext.Block.Remove(recording.Block);
                     }
 
-                      _recordingContext.SaveChanges();                    
+                    _recordingContext.SaveChanges();
 
                 }
                 //Update retry count of existing recording
                 else
                 {
                     existingRecording.RetryCount = retryCount;
-                     _recordingContext.SaveChanges();
+                    _recordingContext.SaveChanges();
                 }
 
             }
@@ -206,7 +208,7 @@ namespace SpeechAccessibility.Controllers
                 }
 
             }
-       
+
         }
 
         private void SaveToDisk(IFormCollection form)
@@ -237,10 +239,11 @@ namespace SpeechAccessibility.Controllers
                 CopyFile(file, blockDirectory, rawFullPath);
 
             }
-            catch {
+            catch
+            {
 
                 throw;
-            }               
+            }
 
         }
 
@@ -250,14 +253,14 @@ namespace SpeechAccessibility.Controllers
 
             string modifiedFileLocation = blockDirectory + "\\modified";
 
-            string modifiedFileName= Path.Combine(modifiedFileLocation, file.FileName);
+            string modifiedFileName = Path.Combine(modifiedFileLocation, file.FileName);
 
             if (System.IO.File.Exists(modifiedFileName))
             {
                 System.IO.File.Delete(modifiedFileName);
             }
 
-             System.IO.File.Copy(fileName, modifiedFileName);
+            System.IO.File.Copy(fileName, modifiedFileName);
         }
 
         private static void CreateSubdirectories(Guid contributorId, int blockId, string fileLocation, string contributorDirectory, string blockDirectory)
@@ -276,7 +279,14 @@ namespace SpeechAccessibility.Controllers
             blockDir.CreateSubdirectory("modified");
         }
 
-        [Authorize][HttpGet]
+        public IActionResult ApprovalRequired(int etiologyId)
+        {
+            ViewBag.Etiology = etiologyId;
+            return View("ApprovalRequired");
+        }
+
+        [Authorize]
+        [HttpGet]
         public IActionResult RecordPrompt()
         {
             RecordPromptModel model = new RecordPromptModel();
@@ -287,17 +297,18 @@ namespace SpeechAccessibility.Controllers
             Contributor contributor = getCurrentContributor();
 
             Guid contributorId = contributor.Id;
-            string contributorStatus = _identityContext.Contributor.Where(c => c.Id == contributor.Id).Select(c => c.Status.Name).First();
+            int statusId = contributor.StatusId;
+            string contributorStatus = _identityContext.ContributorStatus.Where(c => c.Id == statusId).Select(c => c.Name).FirstOrDefault();
             int retryCount = 0;
             int retryMax = Int32.Parse(_config["RetryMax"]);
 
             //Count the number or recordings that the current contributor has completed, excluding section 1
             int totalCount = _recordingContext.Prompt.Where(p => _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id != 1).Count();
 
-            int assessmentMax = _recordingContext.Prompt.Where(p => p.Category.Id == 1 && p.Active=="Yes").Count();
+            int assessmentMax = _recordingContext.Prompt.Where(p => p.Category.Id == 1 && p.Active == "Yes").Count();
             int assessmentCount = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt).Where(p => p.Category.Id == 1).Count();
 
-            int dysarthriaAssessmentMax = _recordingContext.Prompt.Where(p => p.Category.Id == 1 && p.SubCategory.Id == 3 && p.Active=="Yes").Count();
+            int dysarthriaAssessmentMax = _recordingContext.Prompt.Where(p => p.Category.Id == 1 && p.SubCategory.Id == 3 && p.Active == "Yes").Count();
             int dysarthriaAssessmentCount = _recordingContext.Prompt.Where(p => _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 1 && p.SubCategory.Id == 3).Count();
 
             int currentBlockOfPromptsCount = 0;
@@ -306,126 +317,117 @@ namespace SpeechAccessibility.Controllers
 
             string developerMode = _config["DeveloperMode"];
 
-            if (dysarthriaAssessmentCount > 0 || contributor.ParkinsonsInd =="Yes")
+            Recording lastRecording = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).AsEnumerable().LastOrDefault();
+
+            //Approval is required after registration
+            if ("Approved".Equals(contributorStatus) || "Yes".Equals(developerMode))
             {
-                if (dysarthriaAssessmentCount >= dysarthriaAssessmentMax || contributor.ParkinsonsInd == "Yes")
+                int consentCount = _identityContext.Consent.Where(c => c.Contributor.Id == contributorId && c.ConsentType != "Caregiver").Count();
+
+                //Only route to the recording page after they have completed the consent page
+                if (consentCount > 0)
                 {
-                    phonationPromptCount = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt).Where(p => p.SubCategory.Id == 4).Count();
+                    int caregiverConsentCount = _identityContext.Consent.Where(c => c.Contributor.Id == contributorId && c.ConsentType == "Caregiver").Count();
+                    string helperInd = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.HelperInd).First();
 
-                    //After they complete the dysarthria prompts, they will do the phonation prompt 3 times
-                    if (phonationPromptCount == 3 || contributor.ParkinsonsInd == "Yes")
-                    {
-                        //After the phonation prompts are complete, they will do one spontaneous speech prompt
-                        int spontaneousPromptCount = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt).Where(p => p.SubCategory.Id == 5).Count();
-                        if (spontaneousPromptCount > 0 || contributor.ParkinsonsInd == "Yes")
+                    if (contributor.Etiology.Id == 2)
+                    {                      
+                        int legalGuardianCount = _identityContext.LegalGuardian.Where(l => l.ContributorId == contributorId).Count();
+                        int assentCount = _identityContext.Assent.Where(a => a.ContributorId == contributorId).Count();
+
+                        if ("Yes".Equals(helperInd) && caregiverConsentCount == 0)
                         {
-        
-                            Recording lastRecording = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).AsEnumerable().LastOrDefault();
-
-                            //Approval is required after the first section has been completed
-                            if ("Approved".Equals(contributorStatus) || "Yes".Equals(developerMode))
-                            {
-                                int consentCount = _identityContext.Consent.Where(c => c.Contributor.Id == contributorId).Count();
-
-                                //Only route to the recording page after they have completed the consent page
-                                if (consentCount > 0)
-                                {
-                                    int contributorDetailsCount = _identityContext.ContributorDetails.Where(c => c.Contributor.Id == contributorId).Count();
-
-                                    //Display the last prompt they recorded if the max retry count hasn't been met
-                                    if (lastRecording != null && lastRecording.RetryCount < retryMax)
-                                    {
-                                        blockId = _recordingContext.Recording.Where(r => r.Id == lastRecording.Id).Select(r => r.Block.Id).First();
-                                        prompt = _recordingContext.Recording.Where(r => r.Id == lastRecording.Id).Select(r => r.OriginalPrompt).First();
-                                        category = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.Category).FirstOrDefault();
-                                        retryCount = lastRecording.RetryCount;
-                                        SubCategory currentSubCategory = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.SubCategory).FirstOrDefault();
-
-                                        if (currentSubCategory != null)
-                                        {
-                                            subCategory = currentSubCategory;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        blockId = setBlock(contributorId);
-
-                                        //If there are no more blocks, route to complete page
-                                        if (blockId == 0)
-                                        {
-                                           
-                                            return RedirectToAction("CompleteConfirmation");
-                                        }
-                                        //Select a prompt from the current block that has not already been recorded by the contributor
-                                        prompt = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId).Select(p => p.Prompt).Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId && r.Block.Id == blockId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).FirstOrDefault();
-                                        category = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.Category).FirstOrDefault();
-
-                                        SubCategory currentSubCategory = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.SubCategory).FirstOrDefault();
-
-                                        if (currentSubCategory != null)
-                                        {
-                                            subCategory = currentSubCategory;
-                                        }
-
-                                    }
-
-                                    currentBlockOfPromptsCount = _recordingContext.Prompt.Where(p => _recordingContext.Recording.Where(r => r.ContributorId == contributorId && r.RetryCount == retryMax && r.Block.Id == blockId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Count();
-                                }
-                                //Route to the consent page if they haven't provided consent
-                                else
-                                {
-                                    return RedirectToPage("/Account/Consent", new { area = "Identity" });
-
-                                }
-
-                            }
-                            //Route to the ApprovalRequired page if the status isn't Approved
-                            else if ("New".Equals(contributorStatus) || "Non-Responsive".Equals(contributorStatus))
-                            {
-                                ViewBag.Parkinsons = contributor.ParkinsonsInd;
-                                return View("ApprovalRequired");
-                            }
-                            else if (("Denied".Equals(contributorStatus)))
-                            {
-                                return View("Denied");
-                            }
-
+                            return RedirectToPage("/Account/DSCaregiverConsent", new { area = "Identity" });
                         }
-                        else
+
+                        if (legalGuardianCount > 0 && assentCount == 0)
                         {
-                            //Select spontaneous speech prompt
-                            List<Prompt> spontaneousSpeechList = _recordingContext.Prompt.Where(p => p.Category.Id == 1 && p.SubCategory.Id == 5 && p.Active == "Yes" ).ToList();
-                            model.spontaneousSpeechList = spontaneousSpeechList;
-                            category.Id = 1;
-                            subCategory.Id = 5;
-
+                            return RedirectToPage("/Account/DSAssent", new { area = "Identity" });
                         }
-                    }                  
-                    else
+                    }
+                    else if (contributor.Etiology.Id == 6)
                     {
-                        //Select phonation prompt
-                        prompt = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 1 && p.SubCategory.Id == 4 && p.Active=="Yes").First();
-                        category.Id = 1;
-                        subCategory.Id = 4;
+                        if ("Yes".Equals(helperInd) && caregiverConsentCount == 0)
+                        {
+                            return RedirectToPage("/Account/ALSCaregiverConsent", new { area = "Identity" });
+                        }
                     }
 
+                    int contributorDetailsCount = _identityContext.ContributorDetails.Where(c => c.Contributor.Id == contributorId).Count();
+
+                    //Display the last prompt they recorded if the max retry count hasn't been met
+                    if (lastRecording != null && lastRecording.RetryCount < retryMax)
+                    {
+                        blockId = _recordingContext.Recording.Where(r => r.Id == lastRecording.Id).Select(r => r.Block.Id).First();
+                        prompt = _recordingContext.Recording.Where(r => r.Id == lastRecording.Id).Select(r => r.OriginalPrompt).First();
+                        category = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.Category).FirstOrDefault();
+                        retryCount = lastRecording.RetryCount;
+                        SubCategory currentSubCategory = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.SubCategory).FirstOrDefault();
+
+                        if (currentSubCategory != null)
+                        {
+                            subCategory = currentSubCategory;
+                        }
+                    }
+                    else
+                    {
+                        blockId = setBlock(contributorId);
+
+                        //If there are no more blocks, route to complete page
+                        if (blockId == 0)
+                        {
+
+                            return RedirectToAction("CompleteConfirmation");
+                        }
+                        //Select a prompt from the current block that has not already been recorded by the contributor
+                        prompt = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId).Select(p => p.Prompt).Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId && r.Block.Id == blockId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).FirstOrDefault();
+                        category = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.Category).FirstOrDefault();
+
+                        SubCategory currentSubCategory = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.SubCategory).FirstOrDefault();
+
+                        if (currentSubCategory != null)
+                        {
+                            subCategory = currentSubCategory;
+                        }
+
+                    }
+
+                    currentBlockOfPromptsCount = _recordingContext.Prompt.Where(p => _recordingContext.Recording.Where(r => r.ContributorId == contributorId && r.RetryCount == retryMax && r.Block.Id == blockId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Count();
                 }
+                //Route to the consent page if they haven't provided consent
                 else
                 {
-                    //Select a prompt from section one that has not already been recorded by the current contributor
-                    prompt = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 1 && p.SubCategory.Id == 3 && p.Active=="Yes").First();
-                    category.Id = 1;
-                    subCategory.Id = 3;
-                }
-            }
-            else
-            {
-                //Select first prompt in section one
-                prompt = _recordingContext.Prompt.Where(p => p.Category.Id == 1 && p.SubCategory.Id == 3 && p.Active == "Yes" ).FirstOrDefault();
-                category.Id = 1;
-                subCategory.Id = 3;
-            }
+                    if (contributor.Etiology.Id == 2)
+                    {
+                        return RedirectToPage("/Account/DSConsent", new { area = "Identity" });
+                    }
+                    if (contributor.Etiology.Id == 6)
+                    {
+                        return RedirectToPage("/Account/ALSConsent", new {area="Identity"});
+                    }
+                    if (contributor.Etiology.Id == 1)
+                    {
+                        return RedirectToPage("/Account/ConsentLanguage", new { area = "Identity" });
+                    }
+                    else
+                    {
+                        return RedirectToPage("/Account/Consent", new { area = "Identity" });
+                    }
 
+
+                }
+
+            }
+            //Route to the ApprovalRequired page if the status isn't Approved
+            else if ("New".Equals(contributorStatus) || "Non-Responsive".Equals(contributorStatus))
+            {
+                ViewBag.Etiology = contributor.Etiology.Id;
+                return View("ApprovalRequired");
+            }
+            else if (("Denied".Equals(contributorStatus)))
+            {
+                return View("Denied");
+            }
 
             prompt.Category = category;
             prompt.SubCategory = subCategory;
@@ -435,14 +437,16 @@ namespace SpeechAccessibility.Controllers
             //There are three options for the last assessment prompt. We only want to count this as one question
             model.assessmentMax = assessmentMax - 2;
             model.assessmentCount = assessmentCount + 1;
-            model.digitalCommandMax = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId && p.Category.Id==2).Count();
+            model.digitalCommandMax = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId && p.Category.Id == 2).Count();
             model.novelSentenceMax = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId && p.Category.Id == 3).Count();
+            model.openEndedMax = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId && p.Category.Id == 4).Count();
             model.currentBlockOfPromptsCount = currentBlockOfPromptsCount;
             model.totalBlockCount = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.Block).Where(b => b != null).Distinct().Count();
             model.blockId = blockId;
             model.blockMax = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId).Count();
             model.retryCount = retryCount;
             model.phonationPromptCount = phonationPromptCount;
+            model.etiologyId = contributor.Etiology.Id;
 
             HttpContext.Response.Cookies.Append("phonationPromptCount", phonationPromptCount.ToString());
 
@@ -463,6 +467,12 @@ namespace SpeechAccessibility.Controllers
             Contributor contributor = _identityContext.Contributor
                .Where(o => o.IdentityUser.Id == id)
                .FirstOrDefault();
+
+            Etiology etiology = _identityContext.Contributor
+               .Where(o => o.IdentityUser.Id == id)
+               .Select(o => o.Etiology)
+               .FirstOrDefault();
+            contributor.Etiology = etiology;
             return contributor;
         }
 
@@ -474,7 +484,7 @@ namespace SpeechAccessibility.Controllers
             if (numberOfAssignedBlocks != 0)
             {
                 //Get the last assigned block id
-                blockId = _recordingContext.ContributorAssignedBlock.Where(r => r.ContributorId == contributorId).OrderBy(r=>r.CreateTS).Select(r => r.Block.Id).LastOrDefault();
+                blockId = _recordingContext.ContributorAssignedBlock.Where(r => r.ContributorId == contributorId).OrderBy(r => r.CreateTS).Select(r => r.Block.Id).LastOrDefault();
 
                 int blockCount = _recordingContext.Recording.Where(r => r.ContributorId == contributorId && r.Block.Id == blockId).Count();
                 int blockMax = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId).Count();
@@ -482,7 +492,7 @@ namespace SpeechAccessibility.Controllers
                 //if the last block is complete, set a new block
                 if (blockCount == blockMax)
                 {
-                    Block newBlock  = createAndAssignBlock(contributorId);
+                    Block newBlock = createAndAssignBlock(contributorId);
 
                     if (newBlock == null)
                     {
@@ -493,7 +503,7 @@ namespace SpeechAccessibility.Controllers
                 }
             }
             //If no blocks have been assigned, create one 
-            else 
+            else
             {
                 Block newBlock = createAndAssignBlock(contributorId);
 
@@ -512,12 +522,29 @@ namespace SpeechAccessibility.Controllers
 
         private Block createAndAssignBlock(Guid contributorId)
         {
+            int etiologyId = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.Etiology.Id).FirstOrDefault();
+
             int assignedBlockCount = _recordingContext.ContributorAssignedBlock.Where(c => c.ContributorId == contributorId).Count();
             int blocksToComplete = Int32.Parse(_config["BlocksToComplete"]);
-            int digitalCommandMax = Int32.Parse(_config["DigitalCommandMax"]);
-            int novelSentenceMax = Int32.Parse(_config["NovelSentenceMax"]);
-            int openEndedPromptMax = Int32.Parse(_config["OpenEndedPromptMax"]);
-            int proceduralPromptMax = Int32.Parse(_config["ProceduralPromptMax"]);
+            int digitalCommandMax = 0;
+            int novelSentenceMax = 0;
+            int openEndedPromptMax = 0;
+            int proceduralPromptMax = 0;
+
+            if (etiologyId == 2)
+            {
+                digitalCommandMax = Int32.Parse(_config["DSDigitalCommandMax"]);
+                openEndedPromptMax = Int32.Parse(_config["DSOpenEndedPromptMax"]);
+                proceduralPromptMax = Int32.Parse(_config["DSProceduralPromptMax"]);
+            }
+            else
+            {
+                digitalCommandMax = Int32.Parse(_config["DefaultDigitalCommandMax"]);
+                novelSentenceMax = Int32.Parse(_config["DefaultNovelSentenceMax"]);
+                openEndedPromptMax = Int32.Parse(_config["DefaultOpenEndedPromptMax"]);
+                proceduralPromptMax = Int32.Parse(_config["DefaultProceduralPromptMax"]);
+            }
+
 
             if (assignedBlockCount >= blocksToComplete)
             {
@@ -539,14 +566,34 @@ namespace SpeechAccessibility.Controllers
             List<Prompt> openEndedPromptList = new List<Prompt>();
             List<Prompt> proceduralPromptList = new List<Prompt>();
 
-           
-            //The first and last block should contain the same prompts in a random order
-            if (assignedBlockCount == (blocksToComplete - 1) || assignedBlockCount==0)
+            int blockMasterId = 1;
+
+            if (etiologyId == 2)
             {
-                digitalCommandList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == 1 && b.Category.Id == 2).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
-                novelSentenceList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == 1 && b.Category.Id == 3).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
-                openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == 1 && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 1).OrderBy(r => Guid.NewGuid()).ToList();
-                proceduralPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == 1 && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 2).OrderBy(r => Guid.NewGuid()).ToList();
+                blockMasterId = 2;
+            }
+            else if (etiologyId == 6)
+            {
+                blockMasterId = 3;
+            }
+
+            //The first and last block should contain the same prompts in a random order
+            if (assignedBlockCount == (blocksToComplete - 1) || assignedBlockCount == 0)
+            {
+                digitalCommandList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 2).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
+                if (etiologyId == 2)
+                {
+                    openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id != 2).ToList();
+                }
+
+                else
+                {
+                    novelSentenceList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 3).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
+                    openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 1).OrderBy(r => Guid.NewGuid()).ToList();
+
+                }
+                proceduralPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 2).OrderBy(r => Guid.NewGuid()).ToList();
+
             }
             else
             {
@@ -560,51 +607,64 @@ namespace SpeechAccessibility.Controllers
                 else
                 {
                     //If the contributor hasn't been assigned a digital command block, assign one
-                    assignedDigitalCommandListId = assignDigitalCommandBlock(contributorId);
+                    assignedDigitalCommandListId = assignDigitalCommandBlock(contributorId, etiologyId);
                 }
-                
+
                 int blockOfDigitalCommandId = 0;
 
-                 blockOfDigitalCommandId = _recordingContext.BlockOfDigitalCommand.Where(b => b.List.Id == assignedDigitalCommandListId).Select(b => b.Id).Skip(assignedBlockCount-1).First();
-               
-                digitalCommandList = _recordingContext.BlockOfDigitalCommandPrompts.Where(b => b.BlockOfDigitalCommand.Id == blockOfDigitalCommandId).Select(b=>b.Prompt).Take(digitalCommandMax).ToList();                          
-                novelSentenceList = _recordingContext.Prompt.Where(p => !_recordingContext.BlockOfPrompts.Select(b => b.Prompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 3 && p.Active == "Yes").OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
-                openEndedPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes").OrderBy(r => Guid.NewGuid()).Take(openEndedPromptMax).ToList();
-                proceduralPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 2 && p.Active == "Yes").OrderBy(r => Guid.NewGuid()).Take(proceduralPromptMax).ToList();
+                blockOfDigitalCommandId = _recordingContext.BlockOfDigitalCommand.Where(b => b.List.Id == assignedDigitalCommandListId).Select(b => b.Id).Skip(assignedBlockCount - 1).First();
+
+                List<int> currentEtiologyPromptList = new List<int>();
+
+                currentEtiologyPromptList = _recordingContext.PromptEtiology.Where(e => e.EtiologyId == etiologyId).Select(e => e.PromptId).ToList();
+
+                digitalCommandList = _recordingContext.BlockOfDigitalCommandPrompts.Where(b => b.BlockOfDigitalCommand.Id == blockOfDigitalCommandId).Select(b => b.Prompt).Take(digitalCommandMax).OrderBy(r => Guid.NewGuid()).ToList();
+                proceduralPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 2 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(proceduralPromptMax).ToList();
+
+                if (etiologyId == 2)
+                {
+                    int blockNumber = Int32.Parse(block.Description);
+                    assignOpenEndedPrompts(contributorId, openEndedPromptList, currentEtiologyPromptList, blockNumber);
+                }
+                else
+                {
+                    novelSentenceList = _recordingContext.Prompt.Where(p => !_recordingContext.BlockOfPrompts.Select(b => b.Prompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 3 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
+                    openEndedPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(openEndedPromptMax).ToList();
+                }
 
                 //If we run out of unique novel sentences, then we will have to reuse some
                 if (novelSentenceList.Count < novelSentenceMax)
                 {
-                    novelSentenceList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 3 && p.Active == "Yes").OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
+                    novelSentenceList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 3 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
                 }
 
             }
-      
-                foreach (Prompt prompt in digitalCommandList)
-                {
-                    addBlockOfPrompts(block, prompt, 2);
-                }
 
-                foreach (Prompt prompt in novelSentenceList)
-                {
-                    addBlockOfPrompts(block, prompt, 3);
-                }
+            foreach (Prompt prompt in digitalCommandList)
+            {
+                addBlockOfPrompts(block, prompt, 2);
+            }
 
-                foreach (Prompt prompt in openEndedPromptList)
-                {
-                    addBlockOfPrompts(block, prompt, 4);
-                }
+            foreach (Prompt prompt in novelSentenceList)
+            {
+                addBlockOfPrompts(block, prompt, 3);
+            }
 
-                foreach (Prompt prompt in proceduralPromptList)
-                {
-                    addBlockOfPrompts(block, prompt, 4);
-                }
-          
+            foreach (Prompt prompt in openEndedPromptList)
+            {
+                addBlockOfPrompts(block, prompt, 4);
+            }
+
+            foreach (Prompt prompt in proceduralPromptList)
+            {
+                addBlockOfPrompts(block, prompt, 4);
+            }
+
 
             ContributorAssignedBlock assignedBlock = new ContributorAssignedBlock
             {
-                Block= block,
-                ContributorId= contributorId,
+                Block = block,
+                ContributorId = contributorId,
                 InUsed = "Yes"
             };
 
@@ -614,32 +674,100 @@ namespace SpeechAccessibility.Controllers
             return block;
         }
 
-        private int assignDigitalCommandBlock(Guid contributorId)
+        private void assignOpenEndedPrompts(Guid contributorId, List<Prompt> openEndedPromptList, List<int> currentEtiologyPromptList, int blockDescription)
         {
-            int numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Count();
+            int numberOfPairPrompts;
+            int numberOfSinglePrompts;
 
-            int lastAssignedDigitalCommandBlockId = 0;
-            
-            if(numberOfAssignedDigitalCommandBlocks> 0) 
+            if (blockDescription > 6)
             {
-                lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.OrderBy(b => b.CreateTS).Select(b => b.List.Id).LastOrDefault();
+                numberOfPairPrompts = 3;
+                numberOfSinglePrompts = 1;
+            }
+            else
+            {
+                numberOfPairPrompts = 2;
+                numberOfSinglePrompts = 3;
+
             }
 
+            List<Prompt> pairPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 17 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(numberOfPairPrompts).ToList();
+
+            foreach (Prompt currentPrompt in pairPromptList)
+            {
+                openEndedPromptList.Add(currentPrompt);
+                int followupPromptId = _recordingContext.FollowupPrompt.Where(f => f.InitialPromptId == currentPrompt.Id).Select(f => f.FollowupPromptId).FirstOrDefault();
+                if (followupPromptId > 0)
+                {
+                    Prompt followupPrompt = _recordingContext.Prompt.Where(p => p.Id == followupPromptId).First();
+                    openEndedPromptList.Add(followupPrompt);
+                }
+            }
+
+            List<Prompt> singleOpenEndedPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(numberOfSinglePrompts).ToList();
+
+            if (singleOpenEndedPromptList.Count < 3)
+            {
+
+            }
+
+            openEndedPromptList.AddRange(singleOpenEndedPromptList);
+        }
+
+        private int assignDigitalCommandBlock(Guid contributorId, int etiologyId)
+        {
+
+            int lastAssignedDigitalCommandBlockId = 0;
+            int numberOfAssignedDigitalCommandBlocks = 0;
+
+            if (etiologyId == 2)
+            {
+                lastAssignedDigitalCommandBlockId = 10;
+                numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10).Count();
+                if (numberOfAssignedDigitalCommandBlocks > 0)
+                {
+                    lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                }
+            }
+            else
+            {
+
+                numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id < 11).Count();
+                if (numberOfAssignedDigitalCommandBlocks > 0)
+                {
+                    lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id < 11).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                }
+            }
+
+
             int newCommandBlockId = 0;
-            int numberOfDigitalCommandBlocks = Int32.Parse(_config["NumberOfDigitalCommandBlocks"]);
 
-                //Cycle back to list one once we've used all of the lists
-                if (lastAssignedDigitalCommandBlockId == numberOfDigitalCommandBlocks)
-                {
-                    newCommandBlockId = 1;
-                }
-                else
-                {
-                    newCommandBlockId = lastAssignedDigitalCommandBlockId + 1;
-                }
-            
+            int lastDigitalCommandBlock = Int32.Parse(_config["NumberOfDigitalCommandBlocks"]);
 
-            List list  = new List
+            if (etiologyId == 2)
+            {
+                lastDigitalCommandBlock = 20;
+            }
+
+            //Cycle back to list one once we've used all of the lists
+            if (lastAssignedDigitalCommandBlockId == lastDigitalCommandBlock)
+            {
+                newCommandBlockId = 1;
+
+                //List 11-20 are for the 2nd etiology (Down Syndrome)
+                if (etiologyId == 2)
+                {
+                    newCommandBlockId = 11;
+                }
+            }
+            else
+            {
+                newCommandBlockId = lastAssignedDigitalCommandBlockId + 1;
+
+            }
+
+
+            List list = new List
             {
                 Id = newCommandBlockId
             };
@@ -673,7 +801,7 @@ namespace SpeechAccessibility.Controllers
 
             _recordingContext.BlockOfPrompts.Add(blockOfPrompts);
             _recordingContext.Category.Remove(category);
-             _recordingContext.SaveChanges();
+            _recordingContext.SaveChanges();
         }
 
         [Authorize]
@@ -688,7 +816,7 @@ namespace SpeechAccessibility.Controllers
 
             int contributorDetailsCount = _identityContext.ContributorDetails.Where(c => c.Contributor.Id == contributorId).Count();
 
-            if (contributorDetailsCount>0)
+            if (contributorDetailsCount > 0)
             {
                 model.completedOptionalQuestions = true;
             }
@@ -726,13 +854,20 @@ namespace SpeechAccessibility.Controllers
             }
 
             return RedirectToAction("RecordPrompt");
-        }      
+        }
 
         private void SendCompletionEmail(Guid contributorId)
         {
             int count = _recordingContext.Recording.Where(r => _recordingContext.Prompt.Where(p => p.Category.Id != 1).Select(p => p.Id).Contains(r.OriginalPrompt.Id)).Where(r => r.ContributorId == contributorId).Count();
 
+            int etiologyId = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.Etiology.Id).FirstOrDefault();
+
             int totalPromptMax = 450;
+
+            if (etiologyId == 2)
+            {
+                totalPromptMax = 430;
+            }
 
             if (count == totalPromptMax)
             {
@@ -762,7 +897,8 @@ namespace SpeechAccessibility.Controllers
             }
         }
 
-        [Authorize] [HttpGet]
+        [Authorize]
+        [HttpGet]
         public IActionResult Contact()
         {
             return View();
@@ -790,18 +926,18 @@ namespace SpeechAccessibility.Controllers
                     {
                         to = _config["TestEmail"];
                         string testMessage = "<p><strong>This email was sent in testing mode.</strong></p>";
-                         message = testMessage + message;
-                        }
+                        message = testMessage + message;
+                    }
 
                     await _emailSender.SendEmailAsync(to, model.Subject, message);
-                   
+
                     ModelState.Clear();
 
                     contact.Message = string.Empty;
                     contact.Subject = string.Empty;
                     contact.Status = "Your message was successfully sent.";
                 }
-                
+
             }
             catch (Exception)
             {
@@ -831,7 +967,7 @@ namespace SpeechAccessibility.Controllers
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
-        {            
+        {
             var exceptionHandlerFeature = HttpContext.Features.Get<IExceptionHandlerFeature>()!;
 
             string date = DateTime.Now.ToString("yyyy-MM-dd");
