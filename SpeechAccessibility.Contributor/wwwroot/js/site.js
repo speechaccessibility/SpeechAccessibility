@@ -387,29 +387,181 @@ function dsRegisterLoad() {
         checkCorrespondence();
     }
 
-    }
+}
+
+function setSpeech() {
+    return new Promise(
+        function (resolve, reject) {
+            let synth = window.speechSynthesis;
+            let id;
+
+            id = setInterval(() => {
+                if (synth.getVoices().length !== 0) {
+                    resolve(synth.getVoices());
+                    clearInterval(id);
+                }
+            }, 10);
+        }
+    )
+}
 
 function speakPrompt() {
-    const synth = window.speechSynthesis;
-    var element = document.getElementById("speakerIcon");
 
-    if (synth.speaking) {
-        synth.cancel()
-        element.classList.remove("fa-beat");
-    }
-    else {
-        
-        element.classList.add("fa-beat");
-        var prompt = new SpeechSynthesisUtterance(document.getElementById("transcript").value);
-        prompt.lang = 'en-US';
-        prompt.text = document.getElementById("transcript").innerHTML
-        synth.speak(prompt);
+    try {
+        if (!navigator.mediaDevices?.enumerateDevices) {
+            console.log("enumerateDevices() not supported.");
+        } else {
 
-        prompt.addEventListener("end", (event) => {
-            document.getElementById("speakerIcon").classList.remove("fa-beat");
-        });
+            var browser = getBrowser();
+
+            //Safari/Firefox currently don't detect audiooutput
+            if (browser!="Safari" && browser!="Firefox") {
+                navigator.mediaDevices
+                    .enumerateDevices()
+                    .then((devices) => {                      
+                        const availableOutputDevices = devices.filter((d) => d.kind === 'audiooutput');
+                        if (!availableOutputDevices.length) {
+                            alert("No audio output device found. Enable an output device to hear prompt spoken aloud.");
+                            return;
+                        }
+                    });
+            }
+
+        }
+
+        const synth = window.speechSynthesis;
+
+        var element = document.getElementById("speakerIcon");
+
+        if (synth.speaking) {
+            synth.cancel()
+            element.classList.remove("fa-beat");
+        }
+        else {
+
+            element.classList.add("fa-beat");
+            var prompt = new SpeechSynthesisUtterance(document.getElementById("transcript").value);
+            prompt.lang = 'en-US';
+            prompt.text = document.getElementById("transcript").innerHTML
+            prompt.rate = '.5';
+
+
+            var os = getOS();
+            // Get the user-agent string
+            var browser = getBrowser();
+
+            var selectedOption = "";
+
+            if (os == "Windows") {
+                if (browser == "Edge") {
+                    selectedOption = "Microsoft Jenny Online (Natural) - English (United States)"
+
+                }
+                else if (browser == "Firefox") {
+                    selectedOption = "Microsoft Zira Desktop - English (United States)"
+                }
+                else {
+                    selectedOption = "Microsoft Zira - English (United States)"
+                
+                }
+            }
+            else if (os == "Mac OS" || os == "iOS") {
+                selectedOption = "Samantha";
+            }
+
+            var voiceSelect = document.getElementById('voiceSelect');
+
+            for (var i = 0; i < voiceSelect.length; i++) {
+                if (voiceSelect.options[i].getAttribute("data-name") == selectedOption) {
+                    var preferredVoice = synth.getVoices().filter(voice=>voice.name===selectedOption)
+                    console.log("preferredVoice: " + preferredVoice[0].name);
+                    prompt.voice = preferredVoice[0];
+                    break;
+                }
+            }
+
+                synth.speak(prompt);
+
+                prompt.addEventListener("end", (event) => {
+                    document.getElementById("speakerIcon").classList.remove("fa-beat");
+                });
+             
+        }
+
     }
-   
+    catch (error) {
+        alert("Unable to play the prompt. Please try on a different device or browser.")
+
+    }
+
+}
+
+function getBrowser() {
+
+    var browser = "";
+    let userAgentString = navigator.userAgent;
+
+    // Detect Chrome
+    let chromeAgent = userAgentString.indexOf("Chrome") > -1;
+
+    // Detect Firefox
+    let firefoxAgent = userAgentString.indexOf("Firefox") > -1;
+
+    // Detect Safari
+    let safariAgent = userAgentString.indexOf("Safari") > -1;
+
+    let edgeAgent = userAgentString.indexOf("Edg") > -1
+
+    // Discard Safari since it also matches Chrome
+    if ((chromeAgent) && (safariAgent))
+        safariAgent = false;
+
+    // Detect Opera
+    let operaAgent = userAgentString.indexOf("OP") > -1;
+
+    // Discard Chrome since it also matches Opera
+    if ((chromeAgent) && (operaAgent))
+        chromeAgent = false;
+
+    if ((chromeAgent) && (edgeAgent))
+        chromeAgent = false;
+
+    if (chromeAgent) {
+        browser = "Chrome";
+    }
+    else if (firefoxAgent) {
+        browser = "Firefox"
+    }
+    else if (safariAgent) {
+        browser = "Safari"
+    }
+    else if (edgeAgent) {
+        browser = "Edge"
+    }
+    return browser;
+}
+
+function getOS() {
+    const userAgent = window.navigator.userAgent,
+        platform = window.navigator?.userAgentData?.platform || window.navigator.platform,
+        macosPlatforms = ['macOS', 'Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
+        windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'],
+        iosPlatforms = ['iPhone', 'iPad', 'iPod'];
+    let os = null;
+
+    if (macosPlatforms.indexOf(platform) !== -1) {
+        os = 'Mac OS';
+    } else if (iosPlatforms.indexOf(platform) !== -1) {
+        os = 'iOS';
+    } else if (windowsPlatforms.indexOf(platform) !== -1) {
+        os = 'Windows';
+    } else if (/Android/.test(userAgent)) {
+        os = 'Android';
+    } else if (/Linux/.test(platform)) {
+        os = 'Linux';
+    }
+
+    return os;
 }
 
 function showHidePassword() {

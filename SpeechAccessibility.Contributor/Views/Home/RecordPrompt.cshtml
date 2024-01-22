@@ -60,7 +60,7 @@
                     <span style="font-size:large"><strong>@percentComplete%</strong></span>
                 </div>
             </div>
-           
+
         }
 
     }
@@ -71,6 +71,13 @@
         int percentComplete = (int)Math.Round((double)(100 * blockCompleteCount) / Model.blockMax);
 
         int categoryCount = Model.digitalCommandMax + Model.novelSentenceMax;
+
+        if (Model.etiologyId == 3 && Model.promptCategoryId==5)
+        {
+            categoryCount = Model.digitalCommandMax + Model.uaPromptMax;    
+
+        }
+
 
         if (Model.currentBlockOfPromptsCount == Model.digitalCommandMax)
         {
@@ -101,7 +108,7 @@
             }
         }
 
-        if (Model.currentBlockOfPromptsCount == categoryCount && Model.etiologyId!=2)
+        if (Model.currentBlockOfPromptsCount == categoryCount && Model.etiologyId!=2 && Model.etiologyId!=3 && Model.etiologyId!=4)
         {
 
             <div class="alert alert-success alert-dismissible" role="alert">
@@ -111,20 +118,25 @@
 
             <input hidden id="showOpenEndedMessage" value="true" />
 
-            <dialog id="openEndedMessage">
-                <h1>You have completed Section 2 of Block @Model.totalBlockCount!</h1>
-                <p>
-                    The next section will contain @if (Model.etiologyId == 6) { @Model.openEndedMax; } open-ended questions.<br />
-                    <strong>
-                        Please answer each question using several sentences.<br />
-                        Do not simply read the question out loud, but say your response.
-                    </strong>
-                </p>
+                <dialog id="openEndedMessage">
+                    <h1>You have completed Section 2 of Block @Model.totalBlockCount!</h1>
+                    <p>
+                        The next section will contain @if (Model.etiologyId == 6)
+                        {
+                            @Model.openEndedMax;
+                        } open-ended questions.<br />
+                        <strong>
+                            Please answer each question using several sentences.<br />
+                            Do not simply read the question out loud, but say your response.
+                        </strong>
+                    </p>
 
-                <form method="dialog">
-                    <button>OK</button>
-                </form>
-            </dialog>
+                    <form method="dialog">
+                        <button>OK</button>
+                    </form>
+                </dialog>
+            
+          
         }
 
         if (Model.totalBlockCount != 0 && percentComplete == 0 && Model.retryCount==0)
@@ -134,11 +146,11 @@
                 <i class="fa-solid fa-star fa-bounce" style="padding-right:10px"></i>Congratulations! You completed Block @Model.totalBlockCount!
             </div>
 
-            <input hidden id="showSection1And2Message" value="true" />
-            
+                <input hidden id="showSection1And2Message" value="true" />
+                     
                 <dialog id="section1And2Message">
                 <h1>You have completed Block @Model.totalBlockCount!</h1>
-                @if (Model.etiologyId == 2)
+                @if (Model.etiologyId == 2 || Model.etiologyId==3 || Model.etiologyId==4)
                 {
                     <p>
                         The next section will contain digital command prompts.<br />
@@ -150,7 +162,7 @@
                     <p>The next section will contain @Model.digitalCommandMax digital command prompts and @Model.novelSentenceMax novel sentences.<br />
                         Please record yourself speaking the prompts.</p>
                 }
-                else
+                else 
                 {
                     <p>
                         The next section will contain digital command prompts and novel sentences.<br />
@@ -187,7 +199,7 @@
         {
 
            <p>To record your speech, please follow these 3 steps:</p>
-            if (Model.prompt.Category.Id == 2)
+            if (Model.prompt.Category.Id == 2 || Model.prompt.Category.Id==3)
             {
                 <p>1. Press the record button.<br /><strong>2. Read the text.</strong><br/> 3. Press Stop Recording.</p>
                <strong>Text</strong>
@@ -217,14 +229,25 @@
            
         }
 
+
         <p id="prompt" value="@Model.prompt.Transcript">
-            @if (Model.etiologyId == 6)
+            @if (Model.etiologyId == 6 || Model.etiologyId==2 || Model.etiologyId==3)
             {
+                <select hidden id="voiceSelect"></select>
                 <button class="btn btn-primary" onclick="speakPrompt()">
                     <i title="Click here to speak prompt aloud." id="speakerIcon" class="fa-solid fa-volume-high"></i>
                 </button>
-            }         
-            <span id="transcript">@Model.prompt.Transcript</span>
+            }     
+            @if (Model.etiologyId == 3)
+            {
+                <span id="transcript" style="background-color:yellow">@Model.prompt.Transcript</span>
+            }
+            else
+            {
+                 <span id="transcript">@Model.prompt.Transcript</span>
+
+            }
+           
         </p>
 
 
@@ -279,13 +302,40 @@
 
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script>
+ 
+        function populateVoiceList() {
+            if (typeof speechSynthesis === "undefined") {
+                return;
+            }
+
+            const voices = speechSynthesis.getVoices();
+
+            for (let i = 0; i < voices.length; i++) {
+                const option = document.createElement("option");
+                option.textContent = `${voices[i].name})`;
+
+                option.setAttribute("data-lang", voices[i].lang);
+                option.setAttribute("data-name", voices[i].name);
+                document.getElementById("voiceSelect").appendChild(option);
+            }
+        }
+
+        populateVoiceList();
+        if (
+            typeof speechSynthesis !== "undefined" &&
+            speechSynthesis.onvoiceschanged !== undefined
+        ) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+
     Cookies = 'existent global'
 
     $(document).ready(function () {
+
         var anchor = document.getElementById("main");
         anchor.scrollIntoView(true);
 
-          $("#recordForm").submit(function (e) {
+        $("#recordForm").submit(function (e) {
 
             //disable the submit button
             $("#nextButton").attr("disabled", true);
@@ -294,7 +344,10 @@
 
         });
     });
+
+
 </script>
+
 <script src="~/lib/font-awesome/js/all.min.js"></script>
 <script src="~/lib/js-cookie/dist/js.cookie.js"></script>
 <script src="~/lib/js-cookie/dist/js.cookie.min.js"></script>

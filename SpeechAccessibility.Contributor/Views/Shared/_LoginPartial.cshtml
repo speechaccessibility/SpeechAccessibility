@@ -33,6 +33,14 @@
                         {
                             <a class="dropdown-item" href="/DownSyndrome_ConsentForm_Participant.pdf" download style="font-size:x-large">Download Consent</a>
                         }
+                        else if (etiologyId == 1)
+                        {
+                            <a class="dropdown-item" href="/Parkinsons Consent Form.pdf" download style="font-size:x-large">Download Consent</a>
+                        }
+                        else if (etiologyId == 6)
+                        {
+                             <a class="dropdown-item" href="/NOVA H Informed Consent in Plain English_TeamGleason.pdf" download style="font-size:x-large">Download Consent</a>
+                        }
                     }
                     <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
                 <button type="submit" class="dropdown-item" style="font-size:x-large">Logout</button>

@@ -43,7 +43,9 @@ namespace SpeechAccessibility.Infrastructure.Data
         public DbSet<EtiologyView> Etiology { get; set; }
         public DbSet<ApprovedDeniedContributor> ApprovedContributor { get; set; }
         public DbSet<ViewSpeechFiles> ViewSpeechFiles { get; set; }
-
+        public DbSet<RegisterLink> RegisterLink { get; set; }
+        public DbSet<GiftCardAmount> GiftCardAmount { get; set; }
+        public DbSet<ContributorAssignedList> ContributorAssignedList {get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -77,9 +79,13 @@ namespace SpeechAccessibility.Infrastructure.Data
             builder.Entity<EtiologyView>(ConfigureEtiology);
             builder.Entity<ApprovedDeniedContributor>(ConfigureApprovedDeniedContributor);
             builder.Entity<ViewSpeechFiles>(ConfigureViewSpeechFiles);
+            builder.Entity<RegisterLink>(ConfigureRegisterLink);
+            builder.Entity<GiftCardAmount>(ConfigureGiftCardAmount);
+            builder.Entity<ContributorAssignedList>(ConfigureContributorAssignedList);
+
         }
 
-       
+      
 
         private void ConfigureBlockMasterOfPrompts(EntityTypeBuilder<BlockMasterOfPrompts> entity)
         {
@@ -265,7 +271,7 @@ namespace SpeechAccessibility.Infrastructure.Data
         {
             entity.Property(e => e.EmailContent).HasColumnType("text");
 
-            entity.Property(e => e.SendTS)
+            entity.Property(e => e.CreateTS)
                 .HasColumnType("datetime");
         }
         private void ConfigureContributorCompensation(EntityTypeBuilder<ContributorCompensation> entity)
@@ -751,6 +757,24 @@ namespace SpeechAccessibility.Infrastructure.Data
         }
 
 
+        private void ConfigureRegisterLink(EntityTypeBuilder<RegisterLink> entity)
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.RegisterName)
+                .IsRequired()
+                .HasMaxLength(1000);
+        }
+
+        private void ConfigureGiftCardAmount(EntityTypeBuilder<GiftCardAmount> entity)
+        {
+            entity.HasKey(e => e.Id);
+        }
+
+        private void ConfigureContributorAssignedList(EntityTypeBuilder<ContributorAssignedList> entity)
+        {
+            entity.HasNoKey();
+            entity.ToView("v_ContributorAssignedList");
+        }
 
     }
 }

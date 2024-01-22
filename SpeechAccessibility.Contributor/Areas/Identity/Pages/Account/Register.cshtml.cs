@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -14,6 +15,7 @@ using SpeechAccessibility.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -272,39 +274,39 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
+                try {
+                    if (!Input.Email.Equals(Input.ConfirmEmail, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ModelState.AddModelError("confirmEmailValidation", "The email and confirmation email do not match.");
+                        return Page();
+                    }
 
-                if (!Input.Email.Equals(Input.ConfirmEmail, StringComparison.OrdinalIgnoreCase))
-                {
-                    ModelState.AddModelError("confirmEmailValidation", "The email and confirmation email do not match.");
-                    return Page();
-                }
-                
-                if (unqualifiedStates.Contains(Input.state) || "No".Equals(Input.eighteenOrOlderInd))
-                {
-                    return RedirectToPage("./Unqualified");
-                }
-                IdentityUser user = new IdentityUser();
-                user.UserName = Input.Email;
-                user.Email = Input.Email;
-                var result = await _userManager.CreateAsync(user, Input.Password);               
+                    if (unqualifiedStates.Contains(Input.state) || "No".Equals(Input.eighteenOrOlderInd))
+                    {
+                        return RedirectToPage("./Unqualified");
+                    }
+                    IdentityUser user = new IdentityUser();
+                    user.UserName = Input.Email;
+                    user.Email = Input.Email;
+                    var result = await _userManager.CreateAsync(user, Input.Password);
 
-                if (result.Succeeded)
-                {
-                    string isActive = _context.Etiology.Where(e => e.Id == Input.etiologyId).Select(e => e.Active).First();
+                    if (result.Succeeded)
+                    {
+                        string isActive = _context.Etiology.Where(e => e.Id == Input.etiologyId).Select(e => e.Active).First();
 
-                    Contributor contributor = PopulateContributor(user,isActive);
-                    _context.Contributor.Add(contributor);
-         
-                    _context.Etiology.Remove(contributor.Etiology);
-                    _context.SaveChanges();
+                        Contributor contributor = PopulateContributor(user, isActive);
+                        _context.Contributor.Add(contributor);
 
-                    _logger.LogInformation("User created a new account with password.");                    
+                        _context.Etiology.Remove(contributor.Etiology);
+                        _context.SaveChanges();
 
-                    SendEnrollmentEmail(user.Email);
+                        _logger.LogInformation("User created a new account with password.");
 
-                    await _signInManager.SignInAsync(user, isPersistent: false);
+                        SendEnrollmentEmail(user.Email);
 
-                    if (Input.etiologyId != 0)
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+
+                        if (Input.etiologyId != 0)
                         {
                             string message = "<div>Hello,</div><br/><div>A potential Speech Accessibility Project participant, " + Input.firstName + ", has requested an assessment. You may contact them at " + Input.Email + " or " + Input.phoneNumber + "</div><div><br/>The Speech Accessibility Project Team<br/>University of Illinois Urbana-Champaign</div>";
 
@@ -327,23 +329,46 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                         else
                         {
                             return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
-                        }       
-                                     
+                        }
 
-                }
-                foreach (var error in result.Errors)
-                {   if ( error.Code== "DuplicateUserName")
-                    {
-                        error.Description += " Please click the Login link above to log in to an existing account. If you’ve forgotten your password, you can click the 'Forgot your password' link on the Login page to reset it.";
+
                     }
-                    ModelState.AddModelError(string.Empty, error.Description);
-                    resultErrorList.Add(error.Description);
+                    foreach (var error in result.Errors)
+                    {
+                        if (error.Code == "DuplicateUserName")
+                        {
+                            error.Description += " Please click the Login link above to log in to an existing account. If you’ve forgotten your password, you can click the 'Forgot your password' link on the Login page to reset it.";
+                        }
+                        ModelState.AddModelError(string.Empty, error.Description);
+                        resultErrorList.Add(error.Description);
+                        LogError(Input.Email + ": " + error.Description);
 
+                    }
                 }
+                catch (Exception e)
+                {
+                    LogError(Input.Email + ":" + e.ToString());
+                }
+
+                
             }
 
             // If we got this far, something failed, redisplay form
             return Page();
+        }
+
+        private void LogError(string errorMessage)
+        {
+            string date = DateTime.Now.ToString("yyyy-MM-dd");
+            string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
+
+            Directory.CreateDirectory(Path.GetDirectoryName(fileLocation));
+            using (StreamWriter writer = new StreamWriter(fileLocation, true))
+            {
+                string error = DateTime.Now.ToString() + " " + errorMessage;
+                writer.WriteLine(error);
+                writer.Close();
+            }
         }
 
         private void SendEnrollmentEmail(string emailAddress)

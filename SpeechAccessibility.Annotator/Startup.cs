@@ -121,6 +121,10 @@ namespace SpeechAccessibility.Annotator
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
             services.AddScoped<IViewSpeechFilesRepository, ViewSpeechFilesRepository>();
+            services.AddScoped<IRegisterLinkRepository, RegisterLinkRepository>();
+            services.AddScoped<IGiftCardAmountRepository, GiftCardAmountRepository> ();
+            services.AddScoped<IContributorAssignedListRepository, ContributorAssignedListRepository>();
+
             services.AddScoped<DeleteFileAttribute>();
 
             services.AddControllersWithViews()

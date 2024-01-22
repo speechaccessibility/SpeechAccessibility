@@ -1,0 +1,17 @@
+﻿@page
+@model SpeechAccessibility.Areas.Identity.Pages.Account.OpenEndedInstructionsModel
+@{
+    <h1>You have completed Section 1 of Block @Model.blockCount!</h1>
+    <p>
+        The next section will contain open-ended questions.<br />
+        Please answer the questions aloud using several sentences.<br />
+    </p>
+    <p>
+        Sometimes two questions in a row are related to each other.<br />
+        You will answer both questions on the same topic.
+    </p>
+
+    <form method="post">
+    <button class="btn btn-primary" type="submit">Continue</button>
+    </form>
+}

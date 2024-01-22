@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using SpeechAccessibility.Annotator.Extensions;
 using SpeechAccessibility.Annotator.Models;
 using SpeechAccessibility.Annotator.Services;
@@ -37,12 +38,14 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IApprovedDeniedContributorRepository _aprovedDeniedContributorRepository;
         private readonly IContributorRepository _contributorRepository;
         private readonly IRegisterLinkRepository _registerLinkRepository;
-
+        private readonly ICategoryRepository _categoryRepository;
+        
         public ContributorController(IContributorViewRepository contributorViewRepository, IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository
             , IUserRepository userRepository, IConfiguration configuration, IRecordingRepository recordingRepository, IContributorFollowUpRepository contributorFollowUpRepository
             , IEmailLoggingRepository emailLoggingRepository, IUserSubRoleRepository userSubRoleRepository, ISubRoleRepository subRoleRepository
             , IContributorSubStatusRepository contributorSubStatusRepository, IEtiologyViewRepository etiologyRepository
-            , IApprovedDeniedContributorRepository aprovedDeniedContributorRepository, IContributorRepository contributorRepository, IRegisterLinkRepository registerLinkRepository)
+            , IApprovedDeniedContributorRepository aprovedDeniedContributorRepository, IContributorRepository contributorRepository, IRegisterLinkRepository registerLinkRepository
+            , ICategoryRepository categoryRepository)
         {
             _contributorViewRepository = contributorViewRepository;
             _contributorAssignedAnnotatorRepository = contributorAssignedAnnotatorRepository;
@@ -58,6 +61,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             _aprovedDeniedContributorRepository = aprovedDeniedContributorRepository;
             _contributorRepository = contributorRepository;
             _registerLinkRepository = registerLinkRepository;
+            _categoryRepository = categoryRepository;
+            
         }
 
         //[Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdmin")]
@@ -118,7 +123,13 @@ namespace SpeechAccessibility.Annotator.Controllers
                     return RedirectToRoute(new { controller = "Home", action = "Error" });
 
             }
-           
+
+            List<SelectListItem> promptCatForMentor = new SelectList(_categoryRepository.Find(c => c.Active == "Yes" && c.DisplayForMentor == "Yes").OrderBy(c=>c.Id), "Id", "Description").ToList();
+            //promptCatForMentor.Insert(0, (new SelectListItem { Text = "", Value = "0" }));
+            ViewBag.PromptCategories = promptCatForMentor;
+
+
+
             ViewBag.SubRole = etiologyId;
             ViewBag.SubRoleName = _etiologyRepository.Find(e => e.Id == etiologyId).FirstOrDefault()?.Name;
 
@@ -304,7 +315,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         [Authorize(Policy = "SLPAnnotatorAndExternalSLPAnnotator")]
         [HttpPost]
-        public async Task<ActionResult> UpdateContributor(Guid contributorId, string comment, string passwordChange, int subRole, int action)
+        public async Task<ActionResult> UpdateContributor(Guid contributorId, string comment, string passwordChange, int subRole, int action, int promptCategory)
         {
             //make sure the External annotator has permission for this subrole
             var hasSubRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.OtherPhone)?.Value;
@@ -340,6 +351,8 @@ namespace SpeechAccessibility.Annotator.Controllers
                 contributor.ChangePassword = passwordChange == "Yes";
                 contributor.ApproveTS = DateTime.Now;
                 contributor.SubStatusId = 3; //set to Not-Started
+                if (promptCategory>0)
+                    contributor.PromptCategoryId = promptCategory;
             }
             else
                 contributor.UpdateTS = DateTime.Now;
@@ -458,7 +471,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                 {
                     ContributorId = contributorId,
                     EmailContent = message,
-                    SendTS = DateTime.Now,
+                    CreateTS = DateTime.Now,
                     SendBy = User.Identity.Name
                 };
                 _contributorFollowUpRepository.Insert(followUp);
@@ -549,7 +562,176 @@ namespace SpeechAccessibility.Annotator.Controllers
             return Json(new { Success = true, Message = "updated" });
 
         }
-        
+
+        [Authorize(Policy = "AllAnnotatorAndExternalSLPAnnotator")]
+        public ActionResult ScheduleFollowUpEmail(Guid contributorId)
+        {
+            var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+            if(contributor == null)
+                return PartialView("_ScheduleFollowUpEmail", null);
+
+            var scheduledEmail = new ScheduledFollowUpEmailViewModel
+            {
+                ContributorId = contributorId,
+                FirstName = contributor.FirstName,
+                LastName = contributor.LastName,
+                EmailAddress = contributor.EmailAddress,
+                HelperEmail = contributor.HelperEmail
+               
+            };
+            //get existing scheduled email
+            var existing = _contributorFollowUpRepository
+                .Find(s => s.ContributorId == contributorId && s.EmailSentDate == null).FirstOrDefault();
+            if (existing == null)
+            {
+                scheduledEmail.ScheduledSendDate = DateTime.Now;
+                scheduledEmail.EmailContent = "Dear " + contributor.FirstName + Environment.NewLine + Environment.NewLine 
+                                              + "Sincerely,"+ Environment.NewLine + "Speech Accessibility Project Team." 
+                                              +Environment.NewLine + "University of Illinois Urbana - Champaign";
+            }
+            else
+            {
+                scheduledEmail.ScheduledSendDate = existing.ScheduledSendDate;
+                scheduledEmail.SendToContributor = existing.SendToContributor;
+                scheduledEmail.SendToHelper = existing.SendToHelper;
+                scheduledEmail.SendToMentor = existing.SendToMentor;
+                scheduledEmail.MentorEmailAddress=existing.MentorEmailAddress;
+                scheduledEmail.EmailContent = existing.EmailContent;
+
+            }
+
+            return PartialView("_ScheduleFollowUpEmail", scheduledEmail);
+        }
+
+        [Authorize(Policy = "AllAnnotatorAndExternalSLPAnnotator")]
+        [HttpPost]
+        public async Task<ActionResult> SaveScheduleFollowUpEmail(Guid contributorId, DateTime scheduledSendDate, string sendToContributor, string sendToHelper
+            ,string sendToMentor, string mentorEmail, string emailContent)
+        {
+            var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+            if (contributor == null)
+            {
+                return Json(new { Success = false, Message = "Contributor not found" });
+            }
+
+            var returnMessage = "";
+            var scheduleFollowUp = _contributorFollowUpRepository.Find(s => s.ContributorId == contributorId && s.EmailSentDate == null).FirstOrDefault();
+            if (scheduleFollowUp == null)
+            {
+                scheduleFollowUp = new ContributorFollowUp();
+            }
+            scheduleFollowUp.ContributorId = contributorId;
+            scheduleFollowUp.ScheduledSendDate = scheduledSendDate;
+            scheduleFollowUp.SendToContributor = sendToContributor;
+            scheduleFollowUp.SendToHelper = sendToHelper;
+            scheduleFollowUp.SendToMentor = sendToMentor;
+            scheduleFollowUp.MentorEmailAddress = mentorEmail;
+            scheduleFollowUp.EmailContent = emailContent;
+            scheduleFollowUp.CreateTS = DateTime.Now;
+            scheduleFollowUp.SendBy = User.Identity.Name;
+
+            //if the SendDate is today, send the email and mark sent in the database
+            if (scheduledSendDate.CompareTo(DateTime.Now.Date) <= 0)
+            {
+                returnMessage = await SendFollowUpEmail(contributor, scheduleFollowUp, _configuration["AppSettings:EmailServer"]);
+                if (!string.IsNullOrEmpty(returnMessage))
+                {
+                    return Json(new { Success = false, Message = "Could not send the email." });
+                }
+
+                returnMessage = "Follow-up email was sent.";
+                scheduleFollowUp.EmailSentDate= DateTime.Now;
+            }
+            else
+            {
+                returnMessage = "Scheduled follow-up email was saved.";
+            }
+
+            if (scheduleFollowUp.Id == 0)
+            {
+                _contributorFollowUpRepository.Insert(scheduleFollowUp);
+            }
+            else
+            {
+                _contributorFollowUpRepository.Update(scheduleFollowUp);
+            }
+            return Json(new { Success = true, Message = returnMessage });
+        }
+
+        private async Task<string> SendFollowUpEmail(Contributor contributor, ContributorFollowUp contributorFollowUp, string emailServer)
+        {
+            var emailService = new EmailService();
+            var fromEmailAddress = _configuration["AppSettings:SpeechAccessibilityTeamEmail"];
+            string toEmailAddress;
+            string[] toEmails;
+            StringBuilder followUpMessage = new StringBuilder();
+           
+            var emailSubject = "Speech Accessibility Project - Follow-up ";
+
+
+            var emailContent = contributorFollowUp.EmailContent.Replace("\n", "<br />");
+            //followUpMessage.Append("<br>" + emailContent);
+
+            var actualToEmailAddress = "";
+            if (contributorFollowUp.SendToContributor == "Yes")
+            {
+                actualToEmailAddress += contributor.EmailAddress;
+            }
+
+            if (contributorFollowUp.SendToHelper == "Yes")
+            {
+                if(actualToEmailAddress != "")
+                    actualToEmailAddress = actualToEmailAddress + "," + contributor.HelperEmail;
+                else
+                    actualToEmailAddress += contributor.HelperEmail;
+            }
+
+            if (contributorFollowUp.SendToMentor == "Yes")
+            {
+                if (actualToEmailAddress != "")
+                    actualToEmailAddress = actualToEmailAddress + "," + contributorFollowUp.MentorEmailAddress;
+                else
+                    actualToEmailAddress += contributorFollowUp.MentorEmailAddress;
+            }
+
+            if (_configuration["AppSettings:DeveloperMode"] == "Yes")
+            {
+                toEmailAddress = _configuration["AppSettings:TestingEmail"];
+                emailSubject = "Testing: " + emailSubject;
+                followUpMessage.Append("This email was sent in a testing mode. The actual email should be sent to '" + actualToEmailAddress + "'.<br>");
+
+                toEmails = new[] { toEmailAddress };
+            }
+            else if (_configuration["AppSettings:TestingMode"] == "Yes")
+            {
+                toEmailAddress = User.Identity.Name + "@illinois.edu";
+                emailSubject = "Testing: " + emailSubject;
+                followUpMessage.Append("This email was sent in a testing mode.The actual email should be sent to '" + actualToEmailAddress + "'.<br>");
+                toEmails = new[] { toEmailAddress };
+            }
+            else
+            {
+                toEmailAddress = actualToEmailAddress;
+                toEmails = new[] { toEmailAddress };
+            }
+            followUpMessage.Append("<br>" + emailContent);
+
+           var error = await emailService.SendEmail(fromEmailAddress, toEmails, null, null, emailSubject, followUpMessage, emailServer);
+
+           //logging the email
+            var emailLogging = new EmailLogging
+            {
+                ContributorId = contributor.Id,
+                Subject = emailSubject,
+                SendTo = actualToEmailAddress,
+                Message = followUpMessage.ToString(),
+                Error = error,
+                SendTS = DateTime.Now,
+                SendBy = User.Identity.Name
+            };
+            _emailLoggingRepository.Insert(emailLogging);
+            return error;
+        }
 
         private async Task<string> SendEmailToContributor(Contributor contributor, string emailSubject, StringBuilder emailContent, string emailServer)
         {
@@ -603,8 +785,6 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             }
 
-            
-          
             var contributors = _contributorViewRepository.Find(c => c.EtiologyId == subRole && c.StatusId == 4)
                  .Select(c => new { c.FirstName, c.LastName, c.EmailAddress,c.HelperFirstName,c.HelperLastName, c.HelperEmail }).ToList();
 

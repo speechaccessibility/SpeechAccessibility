@@ -14,6 +14,7 @@ namespace SpeechAccessibility.Core.Models
         public string Description { get; set; }
         public string Active { get; set; }
         public DateTime? CreateTS { get; set; }
+        public int DisplayOrder { get; set; }
 
         public  ICollection<Dimension> Dimension { get; set; }
     }

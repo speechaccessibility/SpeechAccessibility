@@ -90,5 +90,7 @@ namespace SpeechAccessibility.Models
         public string DiagnosisAge { get; set; }
 
         public string LengthOfDiagnosis { get; set; }
+
+        public int PromptCategoryId { get; set; }
     }
 }

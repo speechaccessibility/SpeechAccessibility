@@ -19,7 +19,7 @@ namespace SpeechAccessibility.Core.Models
         public string Active { get; set; }
         public DateTime? CreateTS { get; set; }
         public DateTime? UpdateTS { get; set; }
-
+        public  string DisplayForMentor { get; set; }
         public  ICollection<BlockMasterOfPrompts> BlockMasterOfPrompts { get; set; }
         public  ICollection<BlockOfDigitalCommandPrompts> BlockOfDigitalCommandPrompts { get; set; }
         public  ICollection<BlockOfPrompts> BlockOfPrompts { get; set; }

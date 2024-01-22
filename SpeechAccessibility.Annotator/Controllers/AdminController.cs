@@ -23,8 +23,10 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IEtiologyViewRepository _etiologyViewRepository;
         private readonly ISubRoleRepository _subRoleRepository;
         private readonly IEtiologyRepository _etiologyRepository;
+        private readonly IGiftCardAmountRepository _giftCardAmountRepository;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public AdminController(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration,  IUserSubRoleRepository userSubRoleRepository, IEtiologyViewRepository etiologyRepository, ISubRoleRepository subRoleRepository, IEtiologyRepository etiologyRepository1)
+        public AdminController(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration,  IUserSubRoleRepository userSubRoleRepository, IEtiologyViewRepository etiologyRepository, ISubRoleRepository subRoleRepository, IEtiologyRepository etiologyRepository1, IGiftCardAmountRepository giftCardAmountRepository, ICategoryRepository categoryRepository)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
@@ -33,6 +35,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             _etiologyViewRepository = etiologyRepository;
             _subRoleRepository = subRoleRepository;
             _etiologyRepository = etiologyRepository1;
+            _giftCardAmountRepository = giftCardAmountRepository;
+            _categoryRepository = categoryRepository;
         }
 
         public IActionResult Index()
@@ -284,13 +288,20 @@ namespace SpeechAccessibility.Annotator.Controllers
             int pageSize = length != null ? Convert.ToInt32(length) : 0;
             int skip = start != null ? Convert.ToInt32(start) : 0;
 
-            var etiologies = _etiologyRepository.Find(e=>e.Active=="Yes");
-            var recordsTotal = etiologies.Count();
-            etiologies = DynamicSortingExtensions<Etiology>.SetOrderByDynamic(etiologies, Request.Form);
-            etiologies = etiologies.Skip(skip).Take(pageSize);
+            var giftCards = _giftCardAmountRepository.GetAll();
+            foreach (var giftCard in giftCards)
+            {
+                giftCard.EtiologyName = _etiologyRepository.Find(e => e.Id == giftCard.EtiologyId).FirstOrDefault()!.Name;
+                var temp = _categoryRepository.Find(p => p.Id == giftCard.PromptCategoryId).FirstOrDefault();
+                if(temp != null)
+                    giftCard.PromptCategoryName = temp.Description;
 
+            }
 
-            return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = etiologies });
+            var recordsTotal = giftCards.Count();
+            giftCards = DynamicSortingExtensions<GiftCardAmount>.SetOrderByDynamic(giftCards, Request.Form);
+            giftCards = giftCards.Skip(skip).Take(pageSize);
+            return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = giftCards });
 
         }
 
@@ -300,19 +311,19 @@ namespace SpeechAccessibility.Annotator.Controllers
             //personId = 100;
             if (id <= 0)
                 return Json(new { Success = false, Message = "No record is selected." });
-            var etiology = _etiologyRepository.Find(e => e.Id == id).FirstOrDefault();
+            var giftCard = _giftCardAmountRepository.Find(e => e.Id == id).FirstOrDefault();
 
-            var error = "";
-            if (etiology == null)
+           
+            if (giftCard == null)
             {
                 
-                return Json(new { Success = false, Message = "Etiology is not found." });
+                return Json(new { Success = false, Message = "Gift Card is not found." });
             }
 
-           etiology.FirstGiftCard = firstGiftCard;
-           etiology.SecondGiftCard= secondGiftCard;
-           etiology.ThirdGiftCard=thirdGiftCard;
-           _etiologyRepository.Update(etiology);
+            giftCard.FirstGiftCard = firstGiftCard;
+            giftCard.SecondGiftCard= secondGiftCard;
+            giftCard.ThirdGiftCard=thirdGiftCard;
+            _giftCardAmountRepository.Update(giftCard);
             return Json(new { Success = true, Message = "Amounts are updated." });
 
         }

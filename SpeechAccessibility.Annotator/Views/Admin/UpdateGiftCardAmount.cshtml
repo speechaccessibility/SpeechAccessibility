@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 <br/>
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
-<div style="width: 800px">
+<div style="width: 1000px">
     <table class="table table-striped table-bordered table-hover" id="EtiologyGiftCardsTable" cellspacing="0" align="center"></table>
 </div>
 
@@ -46,7 +46,7 @@
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[1, 'asc']],
+                    "aaSorting": [[0, 'asc']],
                     "columns": [
                         {
                             "title": "Id",
@@ -58,11 +58,19 @@
                         },
                         {
                             "title": "Etiology Name",
-                            "data": "name",
+                            "data": "etiologyName",
                             "searchable": true,
                             "orderable": false,
                             "visible": true,
-                            "name": "Name"
+                            "name": "EtiologyName"
+                        },
+                        {
+                            "title": "Prompt Category",
+                            "data": "promptCategoryName",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "PromptCategoryName"
                         },
                         {
                             "title": "FirstGiftCard",

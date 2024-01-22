@@ -1,56 +1,156 @@
-﻿
-function sendFollowUpContributor(postUrl, table) {
-    $("#sendFollowUp-dialog").dialog({
-        title: "Send follow-up message to contributor",
+﻿function getScheduleFollowUpEmail(getUrl,postUrl, table) {
+    $("#scheduleFollowUpEmail-dialog").dialog({
+        title: "Schedule Follow-up Email",
         autoOpen: false,
         resizable: false,
-        width: 700,
+        width: 1000,
+        height: 700,
         show: { effect: 'drop', direction: "up" },
         modal: true,
         draggable: true,
         closeOnEscape: true,
         position: { my: "left top", at: "left+50 top+100", of: window },
+
         open: function () {
-            $('#sendFollowUp-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+            $(this).load(getUrl);
         },
         close: function () {
-            clearFollowUpDialog();
+            $(this).dialog('close');
         },
         buttons: {
-            "Send": function () {
-                $('.spinner').css('display', 'block');
-                var contributorId = $("#hidFollowUpContributorId").val();               
-                var emailContent = $("#txtFollowUpMessage").val();
+            "Submit": function () {
+                //at least one checkbox for email is checked
+                if ($("#chkSendToHelper").length > 0) {
+                    if (!$("#chkSendToContributor").is(":checked") && !$("#chkSendToHelper").is(":checked") && !$("#chkSendToMentor").is(":checked")) {
+                        alert("Please select at least one email");
+                        return false;
+                    }
+                }
+                else {
+                    if (!$("#chkSendToContributor").is(":checked") && !$("#chkSendToMentor").is(":checked")) {
+                        alert("Please select at least one email");
+                        return false;
+                    }
+                }
+
+                //if mentor checkbox is checked, email address is required.
+                if ($("#chkSendToMentor").is(":checked") && $("#txtSendToMentor").val()=="") {
+                    alert("Please enter mentor's email address.");
+                    return false;
+                }       
+
+               
+                if ($("#txtSendDate").val() == "") {
+                    alert("Send Date is required.");
+                    $("#txtSendDate").focus();
+                    return false;
+                }
+
+                var sendContributor = "Yes";
+                var sendHelper = "No";
+                var sendMentor = "No";
+                if ($("#chkSendToContributor").is(":checked"))
+                    sendContributor = "Yes";
+                else
+                    sendContributor = "No";
+
+                if ($("#chkSendToHelper").is(":checked"))
+                    sendHelper = "Yes";
+                else
+                    sendHelper = "No";
+                if ($("#chkSendToMentor").is(":checked"))
+                    sendMentor = "Yes";
+                else
+                    sendMentor = "No";
+
+                //Guid contributorId, DateTime sendDate, string sendToContributor, string sendToHelper, string emailContent
                 $.ajax({
                     url: postUrl,
                     type: "POST",
                     data: {
-                        "contributorId": contributorId, "message": emailContent, "subRole": $("#SubRole").val()
+                        "contributorId": $("#hidFollowUpContributorId").val(),
+                        "scheduledSendDate": $("#txtSendDate").val(),
+                        "sendToContributor": sendContributor,
+                        "sendToHelper": sendHelper,
+                        "sendToMentor": sendMentor,
+                        "mentorEmail": $("#txtSendToMentor").val(),
+                        "emailContent": $("#txtMessage").val()
                     },
                     success: function (response) {
                         $('.spinner').css('display', 'none');
                         if (response.success === true) {
-                            clearFollowUpDialog();
-                            $('#sendFollowUp-dialog').dialog('close');
-                            $("#lblMessage").text("Message was sent to the contributor at " + response.message);
+                            $('#scheduleFollowUpEmail-dialog').dialog('close');
+                            $("#lblMessage").text(response.message);
                             table.draw(false);
-                            //$.scrollTo($("#top"), { offset: { top: -150, left: -100 } });
+
                         } else {
                             $("#lblFollowUpMessage").text(response.message);
                             $("#lblFollowUpMessage").addClass("errorMessage");
                         }
                     },
-                    error: function () { alert('Error Send Follow Up! It could be the timeout issue. Please try to reload your browser.'); }
+                    error: function () { alert('Error saving. It could be the timeout issue. Please try to reload your browser.'); }
                 });
             },
             close: function () {
-                clearFollowUpDialog();
                 $(this).dialog('close');
             }
         }
 
     });
 }
+
+//function sendFollowUpContributor(postUrl, table) {
+//    $("#sendFollowUp-dialog").dialog({
+//        title: "Send follow-up message to contributor",
+//        autoOpen: false,
+//        resizable: false,
+//        width: 700,
+//        show: { effect: 'drop', direction: "up" },
+//        modal: true,
+//        draggable: true,
+//        closeOnEscape: true,
+//        position: { my: "left top", at: "left+50 top+100", of: window },
+//        open: function () {
+//            $('#sendFollowUp-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+//        },
+//        close: function () {
+//            clearFollowUpDialog();
+//        },
+//        buttons: {
+//            "Send": function () {
+//                $('.spinner').css('display', 'block');
+//                var contributorId = $("#hidFollowUpContributorId").val();               
+//                var emailContent = $("#txtFollowUpMessage").val();
+//                $.ajax({
+//                    url: postUrl,
+//                    type: "POST",
+//                    data: {
+//                        "contributorId": contributorId, "message": emailContent, "subRole": $("#SubRole").val()
+//                    },
+//                    success: function (response) {
+//                        $('.spinner').css('display', 'none');
+//                        if (response.success === true) {
+//                            clearFollowUpDialog();
+//                            $('#sendFollowUp-dialog').dialog('close');
+//                            $("#lblMessage").text("Message was sent to the contributor at " + response.message);
+//                            table.draw(false);
+//                            //$.scrollTo($("#top"), { offset: { top: -150, left: -100 } });
+//                        } else {
+//                            $("#lblFollowUpMessage").text(response.message);
+//                            $("#lblFollowUpMessage").addClass("errorMessage");
+//                        }
+//                    },
+//                    error: function () { alert('Error Send Follow Up! It could be the timeout issue. Please try to reload your browser.'); }
+//                });
+//            },
+//            close: function () {
+//                clearFollowUpDialog();
+//                $(this).dialog('close');
+//            }
+//        }
+
+//    });
+//}
 
 function getRecordingRating(getUrl) {
     $("#rating-dialog").dialog({
@@ -107,11 +207,12 @@ function changeContributor(postUrl, table,action, title) {
                 var contributorId = $("#hidMakeChangesContributorId").val();
                 var comment = $("#txtMakeChangesComment").val();
                 var passwordChange = $("input[type='radio'][name='ChangePassword']:checked").val();
+                var promptCategory = $("#PromptCategoryId").val();
                 $.ajax({
                     url: postUrl,
                     type: "POST",
                     data: {
-                        "contributorId": contributorId, "comment": comment, "passwordChange": passwordChange, "subRole": $("#SubRole").val(), "action": action //4 for non-responsive, 3 for deny, 2 for approve
+                        "contributorId": contributorId, "comment": comment, "passwordChange": passwordChange, "subRole": $("#SubRole").val(), "action": action, "promptCategory":promptCategory //4 for non-responsive, 3 for deny, 2 for approve
                     },
                     success: function (response) {
                         $('.spinner').css('display', 'none');
