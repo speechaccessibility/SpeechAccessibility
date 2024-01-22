@@ -6,17 +6,16 @@ using System.IO;
 using System.Linq;
 using CsvHelper;
 using CsvHelper.Configuration;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using SpeechAccessibility.Annotator.Extensions;
 using SpeechAccessibility.Annotator.Models;
 using SpeechAccessibility.Core.Interfaces;
 using SpeechAccessibility.Core.Models;
-using SpeechAccessibility.Infrastructure.Data;
 
 namespace SpeechAccessibility.Annotator.Controllers
 {
@@ -32,11 +31,12 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IContributorCompensationHistoryRepository _contributorCompensationHistoryRepository;
         private readonly IEtiologyViewRepository _etiologyViewRepository;
         private readonly IConfiguration _configuration;
+        private readonly IContributorAssignedListRepository _contributorAssignedListRepository;
 
 
         public ReportController(IUserRepository userRepository, IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository
             , IContributorViewRepository contributorViewRepository, IRecordingRepository recordingRepository, IContributorCompensationRepository contributorCompensationRepository
-            , IConfiguration configuration, IContributorCompensationViewRepository contributorCompensationViewRepository, IContributorCompensationHistoryRepository contributorCompensationHistoryRepository, IEtiologyViewRepository etiologyViewRepository)
+            , IConfiguration configuration, IContributorCompensationViewRepository contributorCompensationViewRepository, IContributorCompensationHistoryRepository contributorCompensationHistoryRepository, IEtiologyViewRepository etiologyViewRepository, IContributorAssignedListRepository contributorAssignedListRepository)
         {
             _userRepository = userRepository;
             _contributorAssignedAnnotatorRepository = contributorAssignedAnnotatorRepository;
@@ -47,6 +47,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             _contributorCompensationViewRepository = contributorCompensationViewRepository;
             _contributorCompensationHistoryRepository = contributorCompensationHistoryRepository;
             _etiologyViewRepository = etiologyViewRepository;
+            _contributorAssignedListRepository = contributorAssignedListRepository;
         }
 
         public IActionResult Index()
@@ -140,27 +141,28 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         public ActionResult ViewDailyContributorSpeechFiles()
         {
-            //var dailyReport = new DailyContributorSpeechFileReportViewModel
-            //{
-            //    TodayDate = DateTime.Now
-            //};
+           
             var yesterdayDate = DateTime.Today.AddDays(-1);
             List<DailyContributorSpeechFileReportViewModel> dailyReportList =
                 new List<DailyContributorSpeechFileReportViewModel>();
             var etiologies = CacheExtension.GetEtiologyList(_etiologyViewRepository);
 
             var todayDate = DateTime.Now;
+            //var todayDate = Convert.ToDateTime("11/30/2023");
             for (var i = 1; i <= 30; i++)
             {
                 var dailyReport = new DailyContributorSpeechFileReportViewModel();
                 dailyReport.TodayDate = todayDate;
                 dailyReport.ApprovedContributors = new List<int>();
                 dailyReport.ApprovedContributorRecordings = new List<int>();
+                dailyReport.NewContributors = new List<int>();
 
 
                 foreach (var etiology in etiologies)
                 {
-                   
+                    var newContributors =
+                        _contributorViewRepository.Find(c => c.CreateTS.Date == todayDate.Date && (c.StatusId==1 || c.StatusId==5 )&& c.EtiologyId == etiology.Id);
+
                     var approvedContributors =
                         _contributorViewRepository.Find(c => c.ApproveTS.Value.Date <= todayDate.Date && c.StatusId == 2 && c.EtiologyId==etiology.Id);
 
@@ -168,125 +170,18 @@ namespace SpeechAccessibility.Annotator.Controllers
                     var approvedContributorRecordings = _recordingRepository.Find(r => approvedContributorIDs.Contains(r.ContributorId)
                         && r.CreateTS.Date == todayDate.Date && r.BlockId != null);
 
-                   
+                    dailyReport.NewContributors.Add(newContributors?.Count() ?? 0);
                     dailyReport.ApprovedContributors.Add(approvedContributors?.Count() ?? 0);
                     dailyReport.ApprovedContributorRecordings.Add(approvedContributorRecordings?.Count() ?? 0);
                 }
 
                 dailyReportList.Add(dailyReport);
-
-                //var newContributorIDs = _contributorViewRepository.Find(c => DateTime.Compare(c.ApproveTS.Value.Date, todayDate.Date) == 0 
-                //    && c.StatusId == 2).Select(c => c.Id).ToList();
-
-
-
-                //var existingContributorIDs = existingContributor.Select(c => c.Id).ToList();
-                ////var approvedContributorRecordings = _recordingRepository.Find(r => existingContributorIDs.Contains(r.ContributorId)
-                ////    && !newContributorIDs.Contains(r.ContributorId) && r.CreateTS.Date == todayDate.Date && r.BlockId != null).Include(r=>r.con);
-
-                //List<Recording> approvedContributorRecordings= new List<Recording>();
-                //foreach (var contributor in existingContributor)
-                //{
-                //    var recrodings = _recordingRepository.Find(r => existingContributorIDs.Contains(r.ContributorId)
-                //                                                    && !newContributorIDs.Contains(r.ContributorId) &&
-                //                                                    r.CreateTS.Date == todayDate.Date &&
-                //                                                    r.BlockId != null &&
-                //                                                    r.ContributorId == contributor.Id)
-                //        .Select(r => new Recording
-                //            {
-                //                Id=r.Id,
-                //                EtiologyId = contributor.EtiologyId
-                //            }
-                //        );
-                //    approvedContributorRecordings.AddRange(recrodings);
-                //}
-
-                //var report = new DailyContributorSpeechFileReportViewModel
-                //{
-                //    TodayDate = todayDate,
-                //    ExistingContributors = existingContributorIDs.Count,
-
-                //};
-
-                //dailyReportList.Add(report);
-
                 todayDate = todayDate.AddDays(-1);
 
             }
 
             return View(dailyReportList);
-            //List<DailyContributorEtiologySpeechFileReportVM> dailyEtiologyList =
-            //    new List<DailyContributorEtiologySpeechFileReportVM>();
-            //var etiologies = _etiologyViewRepository.Find(e => e.Active == "Yes").OrderBy(e=>e.Name).ToList();
-
-            //foreach (var etiology in etiologies)
-            //{
-            //    var temp = new DailyContributorEtiologySpeechFileReportVM
-            //    {
-            //        EtiologyView = etiology
-            //    };
-
-            //    List<DailyContributorSpeechFileReportViewModel> dailyReportList =
-            //        new List<DailyContributorSpeechFileReportViewModel>();
-
-            //    var todayDate = DateTime.Now;
-            //    for (var i = 1; i <= 30; i++)
-            //    {
-            //        var newContributorIDs = _contributorViewRepository.Find(c => DateTime.Compare(c.ApproveTS.Value.Date, todayDate.Date) == 0 
-            //                && c.StatusId == 2 && c.EtiologyId== etiology.Id)
-            //            .Select(c => c.Id).ToList();
-            //        var newContributorRecordings = _recordingRepository.Find(r => newContributorIDs.Contains(r.ContributorId) && r.CreateTS.Date == todayDate.Date && r.BlockId > 0);
-            //        var existingContributorIDs = _contributorViewRepository.Find(c => c.ApproveTS.Value.Date < todayDate.Date 
-            //            && c.StatusId == 2 && c.EtiologyId == etiology.Id).Select(c => c.Id).ToList();
-            //        var existingContributorRecordings = _recordingRepository.Find(r => existingContributorIDs.Contains(r.ContributorId) && !newContributorIDs.Contains(r.ContributorId) && r.CreateTS.Date == todayDate.Date && r.BlockId != null);
-
-            //        var report = new DailyContributorSpeechFileReportViewModel
-            //        {
-            //            TodayDate = todayDate,
-            //            NewContributors = newContributorIDs.Count,
-            //            NewContributorRecordings = newContributorRecordings.Count(),
-            //            ExistingContributors = existingContributorIDs.Count,
-            //            ExistingContributorRecordings = existingContributorRecordings.Count()
-            //        };
-
-            //        dailyReportList.Add(report);
-
-            //        todayDate = todayDate.AddDays(-1);
-
-            //    }
-
-            //    temp.DailyContributorSpeechFileReportViewModel = dailyReportList;
-            //    dailyEtiologyList.Add(temp);
-            //}
-
-
-            //return View(dailyEtiologyList);
-            //var newContributorIDs = _contributorRepository.Find(c=>c.ApproveTS>=yesterdayDate).Select(c=>c.Id).ToList();
-            //var newContributorsRecordings = new List<Tuple<Guid, int>>();
-
-            //foreach (var id in newContributorIDs)
-            //{
-            //    var recordings = _recordingRepository.Find(r => r.ContributorId == id && r.CreateTS>= yesterdayDate).ToList();
-            //    if (recordings.Any())
-            //    {
-            //        newContributorsRecordings.Add(new Tuple<Guid, int>(id, recordings.Count));
-            //    }
-            //    else
-            //    {
-            //        newContributorsRecordings.Add(new Tuple<Guid, int>(id,0));
-            //    }
-            //}
-            ////var existingContributorsNewRecordings = new List<Tuple<Guid, int>>();
-            //var newRecordings = _recordingRepository.Find(c =>
-            //        !newContributorIDs.Contains(c.ContributorId) && c.CreateTS >= yesterdayDate)
-            //    .GroupBy(c => c.ContributorId)
-            //    .Select(c =>  new Tuple<Guid, int>(c.Key, c.Count()) ).ToList();
-
-
-            //dailyReport.NewContributorIDs = newContributorIDs;
-            //dailyReport.NewContributorWithNumberRecording = newContributorsRecordings;
-            //dailyReport.ExistingContributorsNewRecordings = newRecordings;
-            //return View(dailyReport);
+           
         }
 
         //Compensation report
@@ -302,9 +197,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             };
 
             var allGiftCards = _contributorCompensationViewRepository.Find(g=>g.FirstCard=="Yes" || g.SecondCard=="Yes" || g.ThirdCard=="Yes");
-            //var firstGiftCards = allGiftCards.Where(g => g.FirstCard == "Yes");
-            //var secondGiftCards = allGiftCards.Where(g => g.SecondCard == "Yes");
-            //var thirdGiftCards = allGiftCards.Where(g => g.ThirdCard == "Yes");
+          
             contributorCompensation.ContributorsQualifyForFirstCard= allGiftCards.Where(g => g.FirstCard == "Yes")
                 .OrderBy(g=>g.LastName).ThenBy(g=>g.FirstName).ToList();
             contributorCompensation.ContributorsQualifyForSecondCard = allGiftCards.Where(g => g.SecondCard == "Yes")
@@ -313,39 +206,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                 .OrderBy(g => g.LastName).ThenBy(g => g.FirstName).ToList();
 
 
-            //var allPaidContributorsId = _contributorCompensationRepository.GetAll();
-
-            //Guid[] paidContributorIDs = allPaidContributorsId.Where(c => c.SendFirstCard != null && c.SendSecondCard != null && c.SendThirdCard != null)
-            //    .Select(c => c.ContributorId).ToArray();
-
-            //Guid[] paidContributorFor200IDs = allPaidContributorsId.Where(c => c.SendFirstCard != null).Select(c => c.ContributorId).ToArray();
-            //Guid[] paidContributorFor400IDs = allPaidContributorsId.Where(c => c.SendSecondCard != null).Select(c => c.ContributorId).ToArray();
-            //Guid[] paidContributorFor600IDs = allPaidContributorsId.Where(c => c.SendThirdCard != null).Select(c => c.ContributorId).ToArray();
-
-            //var contributorList = _recordingRepository.Find(c => !paidContributorIDs.Contains(c.ContributorId) && c.BlockId >= 1).GroupBy(c => c.ContributorId)
-            //    .Select(c => new { ContributorId = c.Key, count = c.Count() }).ToList();
-
-            //foreach (var contributor in contributorList)
-            //{
-            //    if (contributor.count >= 155 && !paidContributorFor200IDs.Contains(contributor.ContributorId))
-            //    {
-            //        contributorCompensation.ContributorsQualifyForFirstCard
-            //           .Add(new Tuple<ContributorView, int>(_contributorViewRepository.Find(c => !paidContributorFor200IDs.Contains(c.Id)
-            //               && c.Id.Equals(contributor.ContributorId)).FirstOrDefault(), contributor.count));
-            //    }
-            //    if (contributor.count >= 310 && !paidContributorFor400IDs.Contains(contributor.ContributorId))
-            //    {
-            //        contributorCompensation.ContributorsQualifyForSecondCard
-            //            .Add(new Tuple<ContributorView, int>(_contributorViewRepository.Find(c => !paidContributorFor400IDs.Contains(c.Id)
-            //                && c.Id.Equals(contributor.ContributorId)).FirstOrDefault(), contributor.count));
-            //    }
-            //    if (contributor.count >= 450 && !paidContributorFor600IDs.Contains(contributor.ContributorId))
-            //    {
-            //        contributorCompensation.ContributorsQualifyForThirdCard
-            //            .Add(new Tuple<ContributorView, int>(_contributorViewRepository.Find(c => !paidContributorFor600IDs.Contains(c.Id)
-            //                && c.Id.Equals(contributor.ContributorId)).FirstOrDefault(), contributor.count));
-            //    }
-            //}
+           
             return View(contributorCompensation);
         }
 
@@ -474,82 +335,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             ViewBag.EndDate = endDate.ToString("yyyy-MM-dd");
             return View();
         }
-        //public IActionResult ViewAnnotationProgress(DateTime? startDateIn, DateTime? endDateIn)
-        //{
-        //    List<AnnotationProgressViewModel> list = new List<AnnotationProgressViewModel>();
-        //    //set default search dates 
-        //    DateTime startDate;
-        //    DateTime endDate;
-        //    if (endDateIn is null)
-        //    {
-        //        endDate = DateTime.Today;
-        //        if (startDateIn is null)
-        //        {
-        //            startDate = endDate.AddDays(-7);
-        //        }
-        //        else
-        //        {
-        //            startDate = Convert.ToDateTime(startDateIn);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        endDate = Convert.ToDateTime(endDateIn);
-
-        //        if (startDateIn is null)
-        //        {
-        //            startDate = endDate.AddDays(-1);
-        //        }
-        //        else
-        //        {
-        //            startDate = Convert.ToDateTime(startDateIn);
-        //        }
-        //    }
-
-        //    ViewBag.StartDate = startDate.ToString("yyyy-MM-dd");
-        //    ViewBag.EndDate = endDate.ToString("yyyy-MM-dd");
-
-        //    var annotators = _contributorAssignedAnnotatorRepository.Find(a => a.User.Active == "Yes")
-        //        .Include(a=>a.User).ToList()
-        //            .GroupBy(a => new { a.User });
-
-        //    while (startDate <= endDate)
-        //    {
-        //        //get each annotator assigned recordings group by status 
-        //        foreach (var annotator in annotators)
-        //        {
-        //            var temp = new AnnotationProgressViewModel
-        //            {
-        //                ReportDate = startDate,
-        //                Annotator = annotator.Key.User
-        //            };
-
-        //            //get assigned Contributors
-        //            var contributorIds = annotator.ToList().Select(a => a.ContributorId);
-
-        //            temp.AssignedRecordingByContributor = _recordingRepository.Find(r => contributorIds.Contains(r.ContributorId) &&
-        //                    r.BlockId != null
-        //                    && DateTime.Compare(r.UpdateTS.Date, startDate.Date) ==
-        //                    0)
-        //                .Include(r => r.Status)
-        //                .ToList()
-        //                .GroupBy(r => new { r.ContributorId, r.StatusId, r.Status.Name })
-        //                .Select(group => new RecordingStatusViewModel()
-        //                {
-        //                    ContributorId = group.Key.ContributorId,
-        //                    Status = group.Key.Name,  
-        //                    NumberOfRecord= group.ToList().Count
-
-        //                })
-        //                .ToList();
-
-        //            list.Add(temp);
-        //        }
-        //        startDate = startDate.AddDays(1);
-        //    }
-
-        //    return View(list);
-        //}
+      
 
         [HttpPost]
         public ActionResult LoadAnnotatorsForProgress()
@@ -652,6 +438,42 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         }
 
+        public IActionResult ViewContributorAssignedList()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult LoadContributorAssignedList()
+        {
+            var draw = Request.Form["draw"].FirstOrDefault();
+            var start = Request.Form["start"].FirstOrDefault();
+            var length = Request.Form["length"].FirstOrDefault();
+            var searchValue = Request.Form["search[value]"].FirstOrDefault();
+            int pageSize = length != null ? Convert.ToInt32(length) : 0;
+            int skip = start != null ? Convert.ToInt32(start) : 0;
+
+            //var assignedList = _contributorAssignedListRepository.GetAll().GroupBy(l => new { l.ContributorId, l.FirstName, l.LastName, l.ListId})
+            //    .Select(l => 
+            //        new ContributorAssignedList
+            //        {
+            //            ContributorId = l.Key.ContributorId, 
+            //            FirstName = l.Key.FirstName,
+            //            LastName = l.Key.LastName,
+            //            ListId = l.Key.ListId
+            //        }); 
+            var assignedList = _contributorAssignedListRepository.GetAll()
+                .Where(l =>l.FirstName.Contains(searchValue) || l.LastName.Contains(searchValue) || l.ContributorId.ToString().Contains(searchValue)
+                || l.BlockName.Contains(searchValue) || l.ListName.ToLower().Contains(searchValue.ToLower()));
+
+
+            var recordsTotal = assignedList.Count();
+
+            assignedList = DynamicSortingExtensions<ContributorAssignedList>.SetOrderByDynamic(assignedList, Request.Form);
+            assignedList = assignedList.Skip(skip).Take(pageSize);
+            return Json(new { draw, data = assignedList, recordsFiltered = recordsTotal, recordsTotal = recordsTotal });
+
+        }
 
     }
 }

@@ -33,6 +33,7 @@
 <div id="rating-dialog" style="display: none"></div>
 <div id="assignedAnnotators-dialog" style="display: none"></div>
 <div id="assignedBlockPrompts-dialog" style="display: none"></div>
+<div id="scheduleFollowUpEmail-dialog" style="display: none"></div>
 
 <div id="contributorRecordings-dialog" style="display: none"></div>
 <div id="listen-dialog" style="display: none">
@@ -48,18 +49,7 @@
 
     </p>
 </div>
-<div id="sendFollowUp-dialog" style="display: none">
-    <label id="lblFollowUpMessage">Send follow-up message to below Contributor:</label>
-    <input type="hidden" id="hidFollowUpContributorId" />
-    <br /><b>First Name:</b><label id="lblFollowUpFirstName" name="lblFollowUpFirstName"></label>
-    <br /><b>Last Name:</b><label id="lblFollowUpLastName" name="lblFollowUpLastName"></label>
-    <br /><b>Email Address:</b><label id="lblFollowUpEmail" name="lblFollowUpEmail"></label>
-    <br />Message to the Contributor:<br />
-    <textarea id="txtFollowUpMessage" name="txtFollowUpMessage" rows="4" cols="50">
 
-</textarea>
-
-</div>
 <div id="editInfo-dialog" style="display: none">
     <label id="lblEditInfoMessage">Contributor:</label>
     <input type="hidden" id="hidEditInfoContributorId" />
@@ -222,10 +212,8 @@
                                     var date = new Date(data);
                                     var month = date.getMonth() + 1;
                                     return (month.toString().length > 1 ? month : "0" + month) + "/" + date.getDate() + "/" + date.getFullYear() + "&nbsp;" + (date.getHours() < 10 ? ("0" + date.getHours()) : date.getHours()) + ":" + (date.getMinutes() < 10 ? ("0" + date.getMinutes()) : date.getMinutes());
-
                                 }
-                                return '';
-                            
+                                return '';                            
                             }
                         },
                         {
@@ -343,8 +331,7 @@
                         row.child(formatDataTableDetailRow(contributorId)).show();
                         tr.addClass('shown');
                         buildContributorAssignedBlocksTable(contributorId);
-                    }
-                   
+                    }             
 
                 });
 
@@ -457,24 +444,19 @@
 
                 });
             }
+            
+             // schedule a follow-up email
+            $('#ContributorTable').on('click', 'a.sendFollowUp', function (e) {
+                e.preventDefault();
+                var selectedRowData = oContributorTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                var getUrl = "@Url.Action("ScheduleFollowUpEmail", "Contributor")?contributorId=" + row.id;
+                var postUrl = '@Url.Action("SaveScheduleFollowUpEmail", "Contributor")';
+                getScheduleFollowUpEmail(getUrl, postUrl, oContributorTable);
+                $("#scheduleFollowUpEmail-dialog").dialog('open');
+                return false;
+            });          
 
-            //send follow up message to the contributor
-            $('#ContributorTable').on('click',
-                'a.sendFollowUp',
-                function (e) {
-                    e.preventDefault();
-                    var selectedRowData = oContributorTable.row($(this).closest('tr'));
-                    var row = selectedRowData.data();
-                    $("#hidFollowUpContributorId").val(row.id);
-                    $("#lblFollowUpFirstName").text(row.firstName);
-                    $("#lblFollowUpLastName").text(row.lastName);
-                    $("#lblFollowUpEmail").text(row.emailAddress);
-                    var content = "Dear " + row.firstName + ",\n\nSincerely,\n Speech Accessibility Project Team\nUniversity of Illinois Urbana - Champaign";
-                    $("#txtFollowUpMessage").val(content);
-                    sendFollowUpContributor('@Url.Action("SendFollowUpToContributor", "Contributor")', oContributorTable);
-                    $("#sendFollowUp-dialog").dialog('open');
-
-                });
            
             
              //Edit Info

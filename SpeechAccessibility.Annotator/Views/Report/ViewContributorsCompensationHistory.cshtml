@@ -41,11 +41,11 @@
                 "columns": [
                     {
                         "title": "ContributorID",
-                        "data": "id",
+                            "data": "contributorId",
                         "searchable": true,
                         "orderable": true,
                         "visible": true,
-                        "name": "Id"
+                            "name": "ContributorID"
                     },
                     {
                         "title": "First Name",
@@ -77,7 +77,13 @@
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
-                            "name": "EtiologyName"
+                            "name": "EtiologyName",
+                            "render": function (data, type, row){
+                                if(row.promptCategory !=null)
+                                    return row.etiologyName + '-' + row.promptCategory;
+                                else
+                                    return row.etiologyName;
+                            }
                         },
                         
                     {
@@ -87,7 +93,7 @@
                         "orderable": true,
                         "visible": true,                            
                         "name": "SendFirstCard",
-                        'render': function (data) {
+                        "render": function (data) {
                             if (data != null)
                             {
                                 var date = new Date(data);

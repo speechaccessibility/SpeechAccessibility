@@ -34,6 +34,11 @@ namespace SpeechAccessibility
         public DbSet<PromptEtiology> PromptEtiology { get; set; }
 
         public DbSet<FollowupPrompt> FollowupPrompt { get; set; }
+
+        public DbSet<BlockOfSingleWords> BlockOfSingleWords { get; set; }   
+
+        public DbSet<BlockOfSingleWordPrompts> BlockOfSingleWordPrompts { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);

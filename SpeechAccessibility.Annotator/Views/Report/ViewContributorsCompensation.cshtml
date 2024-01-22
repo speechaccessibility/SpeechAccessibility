@@ -33,18 +33,26 @@
             foreach (var contributor in Model.ContributorsQualifyForFirstCard)
             {
                 <tr>
-                    <td><input type="checkbox" id="chkFirstGiftCard_@contributor.ContributorId" name="chkFirstGiftCard" value="@contributor.ContributorId" checked></td>
-                    <td>@contributor.ContributorId </td>
-                    <td>@contributor.FirstName &nbsp; @contributor.LastName</td>
-                    <td>@contributor.EmailAddress </td>
-                    <td>
-                        @if (contributor.HelperInd == "Yes")
-                        {
-                            @Html.Raw( contributor.HelperFirstName + " " + contributor.HelperLastName + " (" + contributor.HelperEmail + ")")
+                <td><input type="checkbox" id="chkFirstGiftCard_@contributor.ContributorId" name="chkFirstGiftCard" value="@contributor.ContributorId" checked></td>
+                <td>@contributor.ContributorId </td>
+                <td>@contributor.FirstName &nbsp; @contributor.LastName</td>
+                <td>@contributor.EmailAddress </td>
+                <td>
+                    @if (contributor.HelperInd == "Yes")
+                    {
+                        @Html.Raw(contributor.HelperFirstName + " " + contributor.HelperLastName + " (" + contributor.HelperEmail + ")")
+                    }
+                </td>
+                <td style="text-align: center">@contributor.RecordingCount</td>
+                <td style="text-align: left">@contributor.Etiology
+                        @{
+                            if (!string.IsNullOrEmpty(contributor.PromptCategory))
+                                {
+                                    <text>-</text> @contributor.PromptCategory;
+                                }
+                            
                         }
-                    </td>
-                    <td style="text-align: center">@contributor.RecordingCount</td>
-                    <td style="text-align: center">@contributor.Etiology</td>
+                        </td>
                 </tr>
             }
         }
@@ -88,7 +96,15 @@
 
                     </td>
                     <td style="text-align: center">@contributor.RecordingCount</td>
-                    <td style="text-align: center">@contributor.Etiology</td>
+                    <td style="text-align: left">@contributor.Etiology
+                        @{
+                            if (!string.IsNullOrEmpty(contributor.PromptCategory))
+                            {
+                                <text>-</text> @contributor.PromptCategory;
+                            }
+                            
+                        }
+                        </td>
                 </tr>
             }
         }
@@ -132,7 +148,15 @@
                         }
                     </td>
                     <td style="text-align: center">@contributor.RecordingCount</td>
-                    <td style="text-align: center">@contributor.Etiology</td>
+                    <td style="text-align: left">@contributor.Etiology
+                        @{
+                            if (!string.IsNullOrEmpty(contributor.PromptCategory))
+                            {
+                                <text>-</text> @contributor.PromptCategory;
+                            }
+                            
+                        }
+                        </td>
                 </tr>
             }
         }

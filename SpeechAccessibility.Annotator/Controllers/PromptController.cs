@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using DocumentFormat.OpenXml.ExtendedProperties;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -10,7 +9,6 @@ using SpeechAccessibility.Annotator.Extensions;
 using SpeechAccessibility.Annotator.Models;
 using SpeechAccessibility.Core.Interfaces;
 using SpeechAccessibility.Core.Models;
-using SpeechAccessibility.Infrastructure.Data;
 
 namespace SpeechAccessibility.Annotator.Controllers
 {
@@ -21,20 +19,18 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IUserRepository _userRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly ISubCategoryRepository _subCategoryRepository;
-        private readonly IRecordingRepository _recordingRepository;
         private readonly IPromptEtiologyRepository _promptEtiologyRepository;
         private readonly IEtiologyViewRepository _etiologyRepository;
 
 
         public PromptController(IPromptRepository promptRepository, IUserRepository userRepository, ICategoryRepository categoryRepository
-            , ISubCategoryRepository subCategoryRepository, IRecordingRepository recordingRepository, IPromptEtiologyRepository promptEtiologyRepository
+            , ISubCategoryRepository subCategoryRepository, IPromptEtiologyRepository promptEtiologyRepository
             , IEtiologyViewRepository etiologyRepository)
         {
             _promptRepository = promptRepository;
             _userRepository = userRepository;
             _categoryRepository = categoryRepository;
             _subCategoryRepository = subCategoryRepository;
-            _recordingRepository = recordingRepository;
             _promptEtiologyRepository = promptEtiologyRepository;
             _etiologyRepository = etiologyRepository;
         }
@@ -204,6 +200,13 @@ namespace SpeechAccessibility.Annotator.Controllers
                 //check to make sure the transcript is not in the database to avoid duplicates
                 var existingPrompt = _promptRepository.Find(p => p.Transcript.Equals(promptIn.Transcript) && p.CategoryId == promptIn.CategoryId && p.SubCategoryId == promptIn.SubCategoryId)
                     .FirstOrDefault();
+                //var existingPrompt = _promptRepository.Find(p => p.Transcript.Equals(promptIn.Transcript) && p.CategoryId == promptIn.CategoryId )
+                //    .FirstOrDefault();
+
+                //var existingPrompt = _promptEtiologyRepository.Find(p => p.EtiologyId == promptIn.EtioglogyId
+                //                                                         && p.Prompt.Transcript.Equals(
+                //                                                             promptIn.Transcript) &&
+                //                                                         p.Prompt.CategoryId == promptIn.CategoryId).FirstOrDefault();
                 if (existingPrompt != null)
                 {
                     return Json(new { Success = false, Message = "The transcript already exists in the database." });
@@ -212,7 +215,6 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             if (action == "addnew")
             {
-               
 
                 if (promptIn.SubCategoryId == 0)
                 {

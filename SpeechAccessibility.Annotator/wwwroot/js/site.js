@@ -3,3 +3,12 @@
 
 // Write your JavaScript code.
 
+function formatDate(dateIn) {
+    var date = new Date(dateIn);
+    var dateDay = ("0" + date.getDate()).slice(-2);
+    var dateMonth = ("0" + (date.getMonth() + 1)).slice(-2);
+    var dateVal = date.getFullYear() + "-" + (dateMonth) + "-" + (dateDay);
+
+    return dateVal;
+
+}

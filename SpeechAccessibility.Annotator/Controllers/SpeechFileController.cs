@@ -589,7 +589,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             if (recording == null)
                 return View("RateSpeechFiles", null);
             var dimensions = _dimensionCategoryRepository.Find(d => d.Active == "Yes")
-                .Include(d => d.Dimension).OrderBy(d => d.Id).ToList();
+                .Include(d => d.Dimension).OrderBy(d => d.DisplayOrder).ToList();
             var recordingRatingList = _recordingRatingRepository.Find(r => r.RecordingId == recordingId)
                 .Include(d => d.Dimension).ThenInclude(d => d.DimensionCategory).ToList();
 

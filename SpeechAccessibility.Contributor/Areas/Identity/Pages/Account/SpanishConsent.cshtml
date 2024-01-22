@@ -8,7 +8,7 @@
 make sure to increment the ConsentVersion in appsettings*@
 
 
-<h1>@ViewData["Title"]</h1>
+<h1 hidden>@ViewData["Title"]</h1>
 
 @if (@Model.ModelState.IsValid == false)
 {
@@ -21,209 +21,545 @@ make sure to increment the ConsentVersion in appsettings*@
 
     <div class="text-center">
         <br />
-        <h2>University of Illinois Urbana-Champaign</h2>
-        <h3>Online Consent Form</h3>
+    <h2>
+        Universidad de Illinois Urbana-Champaign Formulario de  consentimiento
+        en línea
+    </h2>
+    <strong>
+        Proyecto de accesibilidad del habla: personas  con discapacidad que
+        ayudan  a los investigadores a mejorar la tecnología
+    </strong>
     </div>
-
-    <div class="container" id="container" style="font-size:x-large">       
-    <br />
-    <p><strong>Speech Accessibility Project: Individuals with disabilities helping researchers to improve technology</strong></p>
-    <p>
-        You are being asked to participate in a voluntary research study that is called the “Speech Accessibility
-        Project.” The purpose of this study is to help researchers at universities and companies to develop
-        spoken-language user interfaces that work for people with atypical speech. Software programs that
-        understand speech are developed using machine learning. Machine learning is a software development
-        method that imitates the way humans learn, by testing the software repeatedly, and changing its
-        behavior whenever it makes a mistake. In this way, the software learns to reduce the risk of similar
-        mistakes in the future.</p>
-    <p>&nbsp;</p>
-        <p> By providing examples of the sounds of atypical speech, this study will make it
-        possible for the software to learn how to make fewer mistakes when it encounters atypical speech in
-        the future. Participating in this study is all online and will involve recording sentences and uploading
-        your audio recordings to a secure encrypted storage system. We ask you to provide up to 600 speech
-        samples or about 5 hours of your time which you can do any time online, at your own pace and
-        convenience. Risks associated with this study are no greater than those in everyday life. There is no
-        expected benefit of this research to you personally; the expected benefit to society is that companies
-        and organizations using your speech recordings will be able to train better speech technology for people
-        with speech and motor disabilities, which will make technology more accessible for everyone.
-    </p><br />
-    <p><strong>Project Name: &nbsp;</strong>The Speech Accessibility Project which has the website:&nbsp;<a href="https://speechaccessibilityproject.beckman.illinois.edu/">https://speechaccessibilityproject.beckman.illinois.edu/</a><strong>&nbsp;</strong></p>
-    <p>&nbsp;</p>
-    <p><strong>Principal Investigator Name and Title: </strong>Professor Mark Hasegawa-Johnson, University of Illinois Urbana-Champaign (&ldquo;UIUC&rdquo;), Beckman Institute and Department of Electrical and Computer Engineering.</p>
-       <p>&nbsp;</p>
-    <p> <strong>Contact Information</strong>: &nbsp;<a href="mailto:speechaccessibility@beckman.illinois.edu">speechaccessibility@beckman.illinois.edu</a>&nbsp;is the team email address.</p>
-       <p>&nbsp;</p>
-    <p> <strong>Organizations that will perform this study</strong>: University of Illinois Urbana-Champaign (UIUC) is the lead
-organization that will perform this study and has partnered with the Davis Phinney Foundation and
-LSVT Global, two organizations that advocate for people with Parkinson's.
-</p>
-    <p>&nbsp;</p>
-    <p> <strong>Sponsor</strong>: The Speech Accessibility Project is funded by a consortium that currently includes five companies: Amazon, Apple, Google, Microsoft, and Meta (parent company of Facebook). &nbsp;In the future, other companies, universities, and organizations may join this consortium as well.</p>
-    <br />
-    <p> <strong>Why am I being asked?&nbsp;</strong></p>
-    <p>You are being asked to participate in this study because you are an
-        adult who is part of a community of people who may have atypical 
-        or non-standard speech, and you have already qualified to be in 
-        the study by successfully answering our pre-screening questions
-        and providing a set of speech samples.</p>
-    <p>&nbsp;</p>
-        <p>We plan to recruit more
-        than 1,000 people to be in this study. Because the purpose of this
-        study is to help organizations develop better speech interfaces
-        for technologies, our team needs to gather many different types
-        of speech samples from many types of voices.</p>
-            <p>&nbsp;</p>
+    <br/>
+    <div class="container" id="container" style="font-size:x-large">        
         <p>
-        Your participation in this research is voluntary.
-        Your decision whether or not to participate will not affect your
-        current or future dealings with the University of Illinois
-        Urbana-Champaign, its partners, or its sponsors of this project.
-        If you decide to participate, you are free to withdraw at any time without affecting that relationship. </p>
-      <br />
-    <p><strong>What procedures are involved?</strong></p>
-    <p>We will provide you with access to a website where you can record up to 600 speech samples by either reading the text prompt aloud, or by speaking the answer to a question. You can do these recordings at any time, 24/7, at whatever pace you wish. We encourage you to record at different times of day so that we can learn how your speech might change throughout the day. And don’t worry about giving us “bad” samples – all data are really helpful. The more diverse our data set is, the better!</p>
-    <p>&nbsp;</p>
-    <p>You have the option to work with our partner organization, LSVT Global, to get help. LSVT Global can provide you with a mentor to help you do your recordings, give you advice about your microphone settings, and give you tips for when and where to do your recordings.</p>
-    <p>&nbsp;</p>
-    <p>You may take up to three months to finish recording the 600 speech samples. If you will need more than three months, please contact the research team at UIUC at&nbsp;<a href="mailto:speechaccessibility@beckman.illinois.edu">speechaccessibility@beckman.illinois.edu</a>.&nbsp;</p>
-        <p>&nbsp;</p>
-    <p>We will ask you whether you consider U.S. English to be your first language. People who speak English as a second language are sometimes better recognized by devices that also know multiple languages. If you provide this information, it will be shared with researchers using the data.</p>
-    <p>&nbsp;</p>
-    <p>We will also ask you to provide optional data about yourself, such as your age, racial and ethnic identity, and questions about how your speech ability may have impacted your everyday life. You are not required to answer any of these questions. This information will only be used to confirm diverse representation in this data collection, and, if provided, will not be shared outside of the UIUC research team.</p>
-    <p>&nbsp;</p>
-    <p>The UIUC research team will review all of your speech samples, and we will edit them to protect your privacy by removing any references to personally identifiable information about you or others that you might have said in your answers to our question prompts. We will also annotate your samples with “tags” that refer to technical aspects of the acoustic signals in your samples. We will not attach your name or email address to these samples; instead, we will assign a unique participant identification code to you and will annotate your samples with that code. Only the UIUC research team will know the “identity key” that relates your email address to your participant identification code.</p>
-    <p>&nbsp;</p>
-    <p>The UIUC Speech Accessibility Project research team has established a secure, fully encrypted storage system at the UIUC Beckman Institute to store your samples. We will separately store your identifiable information in a separate secure database. We have also established a secure data sharing mechanism with the partners in our consortium. Right now, our partners are the five company sponsors of this project: Amazon, Apple, Google, Meta, and Microsoft. UIUC researchers and researchers at each of the partners will use the collected speech samples to train machine learning algorithms to perform better on speech recognition tasks. These partners will only have access to your speech samples and to no other data about you. </p>
-    <p>&nbsp;</p>
-    <p >The five corporate sponsors of this research at UIUC have signed a legal agreement with the University that sets forth the permitted purposes of the speech data collected from this research project. &nbsp; These permitted purposes are only for research and technology development as stated here:&nbsp;</p>
-    <ul style="">
-        <li>Your samples will be kept forever, to assist in research and technology development in perpetuity.</li>
-        <li>Your samples are not identified with your name or email address, but only with a unique participant code that is only known to the UIUC research team.</li>
-        <li>Your samples will be analyzed by the UIUC research team to verify that the study is being done properly and to provide advice to other researchers about how to design or improve future studies.</li>
-        <li>Your samples will be analyzed and combined with other people&rsquo;s samples to create aggregate results that will be published in the research literature.&nbsp;</li>
-        <li>Your samples will be used to advance understanding of machine learning-related data variances associated with atypical speech variations, and eventually to develop products, technologies, and services by or on behalf of our sponsors to improve communications and increase access to technology, including the creation and training of machine learning solutions and artificial intelligence models for both research and commercial purposes. &nbsp;&nbsp;</li>
-    </ul>
-        <p>&nbsp;</p>
-    <p>In the future, any additional partner organizations in this consortium will sign data use agreements with the same terms and conditions. For these future uses of your data, we will not ask you to consent again. In other words, the future use of your de-identified data could happen without additional informed consent. </p>
-    <p>&nbsp;</p>
-    <p >In summary, your speech samples will help researchers at UIUC and its partner organizations to develop better speech recognition technology algorithms and may eventually help commercial products perform more effectively for people with atypical speech. &nbsp; &nbsp;</p>
-    <br />
-    <p><strong>What are the potential risks and discomforts?&nbsp;</strong></p>
-    <p>In general, we believe that the risks of your participation in this research study are no more than you would encounter in everyday life. &nbsp;However, we do recognize two issues that may be risks in this study, and we also have designed measures to minimize these risks.&nbsp;</p>
-    <p>&nbsp;</p>
-    <p>First, you may get tired. To minimize your tiredness, we have arranged to let you record your speech samples over multiple sessions. You can log in to the system at a time and location convenient to you, and record at your own pace. You can also log out at any time, then log in again to continue recording as you wish. &nbsp;We hope that this flexibility and convenience will minimize any fatigue that you may experience.</p>
-    <p>&nbsp;</p>
-    <p>Second, as is true for almost any online data collection research study, there is a risk that your speech samples could&nbsp;be released for purposes and to other individuals, companies, and organizations beyond the purposes to which you have given consent. Please know that the UIUC team has designed measures to minimize the possibility of unauthorized data release include the following:</p>
-    <ul>
-        <li>&nbsp;Participant code numbers will be used to annotate all speech recordings; your name and email address are not attached to any speech samples directly.&nbsp;</li>
-        <li>All organizations using your speech recordings are required to sign a data use agreement, in which they agree that they will store the data securely, that they will prevent unauthorized access, and that they will not attempt to identify you or obtain any other identifying information about you.</li>
-        <li>Researchers from outside UIUC will not know your name, e-mail address, state of residence, or any other identifying information about you. Identifying information will be stored separately from your speech recordings, in a database accessible only to UIUC research team members. &nbsp;In addition, the UIUC team will edit and annotate your speech samples to protect your privacy.</li>
-        <li>You are allowed to withdraw your voluntary consent at any time and request that all of your data be destroyed. When you notify the UIUC team that you wish to have all of your speech samples destroyed, UIUC will ensure that your speech recordings are removed from the UIUC secure system and will direct our partners that you wish your data to be removed from any copies they have as well.</li>
-    </ul>
-    <p>&nbsp;</p>
-    <p><strong>Are there benefits to participating in the research?&nbsp;</strong></p>
-    <p>There is no immediate benefit of this research to you personally.&nbsp;</p>
-    <p>&nbsp;</p>
-    <p >Information obtained from you in this research may help in the development of commercial products by UIUC, its research partners, or members of the consortium. &nbsp;There are no plans to provide financial compensation to you should this occur.</p>
-    <p>&nbsp;</p>
-    <p>The expected benefit to society is that companies and organizations will be able to develop better spoken-language user interfaces so that people with atypical speech can be as easily understood as other people with typical speech.</p>
-    <br />
-    <p><strong>What other options are there?&nbsp;</strong></p>
-    <p>You have the option to not participate in this study. &nbsp;This study is entirely voluntary.</p>
-    <br />
-    <p><strong>Will my study-related information be kept confidential?&nbsp;</strong></p>
-    <p>Because your voice is identifiable, the UIUC research team has made every effort to protect the audio records of your speech samples. The UIUC team will edit out identifying information from your speech samples (such as your name) and will only store your audio files with a participant code number. &nbsp;This participant code number is stored with your identifiable information on a secure server at the UIUC Beckman Institute, and this &ldquo;identity key&rdquo; information is only accessible by the UIUC research team. This information is necessary in order to pay you for your participation in this project.</p>
-    <p>&nbsp;</p>
-    <p>As described previously, the UIUC team will also listen to all of your speech samples and edit out any personaly identifiable information.&nbsp;</p>
-    <p>&nbsp;</p>
-    <p>Faculty, staff, students, and others with permission or authority to see your study information (such as University auditors) will maintain its confidentiality to the extent permitted and required by laws and university policies.&nbsp;</p>
-    <p>&nbsp;</p>
-    <p>Speech recordings will be distributed only to companies and organizations that have signed a data use agreement, agreeing to confidentiality terms specified above. No other personally identifiable &nbsp;information will be published or presented.&nbsp;</p>
-    <p>&nbsp;</p>
-    <p>Because this is a research project, we do expect to publish research papers as a result of this study. &nbsp;These papers may be in the public domain. &nbsp;Research papers will never state your name or any identifying information about you. &nbsp;Optionally, you may choose to allow us to share samples of your voice as part of research publications or presentations, but this is not required.</p>
-    <br />
-    <p><strong>Will I be reimbursed for any expenses or paid for my participation in this research?&nbsp;</strong></p>
-    <p>You will be compensated up to $180 as follows: $60 after recording the 200<sup>th&nbsp;</sup>sample, an additional $60 after recording the 400<sup>th&nbsp;</sup>sample, and an additional $60 after recording the 600<sup>th&nbsp;</sup>sample.&nbsp;</p>
-        <p>&nbsp;</p>
-    <p>In addition to your own payment, if you require the help of a caregiver to use a web browser, please contact the UIUC research team at&nbsp;<a href="mailto:speechaccessibilityproject@beckman.illinois.edu">speechaccessibilityproject@beckman.illinois.edu</a>&nbsp;to validate that your caregiver may also receive compensation for helping you. Named caregivers will be compensated with up to $90 as follows: $30 after recording the 200<sup>th&nbsp;</sup>sentence, an additional $30 after recording the 400<sup>th</sup>&nbsp;sentence, and an additional $30 after recording the 600<sup>th&nbsp;</sup>sentence.</p>
-    <p>&nbsp;</p>
-    <p>Payments will be made through email using Amazon ecodes.&nbsp;</p>
-    <br />
-    <p><strong>Can I withdraw or be removed from the study?&nbsp;</strong></p>
-    <p>Yes. You are free to withdraw your consent and discontinue participation at any time by notifying the UIUC research team by email or phone. The UIUC research team also have the right to stop your participation in this study without your consent if they believe it is in your best interests. If you withdraw consent, the UIUC research team will remove your speech recordings from the UIUC database and will notify the sponsors and partners that they should also remove your data from their own databases using only your anonymized participant code number. If you withdraw consent, your data will not be used for any future research. If the data you previously provided has been used to inform or create computer code or machine learning algorithms it may not be possible for your data to be removed from them.</p>
-    <br />
-    <p><strong>Will data collected from me be used for any other research?&nbsp;</strong></p>
-    <p>As stated above, UIUC and its partners in the Speech Accessibility Project consortium will use your speech samples to advance&nbsp;understanding of machine learning-related data variances associated with atypical speech variations, and to develop products, technologies, and services to improve communications and increase access to technology, including computational use, and the creation and training of machine learning solutions and artificial intelligence models including for research and for commercial purposes.</p>
-    <p>&nbsp;</p>
-    <p>It is possible that, in the future, other organizations will be granted access to the data, in addition to the founding consortium partners that are Amazon, Apple, Google, Meta, and Microsoft. These other organizations may be other universities or other companies. All organizations seeking access to the data will be required to sign data use agreements that specify the same terms as above: that your speech samples will only be used for research and technology development, that your data will be stored securely, and that you may withdraw consent at any time. You may not be asked to provide additional consent for these future uses of your data.</p>
-   <br />
-    <p><strong>Who should I contact if I have questions?&nbsp;</strong></p>
-    <p>Contact the UIUC research team leader, Professor Mark Hasegawa-Johnson (<a href="mailto:jhasegaw@illinois.edu">jhasegaw@illinois.edu</a>&nbsp;), if you have any questions about this study or your part in it, or if you have concerns or complaints about the research.&nbsp;</p>
-    <br />
-    <p><strong>What are my rights as a research subject?</strong></p>
-    <p>If you have any questions about your rights as a research subject, including concerns, complaints, or to offer input, you may call the UIUC Office for the Protection of Research Subjects (OPRS) at 217-333-2670 or e-mail OPRS at&nbsp;<a href="mailto:irb@illinois.edu">irb@illinois.edu</a>. If you would like to complete a brief survey to provide OPRS feedback about your experiences as a research participant, please follow the link&nbsp;<a href="https://redcap.healthinstitute.illinois.edu/surveys/?s=47X9T4NE4X">here</a>&nbsp;or through a link on the OPRS website:&nbsp;<a href="https://oprs.research.illinois.edu/">https://oprs.research.illinois.edu/</a>. You will have the option to provide feedback or concerns anonymously or you may provide your name and contact information for follow-up purposes.&nbsp;</p>
-    <br />
-    <p><strong>Please print this consent form if you would like to retain a copy for your records.</strong></p>
-    <p><br> <strong>Please read each item carefully and check each box to indicate your agreement.</strong></p>
-    <p>&nbsp;</p>
+            Se le pide que participe de manera voluntaria en un estudio  de
+            investigación llamado "Proyecto de accesibilidad del habla". El
+            objetivo de este estudio es ayudar a los investigadores de universidades
+            y  empresas a desarrollar interfaces de usuario en lenguaje hablado para
+            que  funcionen de manera correcta para personas con habla atípica. Los
+            programas  informáticos (de computadoras) que comprenden el habla se
+            desarrollan mediante  aprendizaje automático (del inglés machine
+            learning). El aprendizaje automático es un método  de desarrollo de
+            software que imita la forma en que aprenden  los humanos, probando el
+            software repetidamente y cambiando su  comportamiento cada vez que
+            comete un error. De este modo, el software aprende  a reducir el riesgo
+            de cometer errores similares en el futuro. Al proporcionar  ejemplos de
+            sonidos de habla atípica, este estudio hará posible que el software
+            aprenda a cometer menos errores cuando se encuentre con habla atípica en
+            el  futuro. La participación en este estudio es totalmente en línea (del
+            inglés  online) y consistirá en grabar frases y subir sus grabaciones de
+            audio a un  sistema de almacenamiento cifrado seguro. Le pedimos que
+            proporcione hasta 600  muestras de habla o unas 5 horas de su tiempo, y
+            lo puede hacer en cualquier  momento en línea, a su propio ritmo y
+            conveniencia. Los riesgos asociados a  este estudio no son mayores que
+            los de la vida cotidiana. No hay expectativa de  beneficio para usted de
+            esta investigación; el beneficio esperado para la  sociedad es que las
+            empresas y organizaciones que utilicen sus grabaciones del  habla podrán
+            entrenar una mejor tecnología del habla para las personas con
+            discapacidades motoras y del habla, lo que hará que la tecnología sea
+            más  accesible para todos.
+        </p>
+        <p>
+            <strong>Nombre del proyecto:</strong>Proyecto de accesibilidad del
+            habla, que tiene el sitio web:
+            <a href="https://speechaccessibilityproject.beckman.illinois.edu/">
+                https://speechaccessibilityproject.beckman.illinois.edu/
+            </a>
+        </p>
+        <p>
+            <strong>Nombre y cargo del  investigador principal</strong>: El Profesor
+            Mark Hasegawa-Johnson, de la Universidad de Illinois Urbana-  Champaign
+            ("UIUC"), Instituto Beckman y facultad  de Ingeniería Eléctrica  e
+            Informática. <strong>Datos de contacto</strong>:La dirección de  correo
+            electrónico del equipo es:
+            <a href="mailto:speechaccessibility@beckman.illinois.edu">
+                speechaccessibility@beckman.illinois.edu.
+            </a>
+        </p>
+        <p>
+            <strong>Organizaciones que realizarán este estudio</strong>: La
+            Universidad de Illinois Urbana-Champaign (UIUC) es la  organización
+            principal que llevará a cabo este estudio y se ha asociado con la
+            Fundación Davis Phinney y LSVT  Global, dos organizaciones que abogan
+            por las personas con Parkinson.
+        </p>
+        <p>
+            <strong>Patrocinador</strong>: El Proyecto de accesibilidad del habla
+            está financiado por un consorcio que actualmente  incluye a cinco
+            empresas: Amazon,  Apple, Google, Microsoft  y Meta (empresa matriz de
+            Facebook). En el futuro, otras empresas,  universidades y organizaciones
+            podrían unirse también a este consorcio.
+        </p>
+        <strong>
+            ¿Por qué se me pidió participar?
+        </strong>
+        <p>
+            Se  le pide que participe en este estudio porque es un adulto que forma
+            parte de  una comunidad de personas que pueden tener un habla atípica,
+            y ha cumplido los requisitos para participar en el estudio  al responder
+            satisfactoriamente a nuestras preguntas de preselección y  proporcionar
+            un conjunto de muestras de habla.
+        </p>
+        <p>
+            Tenemos  previsto reclutar a más de 1.000 personas para participar en
+            este estudio. Dado  que el objetivo de este estudio  es ayudar a estas
+            empresas  a desarrollar mejores  interfaces de habla para las
+            tecnologías,  nuestro equipo necesita reunir muchos tipos diferentes de
+            muestras de habla de  muchos tipos de voces.
+        </p>
+        <p>
+            Su participación en esta investigación es voluntaria. Su decisión de
+            participar no afectará a sus relaciones
+            actuales o futuras con la Universidad de Illinois Urbana-Champaign,  sus
+            socios o los  patrocinadores de este proyecto. Si decide participar, es
+            libre de retirarse en cualquier momento  sin que ello afecte a esa
+            relación.
+        </p>
+        <strong>
+            ¿Qué procedimientos hay que seguir?
+        </strong>
+        <p>
+            <strong></strong>
+        </p>
+        <p>
+            Le proporcionaremos  acceso a un sitio web en el que podrá grabar hasta
+            600 muestras de voz, bien  sea leyendo el texto en voz alta o
+            respondiendo a una pregunta. Puedehacer  estas grabaciones en cualquier
+            momento del día a través de la semana y al ritmo  que desee. Le animamos
+            a que grabe a distintas horas del día para que podamos  saber cómo
+            cambia su habla a lo largo del día. Y no se preocups por darnos muestras
+            "malas": todos los datos son realmente útiles.  Cuanto más diverso  sea
+            nuestro conjunto de muestras de habla, ¡mejor!
+        </p>
+        <p>
+            Tiene la opción de trabajar con nuestra organización asociada, LSVT
+            Global,  para obtener ayuda.  LSVT Global puede proporcionarle un mentor
+            que le ayude a hacer sus  grabaciones, le aconseje sobre la
+            configuración de su micrófono y le dé  consejos sobre cuándo y dónde
+            hacer sus grabaciones.
+        </p>
+        <p>
+            Puede tardar hasta tres meses en terminar de grabar las 600 muestras  de
+            voz. Si va a necesitar más de  tres meses, póngase en contacto con el
+            equipo de investigación de la UIUC a  través de
+            <a href="mailto:speechaccessibility@beckman.illinois.edu">
+                speechaccessibility@beckman.illinois.edu.
+            </a>
+        </p>
+        <p>
+            Le preguntaremos si  considera que el inglés de EE. UU. es su primer
+            idioma. Las personas que hablan  inglés como segundo idioma a veces son
+            mejor reconocidas por los dispositivos que también conocen varios
+            idiomas. Si proporciona  esta información, se compartirá con los
+            investigadores que utilicen las muestras.
+        </p>
+        <p>
+            También le  pediremos que proporcione datos opcionales sobre usted, como
+            su edad, identidad  racial y étnica, y preguntas sobre  cómo puede haber
+            influido su capacidad de habla en su vida cotidiana. No está obligado a
+            responder a ninguna de  estas preguntas. Esta información solo se
+            utilizará para confirmar la  representación diversa en esta recopilación
+            de datos y, si se facilita, no se  compartirá fuera del equipo de
+            investigación de la UIUC.
+        </p>
+        <p>
+            El equipo de  investigación de la UIUC revisará todas sus muestras de
+            habla y las editaremos  para proteger tu privacidad eliminando cualquier
+            referencia a información  personal identificable sobre usted o sobre
+            otras personas que pueda haber  mencionado en sus respuestas a nuestras
+            preguntas. También anotaremos sus muestras con "etiquetas" que se
+            refieren  a aspectos técnicos de las señales  acústicas de sus muestras.
+            No adjuntaremos su nombre ni su dirección de correo  electrónico a estas
+            muestras; en su lugar, le asignaremos un código único de identificación
+            de participante y anotaremos  sus muestras con ese código. Solo el
+            equipo de investigación de la UIUC  conocerá la "clave de identidad" que
+            relaciona su dirección de correo  electrónico con su código de
+            identificación de participante.
+        </p>
+        <p>
+            El equipo de  investigación del Proyecto de accesibilidad del habla de
+            la UIUC ha establecido  un sistema de almacenamiento seguro y totalmente
+            cifrado  o encriptado en el Instituto Beckman de la UIUC  para guardar
+            sus muestras. Almacenaremos por separado su información identificable en
+            una base de datos  segura e independiente. También hemos establecido un
+            mecanismo seguro de  intercambio de datos con los socios de nuestro
+            consorcio. En este momento,  nuestros socios son las cinco empresas
+            patrocinadoras de este proyecto: Amazon,  Apple, Google, Meta y
+            Microsoft. Los
+            investigadores de  la UIUC y los de cada uno de las empresas utilizarán
+            las muestras de voz  recogidas para capacitar a los algoritmos de
+            aprendizaje automático para que funcionen mejor en las tareas  de
+            reconocimiento de voz. Estos colaboradores de investigación solo tendrán
+            acceso a sus muestras de habla y a ningún otro dato sobre usted.
+        </p>
+        <p>
+            Las cinco  empresas patrocinadoras de esta investigación en la UIUC han
+            firmado  un acuerdo legal  con la universidad que  establece los fines
+            permitidos de las muestras de voz recogidas en este  proyecto de
+            investigación. Estos fines permitidos son solo para la  investigación y
+            el desarrollo tecnológico, como se indica aquí:
+        </p>
+    <p>
+        ·  Sus muestras se conservarán para siempre, para ayudar a la
+        investigación y al desarrollo tecnológico en perpetuidad.
+    </p>
+
+
+        <p>
+            ·        Sus muestras no se identificarán con su nombre  o dirección de
+            correo electrónico, sino solo con un código único de participante que
+            solo conoce el equipo de investigación de la UIUC.
+        </p>
+        <p>
+            ·        Sus muestras serán analizadas por  el equipo de investigación
+            de la UIUC para verificar que el estudio se realiza correctamente y para
+            asesorar  a otros investigadores sobre cómo diseñar o mejorar futuros
+            estudios.
+        </p>
+        <p>
+            ·        Sus muestras se analizarán y combinarán con las muestras  de
+            otras personas  para crear resultados  agregados que se publicarán en la
+            literatura de investigación.
+        </p>
+        <p>
+            ·        Sus muestras se utilizarán para  mejorar la comprensión de las
+            variaciones de los datos relacionadas con el  aprendizaje automático que
+            están asociadas a las variaciones atípicas del  habla. Eventualmente
+            conducirá al  desarrollo de productos, tecnologías y servicios por o en
+            nombre de nuestros patrocinadores para mejorar las comunicaciones y
+            aumentar el acceso a la  tecnología, incluyendo la creación y
+            capacitación de soluciones de aprendizaje  automático y modelos de
+            inteligencia artificial tanto para fines de investigación  como
+            comerciales.
+        </p>
+        <p>
+            En el futuro, cualquier organización asociada adicional de este
+            consorcio  firmará acuerdos de uso de datos  con los mismos términos y
+            condiciones. Para tales usos futuros de sus datos, no  pediremos su
+            consentimiento nuevamente. En otras palabras, el uso futuro de sus
+            datos des-identificados podría producirse sin consentimiento informado
+            adicional.
+        </p>
+        <p>
+            En resumen, sus  muestras de habla ayudarán a los investigadores de la
+            UIUC y de sus  organizaciones asociadas a desarrollar mejores algoritmos
+            de tecnología de  reconocimiento del habla y, con el tiempo, podrán
+            ayudar a que los productos comerciales funcionen con mayor eficacia
+            para las personas  con habla atípica.
+        </p>
+        <strong>
+            ¿Cuáles son los posibles riesgos  y molestias?
+        </strong>
+        <p>
+            En general,  creemos que los riesgos de su participación en este estudio
+            de investigación no son mayores  de los que encontraría en la vida
+            cotidiana. Sin embargo, reconocemos  dos asuntos que pueden suponer
+            riesgos en este estudio, y también hemos  diseñado medidas para
+            minimizarlos.
+        </p>
+        <p>
+            En  primer lugar, podría cansarse. Para minimizar su cansancio, hemos
+            dispuesto que  pueda grabar sus muestras de habla  en varias sesiones.
+            Puede conectarse al sistema a la hora y en el lugar que le convenga  y
+            grabar a su propio ritmo. También puede  cerrar la sesión  en cualquier
+            momento  y volver a conectarse para seguir grabando como desee.
+            Esperamos que esta flexibilidad y conveniencia reduzcan al mínimo la
+            fatiga que  pueda experimentar.
+        </p>
+        <p>
+            En segundo  lugar, como ocurre  en casi todos los estudios  de
+            investigación de recopilación de datos en línea,
+            muestras  de habla. El equipo de UIUC editará la información de
+            identificación de sus  muestras de habla (como su nombre) y solo
+            almacenará sus archivos de audio con  un número de código de
+            participante. Este número de código de participante se almacenará con su
+            información de identificación en un servidor  seguro en el Instituto
+            UIUC Beckman, y esta "clave de identidad" es solo accesible por el
+            equipo de investigación de UIUC. Esta  información es necesaria para
+            poder pagarle por su participación en este  proyecto.
+        </p>
+        <p>
+            Como se describió anteriormente, el equipo de UIUC también escuchará
+            todas sus muestras  de habla y las  editará para eliminar cualquier
+            información de identificación personal.
+        </p>
+        <p>
+            Los  miembros de facultad, personal, estudiantes y otras personas con
+            permiso o  autoridad para ver su información de este estudio (como
+            auditores universitarios) mantendrán su confidencialidad en la medida
+            permitida y requerida por las leyes  y políticas universitarias.
+        </p>
+        <p>
+            Las  grabaciones de habla se distribuirán únicamente a empresas y
+            organizaciones que  hayan firmado un acuerdo de uso de datos aceptando
+            los términos de confidencialidad especificados anteriormente. Ninguna
+            otra información de identificación personal será publicada o presentada.
+        </p>
+        <p>
+            Debido a que se trata de un proyecto  de investigación, esperamos
+            publicar artículos de investigación como resultado de este estudio.
+            Estos  artículos pueden ser de dominio público. Las publicaciones sobre
+            esta  investigación nunca incluirán su nombre ni ninguna información que
+            le  identifique. De manera opcional, puede decidir conceder permiso para
+            que la  universidad comparta muestras anónimas de
+        </p>
+        <p>
+            su voz como parte de las publicaciones o presentaciones de
+            investigación, pero esto no es obligatorio.
+        </p>
+        <strong>
+            ¿Seré reembolsado por gastos  que incurra o pagado por mi participación
+            en esta investigación?
+        </strong>
+        <p>
+            Usted  será compensado hasta $180 como sigue: $60 luego de concluir la
+            grabación de la  muestra número 200, $60 adicionales luego de la
+            grabación de la muestra  número 400, y $60 adicionales luego la
+            grabación de la muestra número 600.
+        </p>
+        <p>
+            Además  de su propio pago, si necesita la ayuda de un cuidador para
+            utilizar un  navegador web, comuníquese con el equipo de investigación
+            de la UIUC a través  de
+            <a href="mailto:speechaccessibilityproject@beckman.illinois.edu">
+                speechaccessibilityproject@beckman.illinois.edu
+            </a>
+            para validar que su cuidador también  pueda recibir una compensación por
+            ayudarle. Los  cuidadores aprobados recibirán una compensación de hasta
+            $90, de la siguiente manera  $30 tras usted grabar la frase número  200,
+            otros $30 tras usted  grabar la frase  número 400 y otros $30 tras usted
+            grabar la frase número 600.
+        </p>
+        <p>
+            Los pagos se realizarán por correo electrónico utilizando
+            <em>
+                ecodes
+            </em>
+            de Amazon.
+        </p>
+        <strong>
+            ¿Puedo retirarme o pueden terminar mi participación en el estudio?
+        </strong>
+        <p>
+            Sí. Usted es libre  de retirar su consentimiento e interrumpir su
+            participación en cualquier  momento notificándolo al equipo  de
+            investigación de la UIUC por correo  electrónico o por teléfono. El
+            equipo de investigación de la UIUC también tiene  derecho a interrumpir
+            su participación en este estudio sin su
+            existe  el riesgo que sus muestras de habla se divulguen con otros fines
+            y a personas,  empresas y organizaciones más allá de los que ha dado su
+            consentimiento. Debe saber que el equipo  de la UIUC ha diseñado medidas
+            para minimizar la posibilidad de divulgación no autorizada de datos,
+            entre  las que se incluyen las siguientes:
+        </p>
+        <p>
+            ·        Los números de código  de los participantes se utilizarán para
+            hacer anotaciones en todas las grabaciones de habla; su nombre y
+            dirección de correo electrónico no se adjuntarán directamente a ninguna
+            muestra  de habla.
+        </p>
+        <p>
+            ·       Todas las organizaciones que utilicen sus grabaciones de habla
+            deberán  firmar un acuerdo  de uso de estos datos, en el que se
+            comprometen a almacenar los datos  de forma segura, a impedir el acceso
+            no autorizado y a no intentar  identificarle ni obtener ninguna otra
+            información que le identifique.
+        </p>
+        <p>
+            ·       Los investigadores ajenos a la UIUC no conocerán su nombre,
+            dirección  de correo electrónico, estado de residencia ni ninguna otra
+            información que le  identifique. La información de identificación  se
+            almacenará separada  de sus grabaciones del habla,  en una base de datos
+            accesible  solo a los miembros del equipo de investigación de la UIUC.
+            Además, como  indicamos anteriormente, el equipo de la UIUC editará y
+            anotará sus muestras de  habla para proteger su privacidad.
+        </p>
+        <p>
+            ·       Puede retirarstu consentimiento voluntario en cualquier momento
+            y  solicitar que se destruyan todos sus datos. Cuando notifique al
+            equipo de la  UIUC que desea que se destruyan todas sus muestras de
+            habla, la UIUC se  asegurará de que sus grabaciones de voz se eliminen
+            del sistema seguro de la UIUC y les dará instrucciones a nuestros
+            colaboradores que usted desea  que sus datos sean borrados de todas las
+            copias que posean también
+        </p>
+        <strong>
+            ¿Hay beneficios por participar en esta investigación?
+        </strong>
+        <p>
+            <strong></strong>
+        </p>
+        <p>
+            No existe  un beneficio inmediato  para usted por participar en esta
+            investigación.
+        </p>
+        <p>
+            La  información que obtendremos de usted en esta investigación puede
+            ayudar en el  desarrollo de investigación científica, productos  de
+            código abierto,  y productos comerciales por parte de UIUC, sus socios
+            de investigación o miembros del consorcio. No existen planes de
+            proveerle  compensación financiera adicional de esto ocurrir.
+        </p>
+        <p>
+            El beneficio esperado para la sociedad es que las empresas y
+            organizaciones podrán  desarrollar mejores
+        </p>
+        <p>
+            interfaces que requieren el uso del lenguaje hablado  para que las
+            personas con un habla atípica puedan  ser entendidas tan fácilmente como
+            otras personas con habla típica.
+        </p>
+        <strong>
+            ¿Qué  otras opciones existen?
+        </strong>
+        <p>
+            Usted tiene la opción  de no participar en este estudio. Este estudio es
+            completamente voluntario.
+        </p>
+        <strong>
+            ¿Se mantendrá confidencial mi información relacionada con el estudio?
+        </strong>
+        <p>
+            <strong></strong>
+        </p>
+        <p>
+            El equipo de investigación de UIUC ha hecho todo lo posible  para
+            proteger las audiograbaciones de sus
+        consentimiento  si considera que es lo mejor para usted. Si retirs su
+        consentimiento, el equipo  de investigación de la UIUC eliminará sus
+        grabaciones de  habla de la base de datos de  la UIUC y notificará a los
+        patrocinadores y socios  que también deben eliminar sus datos de sus propias
+        bases de datos utilizando solo su  número de código  de participante
+        anónimo.  Si retira su consentimiento, sus datos no serán utilizados en
+        futuras investigaciones.  Si los datos que proporcionó anteriormente se han
+        utilizado para informar o  crear códigos informáticos o algoritmos de
+        aprendizaje automático, puede que no  sea posible eliminar sus datos de
+        ellos.
+    </p>
+    <strong>
+        ¿Utilizarán misdatos  para otras investigaciones?
+    </strong>
+    <p>
+        Como se ha indicado  anteriormente, la UIUC y sus socios en el consorcio del
+        Proyecto de accesibilidad del habla utilizarán sus muestras de habla para
+        avanzar la comprensión de las variaciones de los datos  relacionados con el
+        aprendizaje automático y asociados a  variaciones atípicas del habla.
+        Ademásserán utilizados para desarrollar  productos, tecnologías y servicios
+        que mejoren las comunicaciones y aumenten el  acceso a la tecnología,
+        incluido el uso computacional, y la creación y  capacitación de soluciones
+        de aprendizaje automático y modelos de inteligencia  artificial, tanto con
+        fines de investigación como comerciales.
+    </p>
+    <p>
+        Es posible que en  el futuro se conceda acceso a los datos a otras
+        organizaciones, además de los  socios fundadores del consorcio  que son
+        Amazon, Apple, Google,  Meta y Microsoft. Estas otras organizaciones pueden
+        ser otras universidades u otras  empresas. Todas las organizaciones que
+        deseen acceder a los datos deberán  firmar acuerdos de uso de datos  que
+        especifiquen los mismos términos  que los anteriores: que sus muestras de
+        habla solo se utilizarán para investigación y desarrollo  tecnológico, que
+        sus datos se almacenarán de forma segura y que podrá retirar  su
+        consentimiento en cualquier momento. No se le pedirá que deconsentimiento
+        adicional para estos usos futuros de sus datos.
+    </p>
+    <strong>
+        ¿Con quién debo ponerme en contacto si tengo preguntas?
+    </strong>
+    <p>
+        Puede comunicarse  con el jefe del equipo de investigación de la UIUC, el
+        profesor Mark  Hasegawa-Johnson (<a href="mailto:jhasegaw@illinois.edu">jhasegaw@illinois.edu</a>),
+        si tiene alguna  pregunta sobre este estudio o sobre su participación en él,
+        o si tiene alguna inquietud o queja sobre la  investigación.
+    </p>
+    <strong>
+        ¿Cuáles son mis derechos  como sujeto de investigación?
+    </strong>
+    <p>
+        Si tiene  alguna pregunta sobre  sus derechos como sujeto de investigación,
+        que incluyan inquietudes, quejas o para  ofrecer su opinión, puede llamar a
+        la Oficina para la Protección de Sujetos de  Investigación (OPRS) de la UIUC
+        al 217-333-2670 o enviar un correo electrónico  a la OPRS a
+        <a href="mailto:irb@illinois.edu">
+            irb@illinois.edu.
+        </a>
+        Si quiere completar una breve encuesta para dar su opinión a la OPRS sobre
+        sus  experiencias como participante en una investigación, siga el enlace que
+        aparece  aquí o a través de un enlace en el sitio web de la OPRS:
+        <a href="https://oprs.research.illinois.edu/">
+            https://oprs.research.illinois.edu/.
+        </a>
+        Tendrá la opción de dar su opinión o compartir sus inquietudes de forma
+        anónima, o pueds proveer su nombre e información de contacto para recibir
+        seguimiento.
+    </p>
+    <p>
+        <strong>
+            Lee atentamente cada punto y marque  cada casilla para indicar que está de
+            acuerdo.
+        </strong>
+    </p>
+
+    <br/>
        
     <form method="post" id="consentForm">      
        
         <p><input  type="checkbox" id="readAndUnderstandConsent" asp-for="readAndUnderstandConsent" value=true>
-            <label style="display:inline" for="readAndUnderstandConsent"> I have read and understand the above consent form.</label><br /><span class="text-danger">@Html.ValidationMessage("readAndUnderstandValidation")</span></p>
+            <label style="display:inline" for="readAndUnderstandConsent"> He leído y comprendo el formulario de consentimiento anterior.</label><br /><span class="text-danger">@Html.ValidationMessage("readAndUnderstandValidation")</span>
+        </p>
     <p>&nbsp;</p>
         <p><input  type="checkbox" id="legalAgreementConsent" asp-for="legalAgreementConsent">
-            <label style="display:inline" for="legalAgreementConsent"> I understand that my speech samples are collected for the purpose of improving speech recognition technology and are protected by a legal agreement between UIUC and the current members of the Speech Accessibility Project coalition, and that future members of the data coalition and any future data licensees will also be bound by similar legal agreements.</label><br /><span class="text-danger">@Html.ValidationMessage("legalAgreementValidation")</span>
+            <label style="display:inline" for="legalAgreementConsent"> Entiendo que mis muestras de habla se recogen con el fin de mejorar la tecnología de reconocimiento del habla y están protegidas por un acuerdo legal entre la UIUC y los miembros actuales de la coalición del Proyecto de accesibilidad del habla, y que los futuros miembros de la coalición de datos y cualquier futuro licenciatario de datos también estarán sujetos a acuerdos legales similares.</label><br /><span class="text-danger">@Html.ValidationMessage("legalAgreementValidation")</span>
         </p>
     <p>&nbsp;</p>
         <p>
             <input  type="checkbox" id="eighteenConsent" asp-for="eighteenConsent">
-            <label style="display:inline" for="eighteenConsent"> I certify that I am 18 years old or older.</label><br /><span class="text-danger">@Html.ValidationMessage("eighteenValidation")</span>
+            <label style="display:inline" for="eighteenConsent"> Certifico que tengo 18 años o más.</label><br /><span class="text-danger">@Html.ValidationMessage("eighteenValidation")</span>
         </p>
     <p>&nbsp;</p>
         <p>
             <input  type="checkbox" id="validEmailConsent" asp-for="validEmailConsent">
-            <label style="display:inline" for="validEmailConsent"> I understand that I must maintain a valid email address in order to participate in this study and to be paid for my participation.</label><br /><span class="text-danger">@Html.ValidationMessage("emailValidation")</span>
+            <label style="display:inline" for="validEmailConsent"> Entiendo que debo mantener una dirección de correo electrónico válida para participar en este estudio y para que se me pague por mi participación.</label><br /><span class="text-danger">@Html.ValidationMessage("emailValidation")</span>
         </p>
     <p>&nbsp;</p>
         <p>
             <input  type="checkbox" id="loginConsent" asp-for="loginConsent">
-            <label style="display:inline" for="loginConsent">I certify that I and I alone will use my login to record speech samples. I will not allow other people to record speech samples on my behalf.</label><br /><span class="text-danger">@Html.ValidationMessage("loginValidation")</span>
+            <label style="display:inline" for="loginConsent">Certifico que yo y solo yo utilizaré mi nombre de usuario para grabar muestras de habla. No permitiré que otras personas graben muestras de habla en mi nombre.</label><br /><span class="text-danger">@Html.ValidationMessage("loginValidation")</span>
         </p>
     <p>&nbsp;</p>
         <p>
             <input  type="checkbox" id="financialCompensationConsent" asp-for="financialCompensationConsent">
-            <label style="display:inline" for="financialCompensationConsent">I understand that the only financial compensation that I will receive for participating in this study is the payment for contributing speech samples, which will be $60 for every batch of 200 samples I provide.</label><br /><span class="text-danger">@Html.ValidationMessage("financialCompensationValidation")</span>
+            <label style="display:inline" for="financialCompensationConsent">Entiendo que la única compensación económica que recibiré por participar en este estudio es el pago por contribuir con muestras de habla, que será de $60 por cada lote de 200 muestras que proporcione.</label><br /><span class="text-danger">@Html.ValidationMessage("financialCompensationValidation")</span>
         </p>
     <p>&nbsp;</p>
         <p>
             <input  type="checkbox" id="maxPaymentConsent" asp-for="maxPaymentConsent">
-            <label style="display:inline" for="maxPaymentConsent"> I understand that my goal is to provide 600 samples total, and that therefore my maximum payment will be $180.</label><br /><span class="text-danger">@Html.ValidationMessage("maxPaymentValidation")</span>
+            <label style="display:inline" for="maxPaymentConsent"> Entiendo que mi objetivo es proporcionar 600 muestras en total, y que por lo tanto mi pago máximo será de $180 .</label><br /><span class="text-danger">@Html.ValidationMessage("maxPaymentValidation")</span>
         </p>
     <p>&nbsp;</p>
         <p>
             <input  type="checkbox" id="caregiverConsent" asp-for="caregiverConsent">
-            <label style="display:inline" for="caregiverConsent">I understand that if I need the help of a caregiver to contribute speech samples, that I must notify the UIUC team and have my caregiver approved to be paid in addition to myself.</label><br /><span class="text-danger">@Html.ValidationMessage("caregiverValidation")</span>
+            <label style="display:inline" for="caregiverConsent">Entiendo que si necesito la ayuda de un cuidador para contribuir mis muestras de habla, debo notificarlo al equipo de la UIUC para que aprueben el que se pague a mi cuidador además de a mí mismo.</label><br /><span class="text-danger">@Html.ValidationMessage("caregiverValidation")</span>
         </p>
     <p>&nbsp;</p>
     <p><input  type="checkbox" id="withdrawalConsent" asp-for="withdrawalConsent">
-            <label style="display:inline" for="withdrawalConsent">I understand that at any time, I can end my participation and withdraw my consent. &nbsp;When I do so, the UIUC research team will remove all of my speech samples from the UIUC secure system. I also understand that it is UIUC&rsquo;s responsibility to ask all sponsors and partners to remove any copies of my speech samples from their own databases as well.</label><br /><span class="text-danger">@Html.ValidationMessage("withdrawalValidation")</span>
+            <label style="display:inline" for="withdrawalConsent">Entiendo que en cualquier momento puedo terminar mi participación y retirar mi consentimiento. Cuando lo haga, el equipo de investigación de la UIUC eliminará todas mis muestras de habla del sistema seguro de la UIUC. También entiendo que es responsabilidad de la UIUC pedir a todos los patrocinadores y socios que eliminen cualquier copia de mis muestras de habla de sus propias bases de datos.</label><br /><span class="text-danger">@Html.ValidationMessage("withdrawalValidation")</span>
         </p>
     <p>&nbsp;</p>
-    <p><strong><em>Optional checkbox</em></strong><em>: By checking the box below, you may also specifically grant your consent for the research team to play or provide audio files of your voice in a public research setting or publication.&nbsp;</em></p>
+        <p><strong>Casilla opcional:</strong> Al marcar la siguiente casilla, también pueds dar específicamente su consentimiento para que el equipo de investigación reproduzca o proporcione archivos de audio de su voz en un entorno público de investigación o publicación.</p>
         <p>
             <input  type="checkbox" id="shareSamplesConsent" asp-for="shareSamplesConsent">
-            <label style="display:inline" for="shareSamplesConsent">I consent to have my voice samples shared in public at research conferences and similar professional meetings, and to have digital audio files of my voice be shared as part of professional research publications.</label>
+            <label style="display:inline" for="shareSamplesConsent">Doy mi consentimiento para que se compartan muestras de mi voz en público en conferencias de investigación y reuniones profesionales similares, y para que se compartan archivos de audio digitales de mi voz como parte de publicaciones de investigación profesional.</label>
         </p>
     <p>&nbsp;</p>
-    <p><strong><em>Optional checkbox</em></strong><em>: By checking the box below, you may also specifically grant your consent to share your contact information with other research teams, so that they may contact you to be a potential participant in their own research studies.</em></p>
+        <p><strong>Casilla opcional:</strong> Al marcar la casilla de abajo, también puede dar específicamentesu consentimiento para compartir su información de contacto con otros equipos de investigación, de modo que puedan ponerse en contacto con usted para ser un participante potencial en sus propios estudios de investigación.</p>
         <p><input  type="checkbox" id="shareContactInfoConsent" asp-for="shareContactInfoConsent">
-            <label style="display:inline" for="shareContactInfoConsent">I consent to have my email address and phone number be shared with other research teams, who may contact me to participate in their studies.</label>
+            <label style="display:inline" for="shareContactInfoConsent">Doy mi consentimiento para que mi dirección de correo electrónico y mi número de teléfono sean compartidos con otros equipos de investigación que podrán ponerse en contacto conmigo para participar en sus estudios.</label>
         </p>
     <p>&nbsp;</p>
-    <p>By clicking the &ldquo;I CONSENT&rdquo; button below, I indicate my willingness to voluntarily take part in this study.</p>
+        <p>Al hacer clic en el botón "ACEPTO" que aparece a continuación, indico mi deseo de participar voluntariamente en este estudio.</p>
     <p>&nbsp;</p>
-    <button class="btn btn-primary" id="consentButton">I CONSENT</button>
+    <button class="btn btn-primary" id="consentButton">ACEPTO</button>
     </form>
 </div>
 

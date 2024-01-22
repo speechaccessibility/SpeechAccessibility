@@ -5,12 +5,6 @@ namespace SpeechAccessibility.Core.Models
     public class Contributor
     {
 
-        //public Contributor()
-        //{
-        //    Consent = new HashSet<Consent>();
-        //    ContributorDetails = new HashSet<ContributorDetails>();
-        //}
-
         public Guid Id { get; set; }
         //public string UnderstandSpeechInd { get; set; }
         public int EtiologyId { get; set; }
@@ -38,6 +32,7 @@ namespace SpeechAccessibility.Core.Models
         public string OtherEtiologyText { get; set; }
         public string BirthYear { get; set; }
         public string HelperPhoneNumber { get; set; }
+        public int? PromptCategoryId { get; set; }
         public Etiology Etiology { get; set; }
         //public  ContributorStatus ContributorStatus { get; set; }
         //public ContributorSubStatus ContributorSubStatus { get; set; }

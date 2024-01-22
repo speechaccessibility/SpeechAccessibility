@@ -13,11 +13,18 @@ Only for the last 30 days
     <table id="DailyContributorRecordingReport">
         <tr>
             <th>&nbsp;</th>
+            <th colspan="@counter" style="text-align: center"># of New Registrations</th>
             <th colspan="@counter" style="text-align: center">Total # of approved contributors</th>
             <th colspan="@counter" style="text-align: center">Total # of files</th>
         </tr>
         <tr>
             <th style="width: 150px">Date</th>
+            @{
+                foreach (var etiology in etiologies)
+                {
+                    <th>@etiology.Acronym</th>
+                }
+            } 
             @{
                 foreach (var etiology in etiologies)
                 {
@@ -37,6 +44,11 @@ Only for the last 30 days
                     <tr>
                         <td>@report.TodayDate.ToShortDateString()</td>
                         @{
+                            foreach (var contributorNumber in report.NewContributors)
+                            {
+                                <td>@contributorNumber</td>
+                            }
+
                             foreach (var contributorNumber in report.ApprovedContributors)
                             {
                                 <td>@contributorNumber</td>

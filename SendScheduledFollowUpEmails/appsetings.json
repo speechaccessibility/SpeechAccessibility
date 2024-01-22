@@ -1,0 +1,14 @@
+﻿{
+  "ConnectionStrings": {
+    "Default": "Server=;Trusted_Connection=True;MultipleActiveResultSets=true"
+  },
+  "AppSettings": {
+    "EmailServer": "",
+    "SpeechAccessibilityTeamEmail": "",
+    "DeveloperMode": "No",
+    "TestingEmail": "",
+    "TestingMode": "Yes"
+  }
+
+}
+  

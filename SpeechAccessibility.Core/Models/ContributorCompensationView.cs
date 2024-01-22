@@ -20,6 +20,7 @@ namespace SpeechAccessibility.Core.Models
         public int ThirdGiftCard { get; set; }
         public int? RecordingCount { get; set; }
         public string Etiology { get; set; }
+        public string PromptCategory { get; set; }
         public string FirstCard { get; set; }
         public string SecondCard { get; set; }
         public string ThirdCard { get; set; }

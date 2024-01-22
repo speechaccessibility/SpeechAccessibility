@@ -23,68 +23,7 @@
     </tr>
 </table>
 
-@*@using (Html.BeginForm("ViewAnnotationProgress", "Report", FormMethod.Post))
-{
-    <table style="border-collapse: collapse !important; border: none !important;">
-        <tr>
-            <td style="border: none !important;">
-                <label><b>Start Date:</b></label>
-            </td>
-            <td style="border: none !important;">
-                <input id="startDateIn" name="startDateIn" type="date" value="@ViewBag.StartDate" />
-            </td>
-            <td><b>End Date:</b></td>
-            <td><input id="endDateIn" name="endDateIn" type="date" value="@ViewBag.EndDate" /></td>
-            <td><input type="submit" id="btnSubmit" name="btnSubmit" value="Submit" class="btn btn-primary btn-sm"/></td>
-        </tr>
-    </table>
-}*@
 
-@*<div style="width: 1500px">
-@{
-    foreach (var report in Model)
-    {
-            <table id="AnnotationProgressReport" style="width: 1000px;">
-            @{
-                    if (report.AssignedRecordingByContributor.Count > 0)
-                {
-                        <tr style="background-color: #797d7f; color: white">
-                            <td><b>@report.ReportDate.ToShortDateString() - @report.Annotator.LastName , @report.Annotator.FirstName</b></td>
-                    </tr>
-                    <tr>
-                        <td>
-                                <table>
-                                <tr style="background-color:#b3b6b7 ">
-                                    <td style="width: 50px">&nbsp;</td>
-                                        <td style="width: 400px"><b>ContributorId</b></td>
-                                        <td style="width: 100px"><b>Status</b></td>
-                                        <td style="width: 200px"><b>Number of Records</b></td>
-                                </tr>
-                                @{
-                                    var counter = 1;
-                                    foreach (var recording in report.AssignedRecordingByContributor)
-                                    {
-                                        <tr>
-                                            <td>@counter</td>
-                                            <td>@recording.ContributorId</td>
-                                            <td>@recording.Status</td>
-                                            <td>@recording.NumberOfRecord</td>
-                                        </tr>
-                                        counter++;
-                                    }
-                                }
-
-                            </table>
-                        </td>
-                    </tr>      
-                }
-            }
-        </table>
-    }
-}
-    
-</div>
-*@
 <div style="width: 1500px">
     <table class="table table-striped table-bordered table-hover" id="AnnotationProgressTable" cellspacing="0" align="center"></table>
 </div>
@@ -270,18 +209,8 @@
             var endDate = formatDate(end);
             $('#startDateIn').val(startDate);
             $('#endDateIn').val(endDate);
-        }
-        
-        function formatDate(dateIn)
-        {
-            var date = new Date(dateIn);
-            var dateDay = ("0" + date.getDate()).slice(-2);
-            var dateMonth = ("0" + (date.getMonth() + 1)).slice(-2);
-            var dateVal = date.getFullYear() + "-" + (dateMonth) + "-" + (dateDay);
-
-            return dateVal;
-
-        }
+        }        
+     
 
     </script>
 }

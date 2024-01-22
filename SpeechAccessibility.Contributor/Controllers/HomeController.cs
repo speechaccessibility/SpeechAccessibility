@@ -287,7 +287,7 @@ namespace SpeechAccessibility.Controllers
 
         [Authorize]
         [HttpGet]
-        public IActionResult RecordPrompt()
+        public IActionResult RecordPrompt(bool displayedMessageForCurrentBlock)
         {
             RecordPromptModel model = new RecordPromptModel();
 
@@ -331,7 +331,7 @@ namespace SpeechAccessibility.Controllers
                     string helperInd = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.HelperInd).First();
 
                     if (contributor.Etiology.Id == 2)
-                    {                      
+                    {
                         int legalGuardianCount = _identityContext.LegalGuardian.Where(l => l.ContributorId == contributorId).Count();
                         int assentCount = _identityContext.Assent.Where(a => a.ContributorId == contributorId).Count();
 
@@ -350,6 +350,20 @@ namespace SpeechAccessibility.Controllers
                         if ("Yes".Equals(helperInd) && caregiverConsentCount == 0)
                         {
                             return RedirectToPage("/Account/ALSCaregiverConsent", new { area = "Identity" });
+                        }
+                    }
+                    else if (contributor.Etiology.Id == 3)
+                    {
+                        if ("Yes".Equals(helperInd) && caregiverConsentCount == 0)
+                        {
+                            return RedirectToPage("/Account/CPCaregiverConsent", new { area = "Identity" });
+                        }
+                    }
+                    else if (contributor.Etiology.Id == 4)
+                    {
+                        if ("Yes".Equals(helperInd) && caregiverConsentCount == 0)
+                        {
+                            return RedirectToPage("/Account/AphasiaCaregiverConsent", new { area = "Identity" });
                         }
                     }
 
@@ -380,7 +394,7 @@ namespace SpeechAccessibility.Controllers
                             return RedirectToAction("CompleteConfirmation");
                         }
                         //Select a prompt from the current block that has not already been recorded by the contributor
-                        prompt = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId).Select(p => p.Prompt).Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId && r.Block.Id == blockId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).FirstOrDefault();
+                        prompt = _recordingContext.BlockOfPrompts.Where(b => b.Block.Id == blockId).Select(b => b.Prompt).Where(b => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId && r.Block.Id == blockId).Select(r => r.OriginalPrompt.Id).Contains(b.Id)).FirstOrDefault();
                         category = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.Category).FirstOrDefault();
 
                         SubCategory currentSubCategory = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.SubCategory).FirstOrDefault();
@@ -393,6 +407,7 @@ namespace SpeechAccessibility.Controllers
                     }
 
                     currentBlockOfPromptsCount = _recordingContext.Prompt.Where(p => _recordingContext.Recording.Where(r => r.ContributorId == contributorId && r.RetryCount == retryMax && r.Block.Id == blockId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Count();
+
                 }
                 //Route to the consent page if they haven't provided consent
                 else
@@ -408,6 +423,14 @@ namespace SpeechAccessibility.Controllers
                     if (contributor.Etiology.Id == 1)
                     {
                         return RedirectToPage("/Account/ConsentLanguage", new { area = "Identity" });
+                    }
+                    if (contributor.Etiology.Id == 3)
+                    {
+                        return RedirectToPage("/Account/CPConsent", new { area = "Identity" });
+                    }
+                    if (contributor.Etiology.Id == 4)
+                    {
+                        return RedirectToPage("/Account/AphasiaConsent", new { area = "Identity" });
                     }
                     else
                     {
@@ -439,6 +462,8 @@ namespace SpeechAccessibility.Controllers
             model.assessmentCount = assessmentCount + 1;
             model.digitalCommandMax = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId && p.Category.Id == 2).Count();
             model.novelSentenceMax = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId && p.Category.Id == 3).Count();
+            model.uaPromptMax = Int32.Parse(_config["CPUAPromptMax"]);
+            model.fiveKPromptMax = Int32.Parse(_config["CP5KPromptMax"]);
             model.openEndedMax = _recordingContext.BlockOfPrompts.Where(p => p.Block.Id == blockId && p.Category.Id == 4).Count();
             model.currentBlockOfPromptsCount = currentBlockOfPromptsCount;
             model.totalBlockCount = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.Block).Where(b => b != null).Distinct().Count();
@@ -447,11 +472,22 @@ namespace SpeechAccessibility.Controllers
             model.retryCount = retryCount;
             model.phonationPromptCount = phonationPromptCount;
             model.etiologyId = contributor.Etiology.Id;
+            model.promptCategoryId = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.PromptCategoryId).FirstOrDefault();
 
             HttpContext.Response.Cookies.Append("phonationPromptCount", phonationPromptCount.ToString());
 
             string url = contributorId + prompt.Id.ToString();
             HttpContext.Response.Cookies.Append("url", "/Home/SaveRecording");
+
+            //For CP we want to display the open ended instructions on a separate page.
+            //It should route to this page at the beginning of the open ended section for each block
+            if(((model.etiologyId == 3 && model.promptCategoryId!=5 && category.Id == 4)||model.etiologyId==4) && !displayedMessageForCurrentBlock)
+            {
+                if (currentBlockOfPromptsCount == model.digitalCommandMax)
+                {
+                    return RedirectToPage("/Account/OpenEndedInstructions", new { area = "Identity", totalBlockCount = model.totalBlockCount });
+                }
+            }
 
             return View(model);
 
@@ -522,34 +558,21 @@ namespace SpeechAccessibility.Controllers
 
         private Block createAndAssignBlock(Guid contributorId)
         {
-            int etiologyId = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.Etiology.Id).FirstOrDefault();
-
+           
             int assignedBlockCount = _recordingContext.ContributorAssignedBlock.Where(c => c.ContributorId == contributorId).Count();
             int blocksToComplete = Int32.Parse(_config["BlocksToComplete"]);
-            int digitalCommandMax = 0;
-            int novelSentenceMax = 0;
-            int openEndedPromptMax = 0;
-            int proceduralPromptMax = 0;
-
-            if (etiologyId == 2)
-            {
-                digitalCommandMax = Int32.Parse(_config["DSDigitalCommandMax"]);
-                openEndedPromptMax = Int32.Parse(_config["DSOpenEndedPromptMax"]);
-                proceduralPromptMax = Int32.Parse(_config["DSProceduralPromptMax"]);
-            }
-            else
-            {
-                digitalCommandMax = Int32.Parse(_config["DefaultDigitalCommandMax"]);
-                novelSentenceMax = Int32.Parse(_config["DefaultNovelSentenceMax"]);
-                openEndedPromptMax = Int32.Parse(_config["DefaultOpenEndedPromptMax"]);
-                proceduralPromptMax = Int32.Parse(_config["DefaultProceduralPromptMax"]);
-            }
-
-
+           
             if (assignedBlockCount >= blocksToComplete)
             {
                 return null;
             }
+
+            int etiologyId = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.Etiology.Id).FirstOrDefault();
+
+            int promptCategoryId, digitalCommandMax, novelSentenceMax, openEndedPromptMax, proceduralPromptMax, uaPromptMax, fivekPromptMax;
+
+            setPromptMax(contributorId, etiologyId, out promptCategoryId, out digitalCommandMax, out novelSentenceMax, out openEndedPromptMax, out proceduralPromptMax, out uaPromptMax, out fivekPromptMax);
+
 
             string description = (assignedBlockCount + 1).ToString();
 
@@ -565,78 +588,20 @@ namespace SpeechAccessibility.Controllers
             List<Prompt> novelSentenceList = new List<Prompt>();
             List<Prompt> openEndedPromptList = new List<Prompt>();
             List<Prompt> proceduralPromptList = new List<Prompt>();
+            List<Prompt> uaPromptList = new List<Prompt>();
+            List<Prompt> fivekPromptList = new List<Prompt>();
 
-            int blockMasterId = 1;
-
-            if (etiologyId == 2)
-            {
-                blockMasterId = 2;
-            }
-            else if (etiologyId == 6)
-            {
-                blockMasterId = 3;
-            }
+            int blockMasterId = setBlockMasterId(etiologyId, promptCategoryId);
 
             //The first and last block should contain the same prompts in a random order
             if (assignedBlockCount == (blocksToComplete - 1) || assignedBlockCount == 0)
             {
-                digitalCommandList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 2).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
-                if (etiologyId == 2)
-                {
-                    openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id != 2).ToList();
-                }
-
-                else
-                {
-                    novelSentenceList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 3).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
-                    openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 1).OrderBy(r => Guid.NewGuid()).ToList();
-
-                }
-                proceduralPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 2).OrderBy(r => Guid.NewGuid()).ToList();
+                assignPromptsForBlock1And10(etiologyId, promptCategoryId,ref digitalCommandList, ref novelSentenceList, ref openEndedPromptList, ref proceduralPromptList, ref uaPromptList, ref fivekPromptList, blockMasterId);
 
             }
             else
             {
-                int assignedDigitalCommandListId = 0;
-                int assignedDigitalCommandBlockCount = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.ContributorId == contributorId).Count();
-                if (assignedDigitalCommandBlockCount > 0)
-                {
-                    //If the contributor has already been assigned a digital command block, retrieve the Id
-                    assignedDigitalCommandListId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.ContributorId == contributorId).Select(a => a.List.Id).FirstOrDefault();
-                }
-                else
-                {
-                    //If the contributor hasn't been assigned a digital command block, assign one
-                    assignedDigitalCommandListId = assignDigitalCommandBlock(contributorId, etiologyId);
-                }
-
-                int blockOfDigitalCommandId = 0;
-
-                blockOfDigitalCommandId = _recordingContext.BlockOfDigitalCommand.Where(b => b.List.Id == assignedDigitalCommandListId).Select(b => b.Id).Skip(assignedBlockCount - 1).First();
-
-                List<int> currentEtiologyPromptList = new List<int>();
-
-                currentEtiologyPromptList = _recordingContext.PromptEtiology.Where(e => e.EtiologyId == etiologyId).Select(e => e.PromptId).ToList();
-
-                digitalCommandList = _recordingContext.BlockOfDigitalCommandPrompts.Where(b => b.BlockOfDigitalCommand.Id == blockOfDigitalCommandId).Select(b => b.Prompt).Take(digitalCommandMax).OrderBy(r => Guid.NewGuid()).ToList();
-                proceduralPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 2 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(proceduralPromptMax).ToList();
-
-                if (etiologyId == 2)
-                {
-                    int blockNumber = Int32.Parse(block.Description);
-                    assignOpenEndedPrompts(contributorId, openEndedPromptList, currentEtiologyPromptList, blockNumber);
-                }
-                else
-                {
-                    novelSentenceList = _recordingContext.Prompt.Where(p => !_recordingContext.BlockOfPrompts.Select(b => b.Prompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 3 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
-                    openEndedPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(openEndedPromptMax).ToList();
-                }
-
-                //If we run out of unique novel sentences, then we will have to reuse some
-                if (novelSentenceList.Count < novelSentenceMax)
-                {
-                    novelSentenceList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 3 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
-                }
+                assignPromptsForBlock2To9(contributorId, etiologyId, assignedBlockCount, promptCategoryId, digitalCommandMax, novelSentenceMax, openEndedPromptMax, proceduralPromptMax, uaPromptMax, fivekPromptMax, block, ref novelSentenceList, ref digitalCommandList, ref openEndedPromptList, ref proceduralPromptList, ref uaPromptList, ref fivekPromptList);
 
             }
 
@@ -659,6 +624,15 @@ namespace SpeechAccessibility.Controllers
             {
                 addBlockOfPrompts(block, prompt, 4);
             }
+            foreach (Prompt prompt in uaPromptList)
+            {
+                addBlockOfPrompts(block, prompt, 5);
+            }
+
+            foreach (Prompt prompt in fivekPromptList)
+            {
+                addBlockOfPrompts(block, prompt, 5);
+            }
 
 
             ContributorAssignedBlock assignedBlock = new ContributorAssignedBlock
@@ -674,22 +648,233 @@ namespace SpeechAccessibility.Controllers
             return block;
         }
 
-        private void assignOpenEndedPrompts(Guid contributorId, List<Prompt> openEndedPromptList, List<int> currentEtiologyPromptList, int blockDescription)
+        private void assignPromptsForBlock2To9(Guid contributorId, int etiologyId, int assignedBlockCount, int promptCategoryId, int digitalCommandMax, int novelSentenceMax, int openEndedPromptMax, int proceduralPromptMax, int uaPromptMax, int fivekPromptMax, Block block, ref List<Prompt> novelSentenceList, ref List<Prompt> digitalCommandList, ref List<Prompt> openEndedPromptList, ref List<Prompt> proceduralPromptList, ref List<Prompt> uaPromptList, ref List<Prompt> fivekPromptList)
+        {
+            int assignedDigitalCommandListId = 0;
+            int assignedSingleWordListId = 0;
+            int assignedDigitalCommandBlockCount = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.ContributorId == contributorId).Count();
+
+            if (assignedDigitalCommandBlockCount > 0)
+            {
+                //If the contributor has already been assigned a digital command block, retrieve the Id
+                assignedDigitalCommandListId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.ContributorId == contributorId).Select(a => a.List.Id).FirstOrDefault();
+            }
+            else
+            {
+                //If the contributor hasn't been assigned a digital command block, assign one
+                assignedDigitalCommandListId = assignDigitalCommandBlock(contributorId, etiologyId);
+            }
+
+            int blockOfDigitalCommandId = 0;
+            blockOfDigitalCommandId = _recordingContext.BlockOfDigitalCommand.Where(b => b.List.Id == assignedDigitalCommandListId).Select(b => b.Id).Skip(assignedBlockCount - 1).First();
+
+            List<int> currentEtiologyPromptList = new List<int>();
+
+            currentEtiologyPromptList = _recordingContext.PromptEtiology.Where(e => e.EtiologyId == etiologyId).Select(e => e.PromptId).ToList();
+
+            digitalCommandList = _recordingContext.BlockOfDigitalCommandPrompts.Where(b => b.BlockOfDigitalCommand.Id == blockOfDigitalCommandId).Select(b => b.Prompt).Take(digitalCommandMax).OrderBy(r => Guid.NewGuid()).ToList();
+
+            if (promptCategoryId !=5)
+            {
+                proceduralPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 2 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(proceduralPromptMax).ToList();
+
+            }
+
+            if (etiologyId == 2 || etiologyId==4)
+            {
+                int blockNumber = Int32.Parse(block.Description);
+                assignOpenEndedPrompts(contributorId, openEndedPromptList, currentEtiologyPromptList, blockNumber,etiologyId);
+            }
+            else if (etiologyId == 3)
+            {
+                if (promptCategoryId != 5)
+                {
+                    int blockNumber = Int32.Parse(block.Description);
+                    assignOpenEndedPrompts(contributorId, openEndedPromptList, currentEtiologyPromptList, blockNumber,etiologyId);
+                }
+                else
+                {
+                    assignedSingleWordListId = assignedDigitalCommandListId - 10;
+                    int blockOfSingleWordId = 0;
+                    blockOfSingleWordId = _recordingContext.BlockOfSingleWords.Where(b => b.List.Id == assignedSingleWordListId).Select(b => b.Id).Skip(assignedBlockCount - 1).First();
+                    uaPromptList = _recordingContext.BlockOfSingleWordPrompts.Where(b => b.BlockOfSingleWordsId == blockOfSingleWordId).Select(b => b.Prompt).Take(uaPromptMax).OrderBy(r => Guid.NewGuid()).ToList();
+                    fivekPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.BlockOfPrompts.Select(b => b.Prompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 5 && p.SubCategory.Id == 24 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(fivekPromptMax).ToList();
+
+                    //If we run out of unique 5k sentences, then we will have to reuse some
+                    if (fivekPromptList.Count < fivekPromptMax)
+                    {
+                        fivekPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 5 && p.SubCategory.Id == 24 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(fivekPromptMax).ToList();
+                    }
+                }
+            }
+            else
+            {
+                novelSentenceList = _recordingContext.Prompt.Where(p => !_recordingContext.BlockOfPrompts.Select(b => b.Prompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 3 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
+                openEndedPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(openEndedPromptMax).ToList();
+
+                //If we run out of unique novel sentences, then we will have to reuse some
+                if (novelSentenceList.Count < novelSentenceMax)
+                {
+                    novelSentenceList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 3 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
+                }
+            }
+
+
+        }
+
+        private void assignPromptsForBlock1And10(int etiologyId, int promptCategoryId, ref List<Prompt> digitalCommandList, ref List<Prompt> novelSentenceList, ref List<Prompt> openEndedPromptList, ref List<Prompt> proceduralPromptList, ref List<Prompt> uaPromptList, ref List<Prompt> fivekPromptList, int blockMasterId)
+        {
+            digitalCommandList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 2).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
+            if (etiologyId == 2 || etiologyId==4)
+            {
+                openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id != 2).ToList();
+
+            }
+            else if (etiologyId == 3)
+            {
+                if (promptCategoryId != 5)
+                {
+                    openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id != 2).ToList();
+
+                }
+                else
+                {
+                    uaPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 5).Select(b => b.Prompt).Where(p => p.SubCategory.Id != 24).ToList();
+                    fivekPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 5).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 24).ToList();
+                }
+            }
+
+            else
+            {
+                novelSentenceList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 3).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
+                openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 1).OrderBy(r => Guid.NewGuid()).ToList();
+
+            }
+            //The prompt category will be set to 5 for CP non-verbal participants.
+            //We don't want to assign procedural prompts to them
+            if (promptCategoryId != 5)
+            {
+                proceduralPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 2).OrderBy(r => Guid.NewGuid()).ToList();
+
+            }
+
+        }
+
+        private static int setBlockMasterId(int etiologyId, int promptCategoryId)
+        {
+            int blockMasterId = 1;
+
+            if (etiologyId == 2)
+            {
+                blockMasterId = 2;
+            }
+            else if (etiologyId == 6)
+            {
+                blockMasterId = 3;
+            }
+            else if (etiologyId == 3)
+            {
+                if (promptCategoryId == 5)
+                {
+                    //Use single word prompts
+                    blockMasterId = 4;
+                }
+                //Use the same prompts as DS
+                else
+                {
+                    blockMasterId = 2;
+                }
+
+            }
+            else if (etiologyId == 4)
+            {
+                blockMasterId = 5;
+            }
+
+            return blockMasterId;
+        }
+
+        private void setPromptMax(Guid contributorId, int etiologyId, out int promptCategoryId, out int digitalCommandMax, out int novelSentenceMax, out int openEndedPromptMax, out int proceduralPromptMax, out int uaPromptMax, out int fivekPromptMax)
+        {
+            //Default prompt category to Spontaneous Speech  
+            promptCategoryId = 4;
+            digitalCommandMax = 0;
+            novelSentenceMax = 0;
+            openEndedPromptMax = 0;
+
+            proceduralPromptMax = 0;
+            uaPromptMax = 0;
+            fivekPromptMax = 0;
+
+            if (etiologyId == 2)
+            {
+                digitalCommandMax = Int32.Parse(_config["DSDigitalCommandMax"]);
+                openEndedPromptMax = Int32.Parse(_config["DSOpenEndedPromptMax"]);
+                proceduralPromptMax = Int32.Parse(_config["DSProceduralPromptMax"]);
+            }
+            else if (etiologyId == 3)
+            {
+                promptCategoryId = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.PromptCategoryId).FirstOrDefault();
+                digitalCommandMax = Int32.Parse(_config["CPDigitalCommandMax"]);
+                if (promptCategoryId == 5)
+                {
+                    uaPromptMax = Int32.Parse(_config["CPUAPromptMax"]);
+                    fivekPromptMax = Int32.Parse(_config["CP5KPromptMax"]);
+                }
+                else
+                {
+                    openEndedPromptMax = Int32.Parse(_config["CPOpenEndedPromptMax"]);
+                    proceduralPromptMax = Int32.Parse(_config["CPProceduralPromptMax"]);
+                }
+            }
+            else if (etiologyId == 4)
+            {
+                digitalCommandMax = Int32.Parse(_config["StrokeDigitalCommandMax"]);
+                openEndedPromptMax = Int32.Parse(_config["StrokeOpenEndedPromptMax"]);
+                proceduralPromptMax = Int32.Parse(_config["StrokeProceduralPromptMax"]);
+            }
+            else
+            {
+                digitalCommandMax = Int32.Parse(_config["DefaultDigitalCommandMax"]);
+                novelSentenceMax = Int32.Parse(_config["DefaultNovelSentenceMax"]);
+                openEndedPromptMax = Int32.Parse(_config["DefaultOpenEndedPromptMax"]);
+                proceduralPromptMax = Int32.Parse(_config["DefaultProceduralPromptMax"]);
+            }
+        }
+
+        private void assignOpenEndedPrompts(Guid contributorId, List<Prompt> openEndedPromptList, List<int> currentEtiologyPromptList, int blockDescription,int etiologyId)
         {
             int numberOfPairPrompts;
             int numberOfSinglePrompts;
 
-            if (blockDescription > 6)
+            if (etiologyId == 4)
             {
-                numberOfPairPrompts = 3;
-                numberOfSinglePrompts = 1;
-            }
-            else
-            {
-                numberOfPairPrompts = 2;
-                numberOfSinglePrompts = 3;
+                if (blockDescription > 8)
+                {
+                    numberOfPairPrompts = 3;
+                    numberOfSinglePrompts = 1;
+                }
+                else
+                {
+                    numberOfPairPrompts = 2;
+                    numberOfSinglePrompts = 3;
 
+                }
             }
+            else {
+                if (blockDescription > 6)
+                {
+                    numberOfPairPrompts = 3;
+                    numberOfSinglePrompts = 1;
+                }
+                else
+                {
+                    numberOfPairPrompts = 2;
+                    numberOfSinglePrompts = 3;
+
+                }
+            }
+            
 
             List<Prompt> pairPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 17 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(numberOfPairPrompts).ToList();
 
@@ -706,10 +891,6 @@ namespace SpeechAccessibility.Controllers
 
             List<Prompt> singleOpenEndedPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(numberOfSinglePrompts).ToList();
 
-            if (singleOpenEndedPromptList.Count < 3)
-            {
-
-            }
 
             openEndedPromptList.AddRange(singleOpenEndedPromptList);
         }
@@ -720,13 +901,23 @@ namespace SpeechAccessibility.Controllers
             int lastAssignedDigitalCommandBlockId = 0;
             int numberOfAssignedDigitalCommandBlocks = 0;
 
-            if (etiologyId == 2)
+            if (etiologyId == 2 || etiologyId == 3)
             {
+                List<Guid> currentEtiologyContributorList = _identityContext.Contributor.Where(c => c.Etiology.Id == etiologyId).Select(c => c.Id).ToList();
                 lastAssignedDigitalCommandBlockId = 10;
-                numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10).Count();
+                numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10).Where(a => currentEtiologyContributorList.Contains(a.ContributorId)).Count();
                 if (numberOfAssignedDigitalCommandBlocks > 0)
                 {
-                    lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                    lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10).Where(a => currentEtiologyContributorList.Contains(a.ContributorId)).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                }
+            }
+            else if (etiologyId == 4)
+            {
+                lastAssignedDigitalCommandBlockId = 20;
+                numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 20).Count();
+                if (numberOfAssignedDigitalCommandBlocks > 0)
+                {
+                    lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 20).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
                 }
             }
             else
@@ -744,7 +935,7 @@ namespace SpeechAccessibility.Controllers
 
             int lastDigitalCommandBlock = Int32.Parse(_config["NumberOfDigitalCommandBlocks"]);
 
-            if (etiologyId == 2)
+            if (etiologyId == 2 || etiologyId==3)
             {
                 lastDigitalCommandBlock = 20;
             }
@@ -755,7 +946,7 @@ namespace SpeechAccessibility.Controllers
                 newCommandBlockId = 1;
 
                 //List 11-20 are for the 2nd etiology (Down Syndrome)
-                if (etiologyId == 2)
+                if (etiologyId == 2 || etiologyId == 3)
                 {
                     newCommandBlockId = 11;
                 }
@@ -862,9 +1053,15 @@ namespace SpeechAccessibility.Controllers
 
             int etiologyId = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.Etiology.Id).FirstOrDefault();
 
+            int promptCategoryId = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.PromptCategoryId).FirstOrDefault();
+
             int totalPromptMax = 450;
 
-            if (etiologyId == 2)
+            if (etiologyId == 2 || etiologyId==4)
+            {
+                totalPromptMax = 430;
+            }
+            else if (etiologyId == 3 && promptCategoryId != 5)
             {
                 totalPromptMax = 430;
             }
