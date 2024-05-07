@@ -26,14 +26,17 @@ namespace SpeechAccessibility.Core.Models
         public string Comments { get; set; }
         public bool? ChangePassword { get; set; }
         //public bool? ContactLsvt { get; set; }
-        //public string PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; }
         public DateTime? ApproveTS { get; set; }
         public string ApproveDenyBy { get; set; }
         public string OtherEtiologyText { get; set; }
         public string BirthYear { get; set; }
         public string HelperPhoneNumber { get; set; }
         public int? PromptCategoryId { get; set; }
+
         public Etiology Etiology { get; set; }
+        public AspNetUsers IdentityUser { get; set; }
+
         //public  ContributorStatus ContributorStatus { get; set; }
         //public ContributorSubStatus ContributorSubStatus { get; set; }
         //public  ICollection<Consent> Consent { get; set; }

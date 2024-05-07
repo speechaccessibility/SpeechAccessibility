@@ -4,6 +4,14 @@
     ViewBag.Title = "View Contributors Compensation";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+<div id="giftCard-dialog" style="display: none">
+    <input type="hidden" id="hidContributorId" name="hidContributorId" />
+    <input type="hidden" id="hidGiftCardNum" name="hidGiftCardNum" />
+    <br /><b>Contributor Name:</b><label id="lblContributorName" name="lblContributorName"></label>
+    <br /><b>ContributorID:</b><label id="lblContributorId" name="lblContributorId"></label>
+    <br /><b>Comments:</b><br /><textarea id="txtGiftCardComment" name="txtGiftCardComment" rows="4" cols="50"></textarea>
+</div>
+
 <table>
     <tr>
         <td>
@@ -22,11 +30,12 @@
         <tr>
             <th style="width: 10px;">&nbsp;</th>
             <th style="width: 350px;">ContributorID</th>
-            <th style="width: 300px;">Name</th>
+            <th style="width: 250px;">Name</th>
             <th style="width: 250px;">Contributor Email</th>
             <th>Helper</th>
             <th>#Recordings</th>
             <th>Etiology</th>
+            
         </tr>
         @{
 
@@ -44,15 +53,16 @@
                     }
                 </td>
                 <td style="text-align: center">@contributor.RecordingCount</td>
-                <td style="text-align: left">@contributor.Etiology
+                    <td style="text-align: left">@contributor.Etiology
                         @{
                             if (!string.IsNullOrEmpty(contributor.PromptCategory))
-                                {
-                                    <text>-</text> @contributor.PromptCategory;
-                                }
+                            {
+                                <text>-</text> @contributor.PromptCategory;
+                            }
                             
                         }
-                        </td>
+                    </td>
+                    
                 </tr>
             }
         }
@@ -73,7 +83,7 @@
         <tr>
             <th style="width: 10px;">&nbsp;</th>
             <th style="width: 350px;">ContributorID</th>
-            <th style="width: 300px;">Name</th>
+            <th style="width: 250px;">Name</th>
             <th style="width: 250px;">Contributor Email</th>
             <th>Helper</th>
             <th>#Recordings</th>
@@ -126,7 +136,7 @@
         <tr>
             <th style="width: 10px;">&nbsp;</th>
             <th style="width: 350px;">ContributorID</th>
-            <th style="width: 300px;">Name</th>
+            <th style="width: 250px;">Name</th>
             <th style="width: 250px;">Contributor Email</th>
             <th>Helper</th>
             <th>#Recordings</th>
@@ -239,7 +249,12 @@
                 });
             }
 
+            
+             $('#ContributorsForFirstGiftCard').on('click', 'a.markPaid', function (e) {
+                e.preventDefault();
+                    alert("mark paid");
 
+             });
         });//End document ready
 
     </script>

@@ -208,19 +208,26 @@ function changeContributor(postUrl, table,action, title) {
                 var comment = $("#txtMakeChangesComment").val();
                 var passwordChange = $("input[type='radio'][name='ChangePassword']:checked").val();
                 var promptCategory = $("#PromptCategoryId").val();
+                var etiologyId = $("#EtiologyId").val();
+               
                 $.ajax({
                     url: postUrl,
                     type: "POST",
                     data: {
-                        "contributorId": contributorId, "comment": comment, "passwordChange": passwordChange, "subRole": $("#SubRole").val(), "action": action, "promptCategory":promptCategory //4 for non-responsive, 3 for deny, 2 for approve
+                        "contributorId": contributorId, "comment": comment, "passwordChange": passwordChange, "subRole": $("#SubRole").val(), "action": action, "promptCategory": promptCategory, "etiologyId": etiologyId //4 for non-responsive, 3 for deny, 2 for approve
                     },
                     success: function (response) {
                         $('.spinner').css('display', 'none');
                         if (response.success === true) {
                             clearMakeChangesDialog();
                             $('#makeChanges-dialog').dialog('close');
-                            if (action == 1)
-                                $("#lblMessage").text("Contributor is moved to Waiting for Approval list.");
+                            if (action == 1) {                                
+                                if ($("#hidMakeChangesOldEtiologyId").val() != $("#EtiologyId").val())
+                                    $("#lblMessage").text("Contributor is moved to " + $("#EtiologyId  option:selected").text() + ".");
+                                else
+                                    $("#lblMessage").text("Contributor is moved to Waiting for Approval list.");
+                            }
+                               
                             else if(action==2)
                                 $("#lblMessage").text("Contributor is approved.");
                             else if (action == 3)

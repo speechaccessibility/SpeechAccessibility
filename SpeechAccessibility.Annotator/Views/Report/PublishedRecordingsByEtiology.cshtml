@@ -1,0 +1,111 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewBag.Title = "Published Recordings By Etiology";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<h1>Published Recordings By Etiology</h1>
+<p><b>Report Date: </b>@DateTime.Now</p>
+<table id="NumberRecordings" class="table table-sm table-bordered">
+    <thead>
+    <tr>
+        <th> </th>
+        <th style="width: 170px">Parkinson's Disease</th>
+        <th style="width: 150px">ALS</th>
+        <th style="width: 150px">Cerebral Palsy</th>
+        <th style="width: 150px">Down Syndrome</th>
+        <th style="width: 150px">Stroke</th>
+
+    </tr>
+    </thead>
+    <tbody id="tblBody">
+    </tbody>
+</table>
+@section scripts {
+
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+
+            //$('input:button[name="btnView"]').click(function () {
+            //    getAssignedContributors($("#dropAnnotator").val());
+            //    //return false;
+            //});          
+
+            function getPublishedRecordings() {
+                $.ajax({
+                    url: '@Url.Action("LoadPublishedRecordingsByEtiology", "Report")',
+                    type: "POST",
+                    //data: { "annotatorId": annotatorId },
+                    success: function (response) {
+
+                        if (response.counter > 0) {
+                            $('#NumberRecordings tbody').empty();
+                            var numPD = 0;
+                            var numALS=0;
+                            var numCP = 0;
+                            var numDS = 0;
+                            var numStroke=0;
+                            var sponPD=0;
+                            var sponALS =0;
+                            var sponCP=0;
+                            var sponDS = 0;
+                            var sponStroke = 0;
+                            
+
+                            for (var i = 0; i < response.recordings.length; i++) {
+                                if (response.recordings[i].etiologyId == 1) {
+                                       numPD = response.recordings[i].numberOfRecordings;   
+                                       sponPD = response.recordings[i].spontaneousSpeechRecordings;  
+                                }
+                                else if (response.recordings[i].etiologyId == 2)
+                                {
+                                    numDS = response.recordings[i].numberOfRecordings;   
+                                    sponDS = response.recordings[i].spontaneousSpeechRecordings;  
+                                }
+                                else if (response.recordings[i].etiologyId == 3) {
+                                    numCP = response.recordings[i].numberOfRecordings;
+                                    sponCP = response.recordings[i].spontaneousSpeechRecordings;
+                                }
+                                else if (response.recordings[i].etiologyId == 4) {
+                                    numStroke = response.recordings[i].numberOfRecordings;
+                                     sponStroke = response.recordings[i].spontaneousSpeechRecordings;  
+                                }
+                                else if (response.recordings[i].etiologyId == 6) {
+                                    numALS = response.recordings[i].numberOfRecordings;
+                                    sponALS = response.recordings[i].spontaneousSpeechRecordings;  
+                                }
+                            }
+                            var sumRow = "<tr><td style='text-align:right'>Sum (# of file annotated)</td><td style='text-align:right'>" + numPD + "</td><td style='text-align:right'>" + numALS + "</td><td style='text-align:right'>" + numCP + "</td><td style='text-align:right'>" + numDS + "</td><td style='text-align:right'>" + numStroke + "</td><tr>";
+                             $("#NumberRecordings > tbody:last").append(sumRow);
+                            var readingRow = "<tr><td style='text-align:right'>Reading</td><td style='text-align:right'>" + (numPD - sponPD) + "</td><td style='text-align:right'>" + (numALS - sponALS) + "</td><td style='text-align:right'>" + (numCP - sponCP) + "</td><td style='text-align:right'>" + (numDS - sponDS) + "</td><td style='text-align:right'>" + (numStroke - sponStroke) + "</td><tr>";
+                            $("#NumberRecordings > tbody:last").append(readingRow);
+                            var sponRow = "<tr><td style='text-align:right'>Spontaneous Speech</td><td style='text-align:right'>" + sponPD + "</td><td style='text-align:right'>" + sponALS + "</td><td style='text-align:right'>" + sponCP + "</td><td style='text-align:right'>" + sponDS + "</td><td style='text-align:right'>" + sponStroke + "</td><tr>";
+                            $("#NumberRecordings > tbody:last").append(sponRow);                           
+
+                        } else {
+                            $('#NumberRecordings tbody').empty();
+                        }
+
+                    },
+                    error: function () {
+                        alert("Error: loading Assigned Contributors!");
+
+                    }
+                });
+            }
+            
+             getPublishedRecordings();
+
+
+        });
+
+    </script>
+}
+
+

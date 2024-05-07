@@ -15,6 +15,15 @@
 @{
     var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 }
+<table>
+    <tr>
+        <td>
+            @Html.DropDownList("EtiologyId", (IEnumerable
+                <SelectListItem>)ViewBag.Etiologies)
+        </td>
+        <td><input type="button" id="btnReloaTable" value="Submit"/></td>
+    </tr>
+</table>
 <input type="hidden" id="UserRole" value="@userRole" />
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
 <div style="width: 1800px">
@@ -88,14 +97,19 @@
                         "<'row'<'col-sm-12'tr>>p",
                     "ajax": ({
                         "url": '@Url.Action("LoadSpeechFiles", "SpeechFile")',
-                        data: {
-                            "recordingStatus": 5
+                        data: function (d) {
+                            d.recordingStatus = 5;
+                            d.etiologyId = $("#EtiologyId").val();
                         },
+
+                        //data: {
+                        //    "recordingStatus": 5, "etiologyId": 0
+                        //},
                         "type": "POST",
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[6, 'desc']],
+                    "aaSorting": [[5, 'desc']],
                     "columns": [
                         {
                             "title": "FileId",
@@ -113,14 +127,14 @@
                             "visible": true,
                             "name": "ContributorId"
                         },
-                        {
-                            "title": "Etiology",
-                            "data": "etiologyName",
-                            "searchable": true,
-                            "orderable": true,
-                            "visible": true,
-                            "name": "EtiologyName"
-                        },
+                        //{
+                        //    "title": "Etiology",
+                        //    "data": "etiologyName",
+                        //    "searchable": true,
+                        //    "orderable": true,
+                        //    "visible": true,
+                        //    "name": "EtiologyName"
+                        //},
                         {
                             "title": "RecordingID",
                             "data": "id",
@@ -223,10 +237,10 @@
                     "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
 
                 });
-                
-                  //hide the header for Start and End Time column
-                //$('#SpeechFileTable th:nth-child(8)').hide();
-                //$('#SpeechFileTable th:nth-child(9)').hide();
+
+            $("#btnReloaTable").click(function () {                
+                oSpeechFileTable.clear().draw();
+            });
 
 
             //listen the recording

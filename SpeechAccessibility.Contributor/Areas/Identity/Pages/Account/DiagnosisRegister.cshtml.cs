@@ -16,6 +16,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Required]
             [Display(Name = "Diagnosis")]
             public string etiologyId { get; set; }
+
+            [MaxLength(100)]
+            public string otherEtiologyDescription { get; set; }
         }
         public void OnGet()
         {
@@ -23,16 +26,34 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPost()
         {
-            if (ModelState.IsValid)
+            if ("5".Equals(Input.etiologyId) && string.IsNullOrEmpty(Input.otherEtiologyDescription))
             {
+                ModelState.AddModelError("otherDiagnosisValidation", "Condition that causes speech disability required.");
+            }
+
+            if (ModelState.IsValid)
+            {              
                 if ("1".Equals(Input.etiologyId))
                 {
                     return RedirectToPage("Register", new { etiology = Input.etiologyId });
                 }
                 else if ("2".Equals(Input.etiologyId))
                 {
-                    return RedirectToPage("DSPreRegister", new { etiology = Input.etiologyId });
+                    return RedirectToPage("DSPreRegister", new { etiology = Input.etiologyId});
                 }
+                else if ("3".Equals(Input.etiologyId) || "5".Equals(Input.etiologyId))
+                {
+                    return RedirectToPage("CPRegister", new { etiology = Input.etiologyId, otherEtiologyDescription = Input.otherEtiologyDescription });
+                }
+                else if ("4".Equals(Input.etiologyId))
+                {
+                    return RedirectToPage("AphasiaPreRegister", new {etiology = Input.etiologyId});
+                }
+                else if ("6".Equals(Input.etiologyId))
+                {
+                    return RedirectToPage("ALSRegister", new { etiology = 6 });
+                }
+
                 else
                 {
                     return RedirectToPage("InvalidDiagnosis");

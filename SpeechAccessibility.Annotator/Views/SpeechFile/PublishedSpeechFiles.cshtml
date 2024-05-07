@@ -15,6 +15,17 @@
 @{
     var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 }
+<table>
+    <tr>
+        <td>
+            @Html.DropDownList("EtiologyId", (IEnumerable
+            <SelectListItem>)ViewBag.Etiologies)
+        </td>
+        <td><input type="button" id="btnReloaTable" value="Submit"/></td>
+    </tr>
+</table>
+
+
 <input type="hidden" id="UserRole" value="@userRole" />
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
 <div style="width: 1800px">
@@ -59,7 +70,8 @@
     <script type="text/javascript">
         $(document).ready(function () {
 
-            //bind datatable for Prompts
+            //bind datatable for published recording
+
             var oSpeechFileTable = $("#SpeechFileTable").on('error.dt',
                 function (e, settings, techNote, message) {
                     alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
@@ -67,14 +79,17 @@
                     "serverSide": true,
                     "processing": true,
                     "responsive": true,
+                    //"deferLoading": 0,
                     "iDisplayLength": 100,
                     "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
                         "<'row'<'col-sm-12'tr>>p",
                     "ajax": ({
                         "url": '@Url.Action("LoadSpeechFiles", "SpeechFile")',
-                        data: {
-                            "recordingStatus": 3
-                        },
+                        data: function (d) {
+                            d.recordingStatus = 3;
+                            d.etiologyId = $("#EtiologyId").val();                            
+                         },                       
+                  
                         "type": "POST",
                         "datatype": "json"
                     }),
@@ -97,14 +112,14 @@
                             "visible": true,
                             "name": "ContributorId"
                         },
-                        {
-                            "title": "Etiology",
-                            "data": "etiologyName",
-                            "searchable": true,
-                            "orderable": true,
-                            "visible": true,
-                            "name": "EtiologyName"
-                        },
+                        //{
+                        //    "title": "Etiology",
+                        //    "data": "etiologyName",
+                        //    "searchable": true,
+                        //    "orderable": true,
+                        //    "visible": true,
+                        //    "name": "EtiologyName"
+                        //},
                         {
                             "title": "RecordingID",
                             "data": "id",
@@ -194,7 +209,6 @@
                         },
                     ],
 
-
                     "ordering": true,
                     "paging": true,
                     "pageLength": 100,
@@ -202,6 +216,9 @@
 
                 });
 
+            $("#btnReloaTable").click(function() {                
+                oSpeechFileTable.clear().draw();
+            });
 
             //listen the recording
             $('#SpeechFileTable').on('click', 'a.listen', function (e) {

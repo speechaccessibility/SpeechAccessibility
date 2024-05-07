@@ -124,6 +124,10 @@ namespace SpeechAccessibility.Annotator
             services.AddScoped<IRegisterLinkRepository, RegisterLinkRepository>();
             services.AddScoped<IGiftCardAmountRepository, GiftCardAmountRepository> ();
             services.AddScoped<IContributorAssignedListRepository, ContributorAssignedListRepository>();
+            services.AddScoped<IEtiologyContactEmailAddressRepository, EtiologyContactEmailAddressRepository>();
+            services.AddScoped<IAspNetUsersRepository, AspNetUsersRepository>();
+            services.AddScoped<INumberOfRecordingByEtiologyRepository, NumberOfRecordingByEtiologyRepository>();
+            
 
             services.AddScoped<DeleteFileAttribute>();
 

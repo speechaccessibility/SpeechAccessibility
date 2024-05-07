@@ -13,6 +13,15 @@
 @{
     var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 }
+<table>
+    <tr>
+        <td>
+            @Html.DropDownList("EtiologyId", (IEnumerable
+            <SelectListItem>)ViewBag.Etiologies)
+        </td>
+        <td><input type="button" id="btnReloaTable" value="Submit" /></td>
+    </tr>
+</table>
 <input type="hidden" id="UserRole" value="@userRole" />
 <a role="button" data-toggle="collapse" href="#abbreviation" aria-expanded="false" aria-controls="abbreviation">Click here for abbreviation in comments</a>
 <div id="abbreviation" class="collapse" style="width: 700px;border-style: groove; border-width: thin;">
@@ -79,9 +88,13 @@
                         "<'row'<'col-sm-12'tr>>p",
                     "ajax": ({
                         "url": '@Url.Action("LoadSpeechFiles", "SpeechFile")',
-                        data: {
-                            "recordingStatus": 4
+                        data: function (d) {
+                            d.recordingStatus = 4;
+                            d.etiologyId = $("#EtiologyId").val();
                         },
+                        //data: {
+                        //    "recordingStatus": 4, "etiologyId": 0
+                        //},
                         "type": "POST",
                         "datatype": "json"
                     }),
@@ -104,14 +117,14 @@
                             "visible": true,
                             "name": "ContributorId"
                         },
-                        {
-                            "title": "Etiology",
-                            "data": "etiologyName",
-                            "searchable": true,
-                            "orderable": true,
-                            "visible": true,
-                            "name": "EtiologyName"
-                        },
+                        //{
+                        //    "title": "Etiology",
+                        //    "data": "etiologyName",
+                        //    "searchable": true,
+                        //    "orderable": true,
+                        //    "visible": true,
+                        //    "name": "EtiologyName"
+                        //},
                         {
                             "title": "Transcript",
                             "data": "modifiedTranscript",
@@ -179,6 +192,10 @@
                     "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
 
                 });
+                
+             $("#btnReloaTable").click(function() {                
+                oSpeechFileTable.clear().draw();
+            });
 
             //listen the recording
             $('#SpeechFileTable').on('click', 'a.listen', function (e) {

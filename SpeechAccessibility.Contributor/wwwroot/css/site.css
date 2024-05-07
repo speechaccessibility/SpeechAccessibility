@@ -879,5 +879,10 @@ option
     transform: rotate(45deg);
 }
 
+.disable-link {
+    pointer-events: none;
+
+}
+
 
 

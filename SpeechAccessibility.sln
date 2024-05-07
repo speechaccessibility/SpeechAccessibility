@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpeechAccessibility.Annotat
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpeechAccessibility.GenerateRecordingInformation", "SpeechAccessibility.GenerateRecordingInformation\SpeechAccessibility.GenerateRecordingInformation.csproj", "{82BDF906-DA83-4482-9071-C6C31E676E73}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SendScheduledFollowUpEmails", "SendScheduledFollowUpEmails\SendScheduledFollowUpEmails.csproj", "{8D848171-0E09-49AC-947F-C16B00C58797}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,14 @@ Global
 		{82BDF906-DA83-4482-9071-C6C31E676E73}.Production|Any CPU.Build.0 = Debug|Any CPU
 		{82BDF906-DA83-4482-9071-C6C31E676E73}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{82BDF906-DA83-4482-9071-C6C31E676E73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D848171-0E09-49AC-947F-C16B00C58797}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D848171-0E09-49AC-947F-C16B00C58797}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D848171-0E09-49AC-947F-C16B00C58797}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D848171-0E09-49AC-947F-C16B00C58797}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{8D848171-0E09-49AC-947F-C16B00C58797}.Production|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D848171-0E09-49AC-947F-C16B00C58797}.Production|Any CPU.Build.0 = Debug|Any CPU
+		{8D848171-0E09-49AC-947F-C16B00C58797}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D848171-0E09-49AC-947F-C16B00C58797}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

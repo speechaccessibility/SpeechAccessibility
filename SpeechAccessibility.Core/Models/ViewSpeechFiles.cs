@@ -26,6 +26,8 @@ namespace SpeechAccessibility.Core.Models
         public int ContributorStatusId { get; set; }
         public string EtiologyName { get; set; }
         public string CategoryName { get; set; }
+        public int EtiologyId { get; set; }
+
 
         //speech file path
         [NotMapped]

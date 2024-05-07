@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json.Linq;
 using SpeechAccessibility.Annotator.Extensions;
 using SpeechAccessibility.Annotator.Models;
 using SpeechAccessibility.Annotator.Services;
@@ -25,8 +26,10 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IEtiologyRepository _etiologyRepository;
         private readonly IGiftCardAmountRepository _giftCardAmountRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IContributorViewRepository _contributorViewRepository;
+        private readonly IContributorRepository _contributorRepository;
 
-        public AdminController(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration,  IUserSubRoleRepository userSubRoleRepository, IEtiologyViewRepository etiologyRepository, ISubRoleRepository subRoleRepository, IEtiologyRepository etiologyRepository1, IGiftCardAmountRepository giftCardAmountRepository, ICategoryRepository categoryRepository)
+        public AdminController(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration,  IUserSubRoleRepository userSubRoleRepository, IEtiologyViewRepository etiologyRepository, ISubRoleRepository subRoleRepository, IEtiologyRepository etiologyRepository1, IGiftCardAmountRepository giftCardAmountRepository, ICategoryRepository categoryRepository, IContributorViewRepository contributorViewRepository, IContributorRepository contributorRepository)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
@@ -37,6 +40,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             _etiologyRepository = etiologyRepository1;
             _giftCardAmountRepository = giftCardAmountRepository;
             _categoryRepository = categoryRepository;
+            _contributorViewRepository = contributorViewRepository;
+            _contributorRepository = contributorRepository;
         }
 
         public IActionResult Index()
@@ -105,6 +110,12 @@ namespace SpeechAccessibility.Annotator.Controllers
             {
                 return Json(new { Success = false, Message = "NetID is required." });
             }
+
+            if (userVM.NetId.Contains("@"))
+            {
+                return Json(new { Success = false, Message = "Invalid NetID." });
+            }
+
             var userName = userVM.LastName + "," + userVM.FirstName;
 
             //testing for hacking
@@ -327,6 +338,94 @@ namespace SpeechAccessibility.Annotator.Controllers
             return Json(new { Success = true, Message = "Amounts are updated." });
 
         }
+
+        public IActionResult ContributorsSearch()
+        {
+
+            return View();
+        }
+
+        public ActionResult LoadContributors(string searchValue)
+        {
+            var draw = Request.Form["draw"].FirstOrDefault();
+            var start = Request.Form["start"].FirstOrDefault();
+            var length = Request.Form["length"].FirstOrDefault();
+            //var searchValue = Request.Form["search[value]"].FirstOrDefault()?.ToLower();
+            int pageSize = length != null ? Convert.ToInt32(length) : 0;
+            int skip = start != null ? Convert.ToInt32(start) : 0;
+            if (!string.IsNullOrEmpty(searchValue))
+            {
+                var contributors = _contributorViewRepository.Find(c => c.Id.ToString().Contains(searchValue)
+                                                                        || c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue)
+                                                                        || c.EmailAddress.Contains(searchValue));
+
+                var recordsTotal = contributors.Count();
+                contributors = DynamicSortingExtensions<ContributorView>.SetOrderByDynamic(contributors, Request.Form);
+                return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = contributors });
+            }
+            else
+            {
+                var contributors = new ContributorView();
+                return Json(new { draw = draw, recordsFiltered = 0, recordsTotal = 0, data = contributors });
+            }
+
+           
+        }
+        [HttpPost]
+        public ActionResult EditContributorInfo(Guid contributorId, string contributorEmail, string helperInd, string helperEmail, string birthYear, string comments, string helperPhone)
+        {
+            //contributor email cannot be empty
+            if (string.IsNullOrEmpty(contributorEmail))
+            {
+                return Json(new { Success = false, Message = "Contributor email cannot be empty." });
+            }
+
+            var contributor = _contributorRepository.Find(c => c.Id == contributorId).Include(c => c.IdentityUser).FirstOrDefault();
+            if (contributor == null)
+            {
+                return Json(new { Success = false, Message = "Contributor is not found." });
+            }
+
+            if (contributor.EmailAddress != null && !contributor.EmailAddress.Equals(contributorEmail))
+            {
+                contributor.EmailAddress = contributorEmail;
+                contributor.IdentityUser.UserName = contributorEmail;
+                contributor.IdentityUser.NormalizedEmail = contributorEmail;
+                contributor.IdentityUser.Email = contributorEmail;
+                contributor.IdentityUser.NormalizedUserName = contributorEmail;
+            }
+            else
+            {
+                contributor.EmailAddress = contributorEmail;
+                contributor.IdentityUser.UserName = contributorEmail;
+                contributor.IdentityUser.NormalizedEmail = contributorEmail;
+                contributor.IdentityUser.Email = contributorEmail;
+                contributor.IdentityUser.NormalizedUserName = contributorEmail;
+            }
+
+            contributor.HelperInd = helperInd;
+            if (helperInd.Trim() == "No")
+            {
+                contributor.HelperEmail = "";
+                contributor.HelperPhoneNumber = "";
+            }
+            else
+            {
+                contributor.HelperEmail = helperEmail;
+                contributor.HelperPhoneNumber = helperPhone;
+            }
+
+            contributor.BirthYear = birthYear;
+            if (!string.IsNullOrEmpty(comments))
+                contributor.Comments = comments;
+            contributor.UpdateTS = DateTime.Now;
+            contributor.ApproveDenyBy = User.Identity.Name;
+            _contributorRepository.Update(contributor);
+
+            return Json(new { Success = true, Message = "updated" });
+
+        }
+
 
     }
 }

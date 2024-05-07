@@ -288,7 +288,7 @@ div.small {
 
 
 /*/*format for datatable*/
-#UserTable th, #PromptTable th, #SpeechFileTable th, #BlockTable th, #ContributorTable th, #ContributorAssignedBlocksTable th, #ContributorRecordingsTable th, #view-recording-rating-table th, #WaitingForApprovalContributorTable th, #contributor-assigned-prompts-table th, #DigitalAssistantCommandsTable th, #NovelSentencesTable th, #SpontaneousSpeechPromptsTable th, #contributor-assigned-annotators-table th, #ContributorRecordingsForBlock-table th, #AssignedConntributorTable th, #CompensationHistoryTable th, #ContributorsProgressTable th, #NonResponsiveContributorTable th, #AnnotationProgressTable th, #EtiologyGiftCardsTable th, #ContributorAssginedListTable th {
+#UserTable th, #PromptTable th, #SpeechFileTable th, #BlockTable th, #ContributorTable th, #ContributorAssignedBlocksTable th, #ContributorRecordingsTable th, #view-recording-rating-table th, #WaitingForApprovalContributorTable th, #contributor-assigned-prompts-table th, #DigitalAssistantCommandsTable th, #NovelSentencesTable th, #SpontaneousSpeechPromptsTable th, #contributor-assigned-annotators-table th, #ContributorRecordingsForBlock-table th, #AssignedConntributorTable th, #CompensationHistoryTable th, #ContributorsProgressTable th, #NonResponsiveContributorTable th, #AnnotationProgressTable th, #EtiologyGiftCardsTable th, #ContributorAssginedListTable th, #ContributorsSearchTable th, #NumberRecordings th {
     background-color: #13294B !important;
     color: white;
     text-align: center;
@@ -299,7 +299,7 @@ div.small {
     background-color: #2da5fa !important;
 }
 
-#UserTable, #PromptTable, #SpeechFileTable, #BlockTable, #ContributorTable, #ContributorAssignedBlocksTable, #ContributorRecordingsTable, #view-recording-rating-table, #WaitingForApprovalContributorTable, #contributor-assigned-prompts-table, #DigitalAssistantCommandsTable, #NovelSentencesTable, #SpontaneousSpeechPromptsTable, #contributor-assigned-annotators-table, #ContributorRecordingsForBlock-table, #AssignedConntributorTable, #CompensationHistoryTable, #ContributorsProgressTable, #NonResponsiveContributorTable, #AnnotationProgressTable, #EtiologyGiftCardsTable, #ContributorAssginedListTable {
+#UserTable, #PromptTable, #SpeechFileTable, #BlockTable, #ContributorTable, #ContributorAssignedBlocksTable, #ContributorRecordingsTable, #view-recording-rating-table, #WaitingForApprovalContributorTable, #contributor-assigned-prompts-table, #DigitalAssistantCommandsTable, #NovelSentencesTable, #SpontaneousSpeechPromptsTable, #contributor-assigned-annotators-table, #ContributorRecordingsForBlock-table, #AssignedConntributorTable, #CompensationHistoryTable, #ContributorsProgressTable, #NonResponsiveContributorTable, #AnnotationProgressTable, #EtiologyGiftCardsTable, #ContributorAssginedListTable, #ContributorsSearchTable {
     font-size: small;
 }
 

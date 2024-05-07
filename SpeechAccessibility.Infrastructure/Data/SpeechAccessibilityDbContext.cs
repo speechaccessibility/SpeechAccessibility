@@ -46,6 +46,8 @@ namespace SpeechAccessibility.Infrastructure.Data
         public DbSet<RegisterLink> RegisterLink { get; set; }
         public DbSet<GiftCardAmount> GiftCardAmount { get; set; }
         public DbSet<ContributorAssignedList> ContributorAssignedList {get; set; }
+        public DbSet<EtiologyContactEmailAddress> EtiologyContactEmailAddress { get; set; }
+        public DbSet<NumberOfRecordingByEtiology> NumberOfRecordingByEtiology { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -82,10 +84,12 @@ namespace SpeechAccessibility.Infrastructure.Data
             builder.Entity<RegisterLink>(ConfigureRegisterLink);
             builder.Entity<GiftCardAmount>(ConfigureGiftCardAmount);
             builder.Entity<ContributorAssignedList>(ConfigureContributorAssignedList);
+            builder.Entity<EtiologyContactEmailAddress>(ConfigureEtiologyContactEmailAddress);
+            builder.Entity<NumberOfRecordingByEtiology>(ConfigureNumberOfRecordingByEtiology);
 
         }
 
-      
+       
 
         private void ConfigureBlockMasterOfPrompts(EntityTypeBuilder<BlockMasterOfPrompts> entity)
         {
@@ -774,6 +778,18 @@ namespace SpeechAccessibility.Infrastructure.Data
         {
             entity.HasNoKey();
             entity.ToView("v_ContributorAssignedList");
+        }
+
+        private void ConfigureEtiologyContactEmailAddress(EntityTypeBuilder<EtiologyContactEmailAddress> entity)
+        {
+            entity.HasKey(e => e.Id);
+        }
+
+        private void ConfigureNumberOfRecordingByEtiology(EntityTypeBuilder<NumberOfRecordingByEtiology> entity)
+        {
+            entity.HasNoKey();
+            entity.ToView("v_NumberOfRecordingByEtiology");
+            
         }
 
     }
