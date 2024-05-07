@@ -11,8 +11,9 @@ namespace SpeechAccessibility.Core.Models
         public string Acronym { get; set; }
         public DateTime CreateTS { get; set; }
         public DateTime UpdateTS { get; set; }
+        
 
-      
+
 
 
     }

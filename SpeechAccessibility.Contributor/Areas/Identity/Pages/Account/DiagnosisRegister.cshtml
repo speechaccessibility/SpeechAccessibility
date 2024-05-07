@@ -24,9 +24,10 @@
                     <br />
                     <label for="CP"><input id="CP" asp-for="Input.etiologyId" type="radio" value="3" /> Cerebral Palsy</label>
                     <br />
-                    <label for="None of the above"><input id="None of the above" asp-for="Input.etiologyId" type="radio" value="5" /> None of the above</label>
+                    <label for="None of the above"><input id="None of the above" asp-for="Input.etiologyId" type="radio" value="5" />Other condition that causes speech disability: </label>&nbsp;<input type="text" size="75" asp-for="Input.otherEtiologyDescription" />
                 </fieldset>
                 <span asp-validation-for="Input.etiologyId" class="text-danger"></span>
+                <span class="text-danger">@Html.ValidationMessage("otherDiagnosisValidation")</span>
             </div>
         </div>
     </div>

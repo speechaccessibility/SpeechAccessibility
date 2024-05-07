@@ -1,0 +1,350 @@
+﻿@{
+    ViewData["Title"] = "Contributors Search";
+}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+@{
+    ViewBag.Title = "Contributors Search";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h1>Contributors Search</h1>
+<div id="top"></div>
+<label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+@using (Html.BeginForm("LoadContributors", "Admin", FormMethod.Post, new { id = "searchContributor" }))
+{
+    <table style="border-collapse: collapse !important; border: none !important;">
+        <tr>
+
+            <td style="border: none !important;">
+                <input id="SearchValue" name="SearchValue" type="text" value="">
+            </td>
+            <td><input type="submit" id="btnSearch" name="btnSearch" value="Search" class="btn btn-primary btn-sm" /></td>
+        </tr>
+
+    </table>
+}
+
+<div style="width: 1700px">
+    <table class="table table-striped table-bordered table-hover" id="ContributorsSearchTable" cellspacing="0" align="center"></table>
+</div>
+
+
+<div id="editInfo-dialog" style="display: none">
+    <label id="lblEditInfoMessage">Contributor:</label>
+    <input type="hidden" id="hidEditInfoContributorId" />
+    <br /><b>First Name:</b><label id="lblEditInfoFirstName" name="lblEditInfoFirstName"></label>
+    <br /><b>Last Name:</b><label id="lblEditInfoLastName" name="lblEditInfoLastName"></label>
+    <br /><b>Year of Birth:</b><input type="text" id="txtEditInfoBirthYear" name="txtEditInfoBirthYear" />
+    <br /><br /><b>Contributor Email:</b><input type="text" id="txtEditContributorEmail" name="txtEditContributorEmail" />
+    <br /><br /><b>Has Helper:</b> <input type="checkbox" id="chkHasHelper" name="chkHasHelper" />
+    <br /><br /><b>Helper Email:</b><input type="text" id="txtEditHelperEmail" name="txtEditHelperEmail" />
+    &nbsp;&nbsp;&nbsp;<b>Helper Phone:</b><input type="text" id="txtEditHelperPhone" name="txtEditHelperPhone" />
+    <br />Comment:<br /><textarea id="txtEditInfoComment" name="txtEditInfoComment" rows="4" cols="50"></textarea>
+</div>
+
+
+
+<div class="spinner" style="display:none">
+    <div class="center-div">
+        <div class="inner-div">
+            <div class="loader"></div>
+        </div>
+    </div>
+</div>
+
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+    <script src="~/js/Contributor.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            var oContributorsTable = $("#ContributorsSearchTable").on('error.dt',
+                function (e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                    "serverSide": true,
+                    "processing": true,
+                    "responsive": true,
+                    //"iDisplayLength": 100,
+                    "dom": "<'row'<'col-sm-4'l><'col-sm-4'i><'col-sm-4'f>>" +
+                        "<'row'<'col-sm-12'tr>>p", //'<"top"l>rift<"bottom"p><"clear">',
+                    "ajax": ({
+                        "url": '@Url.Action("LoadContributors", "Admin")',
+                        "data": { 'searchValue': "" },
+                        "data": function (data) {
+                            data.searchValue = "";
+                        },
+                        "type": "POST",
+                        "datatype": "json"
+                    }),
+                    "bAutoWidth": false,
+                    "aaSorting": [[1, 'desc']],
+                    "columns": [
+                        {
+                            "title": "ContributorID",
+                            "data": "id",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Id",
+                            "width": "260px"
+                        },
+
+                        {
+                            "title": "FirstName",
+                            "data": "firstName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "FirstName"
+                        },
+                        {
+                            "title": "LastName",
+                            "data": "lastName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "LastName"
+                        },
+                        {
+                            "title": "BYear",
+                            "data": "birthYear",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "BirthYear"
+                        },
+                        {
+                            "title": "Email Address",
+                            "data": "emailAddress",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "EmailAddress"
+
+                        },
+                        {
+                            "title": "Phone#",
+                            "data": "phoneNumber",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "PhoneNumber"
+                        },
+                        {
+                            "title": "HelperEmail",
+                            "data": "helperEmail",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "HelperEmail",
+                            'render': function (data, type, row) {
+                                if (row.helperInd == "Yes")
+                                    return row.helperEmail
+                                return '';
+                            }
+                        },
+
+                        {
+                            "title": "HelperPhone",
+                            "data": "helperPhoneNumber",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "HelperPhoneNumber",
+                            'render': function (data, type, row) {
+                                if (row.helperInd == "Yes")
+                                    return row.helperPhoneNumber
+                                return '';
+                            }
+                        },
+                        {
+                            "title": "Etiology",
+                            "data": "etiologyName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "EtiologyName"
+                        },
+                        {
+                            "title": "Status",
+                            "data": "statusName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "width": '80px',
+                            "name": "StatusName"
+                        },
+
+                        //{
+                        //    "title": "Comments",
+                        //    "data": "comments",
+                        //    "searchable": true,
+                        //    "orderable": true,
+                        //    "visible": true,
+                        //    "name": "comments"
+                        //},
+                        
+                        
+                        {
+                            "title": "Actions",
+                            "data": "id",
+                            "searchable": false,
+                            "orderable": false,
+                            "width": '200px',
+                            "classDescription": 'dt-body-center',
+                            "visible": true,
+                            "name": "id",
+                            "render": function (data, type, row) {
+                                var link = '<a href="#" class="editInfo">Edit Info</a> ';
+                                return link;
+                            }
+                        }
+                    ],
+                    "ordering": true,
+                    "paging": false,
+                    "searching": false
+                    //"pageLength": 100,
+                    //"lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+                });
+
+
+            $("#searchContributor").on("submit", function (event) {
+                //getContributors()
+                event.preventDefault();
+                oContributorsTable.on('preXhr.dt', function (e, settings, data) {
+                    data.searchValue = $("#SearchValue").val();
+                });
+                oContributorsTable.draw();
+
+            });
+
+            $('#ContributorsSearchTable').on('click',
+                'a.editInfo',
+                function (e) {
+                    e.preventDefault();
+                    //var data = $('#ContributorsSearchTable').row(e.target.closest('tr')).data();
+
+                    var selectedRowData = oContributorsTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();
+                    $("#lblEdiInfoMessage").text("Update Contributor Information:");
+                    $("#hidEditInfoContributorId").val(row.id);
+                    $("#lblEditInfoFirstName").text(row.firstName);
+                    $("#lblEditInfoLastName").text(row.lastName);
+                    $("#txtEditContributorEmail").val(row.emailAddress);
+                    $("#txtEditHelperEmail").val(row.helperEmail);
+                    $("#txtEditHelperPhone").val(row.helperPhoneNumber);
+                    $("#txtEditInfoBirthYear").val(row.birthYear);
+
+                    if (row.helperInd == "Yes") {
+                        $("#chkHasHelper").prop('checked', true);
+                        //$("#txtEditHelperEmail").prop("disabled", false);
+                        //$("#txtEditHelperPhone").prop("disabled", false);
+                    }
+                    else {
+                        $("#chkHasHelper").prop('checked', false);
+                        //$("#txtEditHelperEmail").prop("disabled", true);
+                        //$("#txtEditHelperPhone").prop("disabled", true);
+                    }
+
+                    $("#txtEditInfoComment").val(row.comments);
+
+                    admimEditContributorInfo('@Url.Action("EditContributorInfo", "Admin")', oContributorsTable, "Edit Contributor Info");
+                    $("#editInfo-dialog").dialog('open');
+
+                });
+
+            function admimEditContributorInfo(postUrl, table, title) {
+                $("#editInfo-dialog").dialog({
+                    title: title,
+                    autoOpen: false,
+                    resizable: false,
+                    width: 900,
+                    show: { effect: 'drop', direction: "up" },
+                    modal: true,
+                    draggable: true,
+                    closeOnEscape: true,
+                    position: { my: "left top", at: "left+50 top+100", of: window },
+                    open: function () {
+                        $('#editInfo-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+                    },
+                    close: function () {
+                        $("#lblEditInfoMessage").text("Change Emails:");
+                        $("#hidEditInfoContributorId").val("");
+                        $("#lblEditInfoFirstName").text("");
+                        $("#lblEditInfoLastName").text("");
+                        $("#txtEditContributorEmail").val("");
+                        $("#txtEditHelperEmail").val("");
+                        $("#txtEditInfoBirthYear").val("");
+                        $("#txtEditInfoComment").val("");
+                        $("#lblEditInfoMessage").removeClass("errorMessage");
+                    },
+                    buttons: {
+                        "Submit": function () {
+                            var helperInd = "No";
+                            if ($("#chkHasHelper").is(":checked")) {
+                                helperInd = "Yes";
+                                if ($("#txtEditHelperEmail").val() == "") {
+                                    alert("Helper Email is required.");
+                                    $("#txtEditHelperEmail").focus();
+                                    return false;
+                                }
+                            }
+                            $('.spinner').css('display', 'block');
+                            //Guid contributorId, string contributorEmail, string helperInd, string helperEmail, string birthYear, string comments, string helperPhone
+                            $.ajax({
+                                url: postUrl,
+                                type: "POST",
+                                data: {
+                                    "contributorId": $("#hidEditInfoContributorId").val(),
+                                    "contributorEmail": $("#txtEditContributorEmail").val(),
+                                    "helperInd": helperInd,
+                                    "helperEmail": $("#txtEditHelperEmail").val(),
+                                    "birthYear": $("#txtEditInfoBirthYear").val(),
+                                    "comments": $("#txtEditInfoComment").val(),
+                                    "helperPhone": $("#txtEditHelperPhone").val()
+                                },
+                                success: function (response) {
+                                    $('.spinner').css('display', 'none');
+                                    if (response.success === true) {
+                                        clearEditInfoDialog();
+                                        $('#editInfo-dialog').dialog('close');
+                                        $("#lblMessage").text("Contributor information was updated.");
+                                        table.draw(false);
+                                    } else {
+                                        $("#lblEditInfoMessage").text(response.message);
+                                        $("#lblEditInfoMessage").addClass("errorMessage");
+                                    }
+                                },
+                                error: function () { alert('Error Update Information. It could be the timeout issue. Please try to reload your browser.'); }
+                            });
+
+
+                        },
+                        close: function () {
+                            $("#lblEditInfoMessage").text("Change Emails:");
+                            $("#hidEditInfoContributorId").val("");
+                            $("#lblEditInfoFirstName").text("");
+                            $("#lblEditInfoLastName").text("");
+                            $("#txtEditContributorEmail").val("");
+                            $("#txtEditHelperEmail").val("");
+                            $("#txtEditInfoBirthYear").val("");
+                            $("#txtEditInfoComment").val("");
+                            $("#lblEditInfoMessage").removeClass("errorMessage");
+                            $(this).dialog('close');
+                        }
+                    }
+
+                });
+            }
+
+
+        });//document ready
+
+    </script>
+    }

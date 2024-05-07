@@ -20,6 +20,7 @@ namespace SpeechAccessibility.Infrastructure.Data
         public DbSet<ContributorSubStatus> ContributorSubStatus { get; set; }
         public DbSet<Etiology> Etiology { get; set; }
         public  DbSet<RacialGroup> RacialGroup { get; set; }
+        public DbSet<AspNetUsers> AspNetUsers { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
 
@@ -32,6 +33,7 @@ namespace SpeechAccessibility.Infrastructure.Data
             builder.Entity<ContributorSubStatus>(ConfigureContributorSubStatus);
             builder.Entity<Etiology>(ConfigureEtiology);
             builder.Entity<RacialGroup>(ConfigureRacialGroup);
+            builder.Entity<AspNetUsers>(ConfigureAspNetUsers);
 
 
         }
@@ -67,6 +69,10 @@ namespace SpeechAccessibility.Infrastructure.Data
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Contributor_Etiology");
 
+            entity.HasOne(d => d.IdentityUser)
+                .WithMany(p => p.Contributor)
+                .HasForeignKey(d => d.IdentityUserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             //entity.HasOne(d => d.ContributorStatus)
             //    .WithMany(p => p.Contributor)
@@ -267,6 +273,9 @@ namespace SpeechAccessibility.Infrastructure.Data
             
         }
 
+        private void ConfigureAspNetUsers(EntityTypeBuilder<AspNetUsers> entity)
+        {
 
+        }
     }
 }

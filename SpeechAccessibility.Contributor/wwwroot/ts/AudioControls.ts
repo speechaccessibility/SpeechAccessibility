@@ -1,4 +1,4 @@
-﻿/*
+/*
  MIT License
 
  Copyright (c) 2022 The Speech Accessibility Project,
@@ -24,7 +24,7 @@
  SOFTWARE.
  */
 
-import * as WavFileEncoder from "../lib/wav-file-encoder/dist/wavfileencoder.js";
+import * as WavFileEncoder from "../lib/wav-file-encoder/dist/WavFileEncoder.js"
 
 export class AudioControls {
 	private _chunks: Blob[] = [];
@@ -134,15 +134,15 @@ export class AudioControls {
 	 *                  cycle.
 	 */
 	constructor(codec: string,
-		recordStartButtonId: string | undefined,
-		recordStopButtonId: string | undefined = undefined,
-		waveformCanvasId: string | undefined = undefined,
-		waveformBackgroundCSS: string = "black",
-		waveformForegroundCSS: string = "white",
-		maxRecordingTimeMsec: number = 60000,
-		recordingSampleRateMsec: number = 100,
-		audio_display_threshold: number = 0.005,
-		audio_display_value_length: number = 1024 * 16) {
+	            recordStartButtonId: string | undefined,
+	            recordStopButtonId: string | undefined = undefined,
+	            waveformCanvasId: string | undefined   = undefined,
+	            waveformBackgroundCSS: string          = "black",
+	            waveformForegroundCSS: string          = "white",
+	            maxRecordingTimeMsec: number           = 60000,
+	            recordingSampleRateMsec: number        = 100,
+	            audio_display_threshold: number        = 0.005,
+	            audio_display_value_length: number     = 1024 * 16) {
 		// codec is REQUIRED
 		if (!(codec && codec.trim())) {
 			let msg = `recordStartButtonId is required.`
@@ -171,7 +171,7 @@ export class AudioControls {
 		recordStartButtonId = recordStartButtonId.trim()
 		if (!document.getElementById(recordStartButtonId)) {
 			let msg = `recordStartButtonId value "${recordStartButtonId}" `
-				+ `does not exist in the DOM.`
+			          + `does not exist in the DOM.`
 			console.log(msg)
 			throw new Error(msg)
 		}
@@ -189,7 +189,7 @@ export class AudioControls {
 			recordStopButtonId = recordStopButtonId.trim()
 			if (!document.getElementById(recordStopButtonId)) {
 				let msg = `recordStopButtonId value "${recordStopButtonId}" `
-					+ `does not exist in the DOM.`
+				          + `does not exist in the DOM.`
 				console.log(msg)
 				throw new Error(msg)
 			}
@@ -209,7 +209,7 @@ export class AudioControls {
 			waveformCanvasId = waveformCanvasId.trim()
 			if (!document.getElementById(waveformCanvasId)) {
 				let msg = `waveformCanvasId value "${waveformCanvasId}" `
-					+ `does not exist in the DOM.`
+				          + `does not exist in the DOM.`
 				console.log(msg)
 				throw new Error(msg)
 			}
@@ -236,11 +236,11 @@ export class AudioControls {
 		// MAX RECORDING TIME
 		if (typeof maxRecordingTimeMsec != 'number') {
 			let msg = `maxRecordingTimeMsec should be a number in `
-				+ `milliseconds.`
+			          + `milliseconds.`
 			console.log(msg)
 			throw new Error(msg)
 		}
-		this._maxRecordingTimeMsec = Math.trunc(maxRecordingTimeMsec)
+		this._maxRecordingTimeMsec = Math.ceil(maxRecordingTimeMsec)
 
 		if (typeof recordingSampleRateMsec != 'number') {
 			throw new Error(
@@ -249,7 +249,7 @@ export class AudioControls {
 			)
 		}
 		if (recordingSampleRateMsec) {
-			this._recordingSampleRateMsec = Math.trunc(recordingSampleRateMsec)
+			this._recordingSampleRateMsec = Math.ceil(recordingSampleRateMsec)
 			if (this._recordingSampleRateMsec === 0) {
 				let msg = `Recording Sample Rate value is zero.`
 				console.log(msg)
@@ -260,13 +260,13 @@ export class AudioControls {
 		// AUDIO DISPLAY THRESHOLD
 		if (typeof audio_display_threshold != 'number') {
 			let msg = `audio_display_threshold should be a floating `
-				+ `point number.`
+			          + `point number.`
 			console.log(msg)
 			throw new Error(msg)
 		}
 		if (audio_display_threshold > 1.0 || audio_display_threshold < -1.0) {
 			let msg = `audio_display_threshold only has a useful range `
-				+ `between -1.0 and 1.0. Default is 0.005.`
+			          + `between -1.0 and 1.0. Default is 0.005.`
 			console.log(msg)
 			throw new Error(msg)
 		}
@@ -280,11 +280,11 @@ export class AudioControls {
 		}
 		if (audio_display_value_length < 1) {
 			let msg = `audio_display_value_length only has a useful integer`
-				+ ` range > 0.`
+			          + ` range > 0.`
 			console.log(msg)
 			throw new Error(msg)
 		}
-		this.audio_display_value_length = Math.trunc(audio_display_value_length)
+		this.audio_display_value_length = Math.ceil(audio_display_value_length)
 
 		//
 		// get list of available input devices. The "list" is probably not
@@ -295,9 +295,15 @@ export class AudioControls {
 		} catch {
 			let msg = `Browser Not Supported.`
 			console.log(msg)
-			document.dispatchEvent(new CustomEvent('AudioControls.Error', {
-				'detail': 'This browser does not support recording. Please try opening this page in a different browser or update this browser to the most recent version to continue'
-			}));
+			document.dispatchEvent(
+				new CustomEvent(
+					'AudioControls.Error',
+					{
+						'detail': 'This browser does not support recording. Please try opening this page in a different browser or update this browser to the most recent version to continue'
+					}
+				)
+			);
+			throw new Error(msg)
 		}
 
 		devices.then(
@@ -312,9 +318,15 @@ export class AudioControls {
 				if (!availableInputDevices.length) {
 					let msg = `No input devices found.`
 					console.log(msg)
-					document.dispatchEvent(new CustomEvent('AudioControls.Error', {
-						'detail': 'No input devices found. Please attach a microphone and reload the page'
-					}));
+					document.dispatchEvent(
+						new CustomEvent(
+							'AudioControls.Error',
+							{
+								'detail': 'No input devices found. Please attach a microphone and reload the page'
+							}
+						)
+					);
+					throw new Error(msg)
 				}
 
 				this.initializeRecording()
@@ -329,11 +341,13 @@ export class AudioControls {
 									}
 								)
 							)
+							throw new Error(error.message)
 						}
 					)
 			}
 		).catch(
 			(error) => {
+				console.log(error.message)
 				switch (error.message) {
 					case "Browser Not Supported.":
 						document.dispatchEvent(
@@ -345,7 +359,7 @@ export class AudioControls {
 							this.eventNoInputDevicesFound
 						)
 						break
-					default:					
+					default:
 						document.dispatchEvent(
 							new CustomEvent(
 								'AudioControls.Error',
@@ -356,6 +370,7 @@ export class AudioControls {
 						)
 						break
 				}
+				throw new Error(error.message)
 			}
 		)
 	}
@@ -366,13 +381,21 @@ export class AudioControls {
 	 *
 	 * @throws Exceptions are possible from navigator.mediaDevices.getUserMedia
 	 */
-	private async initializeRecording() {
+	private async initializeRecording(): Promise<void> {
 		try {
 			this._recordingContext = new (
 				AudioContext)()
 		} catch (e) {
 			console.log(e)
-			throw e
+			document.dispatchEvent(
+				new CustomEvent(
+					'AudioControls.Error',
+					{
+						'detail': `Trying to establish an AudioContext: ${e}`
+					}
+				)
+			);
+			throw new Error(e)
 		}
 
 		//
@@ -387,6 +410,14 @@ export class AudioControls {
 				if (!stream) {
 					let msg = `No MediaStream "stream" found.`
 					console.log(msg)
+					document.dispatchEvent(
+						new CustomEvent(
+							'AudioControls.Error',
+							{
+								'detail': `${msg}`
+							}
+						)
+					);
 					throw new Error(msg)
 				}
 				this._stream = stream;
@@ -406,15 +437,17 @@ export class AudioControls {
 							(error) => {
 								let msg = `startRecording error: ${error.message}.`
 								console.log(msg)
-								document.dispatchEvent(
-									new CustomEvent(
-										'AudioControls.Error',
-										{
-											'detail': error.stack
-										}
+								if ('MediaRecorder.start: The MediaStream is inactive' != error.message) {
+									document.dispatchEvent(
+										new CustomEvent(
+											'AudioControls.Error',
+											{
+												'detail': error.stack
+											}
+										)
 									)
-								)
-								
+								}
+								throw new Error(msg)
 							}
 						)
 					}
@@ -429,13 +462,21 @@ export class AudioControls {
 						if (!this._isRecording) {
 							return false
 						}
-						this._mediaRecorder.stop()
+						this._mediaRecorder.stop();
 					}
 				)
 			}
 		).catch(
 			(error) => {
 				console.log(error.message)
+				document.dispatchEvent(
+					new CustomEvent(
+						'AudioControls.Error',
+						{
+							'detail': `Trying to GetUserMedia: ${error.message}`
+						}
+					)
+				);
 				throw new Error(error.message);
 			}
 		);
@@ -454,14 +495,24 @@ export class AudioControls {
 	 *
 	 * @returns {Promise}
 	 */
-	private async startRecording(): Promise<unknown> {
+	private async startRecording(): Promise<void> {
 		return new Promise(
 			() => {
+
+				//console.log('entering startRecording')
 				this._chunks = [];
 
 				if (!this._codec) {
 					let msg = `Codec was not specified.`
 					console.log(msg)
+					document.dispatchEvent(
+						new CustomEvent(
+							'AudioControls.Error',
+							{
+								'detail': `startRecording: no codec: ${msg}`
+							}
+						)
+					);
 					throw new Error(msg)
 				}
 
@@ -474,6 +525,14 @@ export class AudioControls {
 					);
 				} catch (e) {
 					console.log(e)
+					document.dispatchEvent(
+						new CustomEvent(
+							'AudioControls.Error',
+							{
+								'detail': `MediaRecorder: ${e}`
+							}
+						)
+					);
 					throw e
 				}
 				this._mediaRecorder.addEventListener(
@@ -514,7 +573,15 @@ export class AudioControls {
 							this.decodeAndDisplayAudio().catch(
 								(error) => {
 									console.log(error.message)
-									throw new Error(error.message)
+									//document.dispatchEvent(
+									//	new CustomEvent(
+									//		'AudioControls.Error',
+									//		{
+									//			'detail': `decodeAndDisplayAudio: ${error.message}`
+									//		}
+									//	)
+									//);
+									//throw new Error(error.message)
 								}
 							)
 						}
@@ -526,11 +593,14 @@ export class AudioControls {
 						this.onStop()
 					}
 				);
+
 				//
 				// start recording here
 				this._mediaRecorder.start(this._recordingSampleRateMsec);
+				//console.log('exiting startRecording')
 			}
 		);
+
 	}
 
 	/**
@@ -539,9 +609,10 @@ export class AudioControls {
 	 * @DOM_Events 'AudioControls.RecordingStopped': when playing has finished.
 	 */
 	private onStop() {
+		//console.log('entering onStop')
 		if (!this._isRecording) {
 			console.log('Stop Recording called when Start Recording was not'
-				+ ' active.')
+			            + ' active.')
 			return
 		}
 
@@ -556,6 +627,14 @@ export class AudioControls {
 			getTracks = this._stream.getTracks()
 		} catch (e) {
 			console.log(e)
+			document.dispatchEvent(
+				new CustomEvent(
+					'AudioControls.Error',
+					{
+						'detail': `getTracks: ${e}`
+					}
+				)
+			);
 			throw e
 		}
 
@@ -568,16 +647,17 @@ export class AudioControls {
 				if (!recordingData
 					.hasOwnProperty('track information')) {
 					recordingData['track information'] = {
-						'number of tracks': getTracks.length,
+						'number of tracks'     : getTracks.length,
 						'per track information': []
 					}
 				}
 
 				recordingData['track information']
-				['per track information'].push({
-					'track number': index,
-					'track label': track.label
-				}
+					['per track information'].push(
+					{
+						'track number': index,
+						'track label' : track.label
+					}
 				)
 
 				track.stop()
@@ -594,6 +674,14 @@ export class AudioControls {
 		if (this._chunks.length == 0) {
 			let msg = 'There are no audio chunks.'
 			console.log(msg)
+			document.dispatchEvent(
+				new CustomEvent(
+					'AudioControls.Error',
+					{
+						'detail': msg
+					}
+				)
+			);
 			throw new Error(msg)
 		}
 
@@ -620,7 +708,7 @@ export class AudioControls {
 						if (!recordingData['WAV information']
 							.hasOwnProperty('sampleRate')) {
 							recordingData['WAV information']
-							['sampleRate'] = buffer.sampleRate
+								['sampleRate'] = buffer.sampleRate
 						}
 						if (!recordingData['WAV information']
 							.hasOwnProperty('length')) {
@@ -630,7 +718,7 @@ export class AudioControls {
 						if (!recordingData['WAV information']
 							.hasOwnProperty('numberOfChannels')) {
 							recordingData['WAV information']
-							['numberOfChannels'] = buffer.numberOfChannels
+								['numberOfChannels'] = buffer.numberOfChannels
 						}
 						if (!recordingData['WAV information']
 							.hasOwnProperty('duration')) {
@@ -644,7 +732,7 @@ export class AudioControls {
 							.encodeWavFileFromAudioBuffer(
 								buffer,
 								WavFileEncoder.WavFileType.float32
-						)
+							)
 
 						document.getElementById(
 							this._recordStopButtonId
@@ -656,9 +744,9 @@ export class AudioControls {
 								{
 									'detail': {
 										'recordingData': recordingData,
-										'wavData': new Blob(
+										'wavData'      : new Blob(
 											[wavData],
-											{ type: 'audio/wav' }
+											{type: 'audio/wav'}
 										)
 									}
 								}
@@ -668,16 +756,34 @@ export class AudioControls {
 				).catch(
 					(error) => {
 						console.log(error.message)
-						throw new Error(error.message)
+						//document.dispatchEvent(
+						//	new CustomEvent(
+						//		'AudioControls.Error',
+						//		{
+						//			'detail': `decodeAudioData: ${error.message}`
+						//		}
+						//	)
+						//);
+						//throw new Error(error.message)
 					}
 				)
 			}
 		).catch(
 			error => {
 				console.log(error.message)
+				document.dispatchEvent(
+					new CustomEvent(
+						'AudioControls.Error',
+						{
+							'detail': `unsavedAudioBuffer: ${error.message}`
+						}
+					)
+				);
 				throw new Error(error.message)
 			}
+
 		)
+		//console.log('exiting onstop')
 	}
 
 	/**
@@ -813,27 +919,27 @@ export class AudioControls {
 
 				let cmx = chunkMax
 				if (cmx < this.audio_display_threshold
-					&& cmx > (this.audio_display_threshold * -1)) {
+				    && cmx > (this.audio_display_threshold * -1)) {
 					cmx = 0.0
 				}
 
 				let cmn = chunkMin
 				if (cmn < this.audio_display_threshold
-					&& cmn > (this.audio_display_threshold * -1)) {
+				    && cmn > (this.audio_display_threshold * -1)) {
 					cmn = 0.0
 				}
 
 				let top = cmx * scalingFactor // Scale the value to "1.0".
-					* halfHeight        // Scale the "1" value to the
-					//     space around the midline.
-					+ halfHeight        // Translate the value down to
-				//     the midline.
+				          * halfHeight        // Scale the "1" value to the
+				          //     space around the midline.
+				          + halfHeight        // Translate the value down to
+			                                  //     the midline.
 				let bottom = cmn * scalingFactor // Scale the value to "1.0".
-					* halfHeight        // Scale the "1" value to the
-					//     space around the
-					//     midline.
-					+ halfHeight        // Translate the value down to
-				//     the midline.
+				             * halfHeight        // Scale the "1" value to the
+				             //     space around the
+				             //     midline.
+				             + halfHeight        // Translate the value down to
+			                                     //     the midline.
 
 				canvasCtx.beginPath()
 				canvasCtx.moveTo(x, top)
@@ -841,6 +947,14 @@ export class AudioControls {
 				canvasCtx.stroke()
 			}
 		} catch (e) {
+			document.dispatchEvent(
+				new CustomEvent(
+					'AudioControls.Error',
+					{
+						'detail': `drawWaveform: ${e}`
+					}
+				)
+			);
 			throw new Error(e)
 		}
 	}
@@ -848,14 +962,14 @@ export class AudioControls {
 	/**
 	 * Convert the recorded Blob into audio
 	 */
-	private async decodeAndDisplayAudio() {
+	private async decodeAndDisplayAudio(): Promise<void> {
 		try {
 			// convert the blob audio data into an AudioContext and prepare to
 			// display a "waveform".
 
 			new Blob(
 				this._chunks,
-				{ 'type': 'audio/wav' }
+				{'type': 'audio/wav'}
 			).arrayBuffer().then(
 				(arrayBuffer) => {
 					this._recordingContext.decodeAudioData(
@@ -871,19 +985,43 @@ export class AudioControls {
 					).catch(
 						(error) => {
 							console.log(error.message)
-							throw new Error(error.message)
+							//document.dispatchEvent(
+							//	new CustomEvent(
+							//		'AudioControls.Error',
+							//		{
+							//			'detail': `decodeAndDisplayAudio: decodeAudioData: ${error.message}`
+							//		}
+							//	)
+							//);
+							//throw new Error(error.message)
 						}
 					)
 				}
 			).catch(
 				(error) => {
 					console.log(error.message)
-					throw new Error(error.message)
+					//document.dispatchEvent(
+					//	new CustomEvent(
+					//		'AudioControls.Error',
+					//		{
+					//			'detail': `decodeAndDisplayAudio reading Blob: ${error.message}`
+					//		}
+					//	)
+					//);
+					//throw new Error(error.message)
 				}
 			)
 		} catch (e) {
 			console.log(e)
-			throw new Error(e)
+			//document.dispatchEvent(
+			//	new CustomEvent(
+			//		'AudioControls.Error',
+			//		{
+			//			'detail': `decodeAndDisplayAudio: ${e}`
+			//		}
+			//	)
+			//);
+			//throw new Error(e)
 		}
 	}
 }

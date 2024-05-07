@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using CsvHelper;
 using CsvHelper.Configuration;
-using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -32,11 +31,12 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IEtiologyViewRepository _etiologyViewRepository;
         private readonly IConfiguration _configuration;
         private readonly IContributorAssignedListRepository _contributorAssignedListRepository;
+        private readonly INumberOfRecordingByEtiologyRepository _numberOfRecordingByEtiologyRepository;
 
 
         public ReportController(IUserRepository userRepository, IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository
             , IContributorViewRepository contributorViewRepository, IRecordingRepository recordingRepository, IContributorCompensationRepository contributorCompensationRepository
-            , IConfiguration configuration, IContributorCompensationViewRepository contributorCompensationViewRepository, IContributorCompensationHistoryRepository contributorCompensationHistoryRepository, IEtiologyViewRepository etiologyViewRepository, IContributorAssignedListRepository contributorAssignedListRepository)
+            , IConfiguration configuration, IContributorCompensationViewRepository contributorCompensationViewRepository, IContributorCompensationHistoryRepository contributorCompensationHistoryRepository, IEtiologyViewRepository etiologyViewRepository, IContributorAssignedListRepository contributorAssignedListRepository, INumberOfRecordingByEtiologyRepository numberOfRecordingByEtiologyRepository)
         {
             _userRepository = userRepository;
             _contributorAssignedAnnotatorRepository = contributorAssignedAnnotatorRepository;
@@ -48,6 +48,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             _contributorCompensationHistoryRepository = contributorCompensationHistoryRepository;
             _etiologyViewRepository = etiologyViewRepository;
             _contributorAssignedListRepository = contributorAssignedListRepository;
+            _numberOfRecordingByEtiologyRepository = numberOfRecordingByEtiologyRepository;
         }
 
         public IActionResult Index()
@@ -411,8 +412,11 @@ namespace SpeechAccessibility.Annotator.Controllers
                 };
 
                 //get assigned Contributors
-                var contributorIds = _contributorAssignedAnnotatorRepository.Find(a => a.UserId==annotatorId)
-                    .ToList().Select(a => a.ContributorId);
+                var contributors = _contributorAssignedAnnotatorRepository.Find(a => a.UserId == annotatorId)
+                    .ToList();
+                //var contributorIds = _contributorAssignedAnnotatorRepository.Find(a => a.UserId==annotatorId)
+                //    .ToList().Select(a => a.ContributorId);
+                var contributorIds = contributors.Select(a => a.ContributorId);
 
                 temp.AssignedRecordingByContributor = _recordingRepository.Find(r => contributorIds.Contains(r.ContributorId) &&
                         r.BlockId != null
@@ -426,7 +430,8 @@ namespace SpeechAccessibility.Annotator.Controllers
                         ContributorId = group.Key.ContributorId,
                         Status = group.Key.Name,
                         NumberOfRecord = group.ToList().Count,
-                        ReportDate = startDate
+                        ReportDate = startDate,
+                        EtiologyName = _contributorViewRepository.Find(c=>c.Id==group.Key.ContributorId).FirstOrDefault()!.EtiologyName
 
                     })
                     .ToList();
@@ -474,6 +479,54 @@ namespace SpeechAccessibility.Annotator.Controllers
             return Json(new { draw, data = assignedList, recordsFiltered = recordsTotal, recordsTotal = recordsTotal });
 
         }
+        //PublishedRecordingsByEtiology
+        public IActionResult PublishedRecordingsByEtiology()
+        {
+            return View();
+        }
 
+        public ActionResult LoadPublishedRecordingsByEtiology(int annotatorId)
+        {
+            var publishedRecordingsByEtiology = _numberOfRecordingByEtiologyRepository.GetAll().AsEnumerable().GroupBy(r => r.EtiologyId)
+                .Select(r => new
+                {
+                    EtiologyId = r.Key,
+                    NumberOfRecordings = r.Count()
+                }).ToList();
+
+            var spontaneousSpeechRecordingsByEtiology = _numberOfRecordingByEtiologyRepository.Find(r=>r.CategoryId==4).AsEnumerable().GroupBy(r => r.EtiologyId)
+                .Select(r => new
+                {
+                    EtiologyId = r.Key,
+                    NumberOfRecordings = r.Count()
+                }).ToList();
+
+            List<PublishedRecordingsByEtiologyViewModel> data = new List<PublishedRecordingsByEtiologyViewModel>();
+
+            foreach (var r in publishedRecordingsByEtiology)
+            {
+                var temp = new PublishedRecordingsByEtiologyViewModel
+                {
+                    EtiologyId = r.EtiologyId,
+                    NumberOfRecordings = r.NumberOfRecordings
+                };
+              
+                var spontaneousSpeechRecordings = spontaneousSpeechRecordingsByEtiology
+                    .Find(s => s.EtiologyId == r.EtiologyId);
+                if (spontaneousSpeechRecordings != null)
+                {
+                    temp.SpontaneousSpeechRecordings = spontaneousSpeechRecordingsByEtiology
+                        .Find(s => s.EtiologyId == r.EtiologyId)!.NumberOfRecordings;
+
+                }
+
+                data.Add(temp);
+            }
+
+            return data.Any() ? Json(new { Counter = data.Count, recordings = data }) : Json(new { Counter = 0 });
+
+
+            //return publishedRecordingsByEtiology.Any() ? Json(new { Counter = publishedRecordingsByEtiology.Count, recordings = publishedRecordingsByEtiology }) : Json(new { Counter = 0 });
+        }
     }
 }

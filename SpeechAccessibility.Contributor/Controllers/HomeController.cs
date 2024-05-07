@@ -46,6 +46,15 @@ using System.Threading.Tasks;
 using Xabe.FFmpeg;
 using System.Speech.Synthesis;
 using Prompt = SpeechAccessibility.Models.Prompt;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.Build.Evaluation;
+using Microsoft.CodeAnalysis;
+using Microsoft.VisualBasic;
+using System.Drawing;
+using System.Numerics;
+using System.Security.Policy;
+using System.Speech.Recognition;
+using Microsoft.EntityFrameworkCore;
 
 namespace SpeechAccessibility.Controllers
 {
@@ -323,9 +332,10 @@ namespace SpeechAccessibility.Controllers
             if ("Approved".Equals(contributorStatus) || "Yes".Equals(developerMode))
             {
                 int consentCount = _identityContext.Consent.Where(c => c.Contributor.Id == contributorId && c.ConsentType != "Caregiver").Count();
+                int assentCount = _identityContext.Assent.Where(a => a.ContributorId == contributorId).Count();
 
                 //Only route to the recording page after they have completed the consent page
-                if (consentCount > 0)
+                if (consentCount > 0 || (contributor.Etiology.Id==4 && assentCount>0))
                 {
                     int caregiverConsentCount = _identityContext.Consent.Where(c => c.Contributor.Id == contributorId && c.ConsentType == "Caregiver").Count();
                     string helperInd = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.HelperInd).First();
@@ -333,8 +343,7 @@ namespace SpeechAccessibility.Controllers
                     if (contributor.Etiology.Id == 2)
                     {
                         int legalGuardianCount = _identityContext.LegalGuardian.Where(l => l.ContributorId == contributorId).Count();
-                        int assentCount = _identityContext.Assent.Where(a => a.ContributorId == contributorId).Count();
-
+                        
                         if ("Yes".Equals(helperInd) && caregiverConsentCount == 0)
                         {
                             return RedirectToPage("/Account/DSCaregiverConsent", new { area = "Identity" });
@@ -360,11 +369,12 @@ namespace SpeechAccessibility.Controllers
                         }
                     }
                     else if (contributor.Etiology.Id == 4)
-                    {
+                    {                      
                         if ("Yes".Equals(helperInd) && caregiverConsentCount == 0)
                         {
                             return RedirectToPage("/Account/AphasiaCaregiverConsent", new { area = "Identity" });
                         }
+                       
                     }
 
                     int contributorDetailsCount = _identityContext.ContributorDetails.Where(c => c.Contributor.Id == contributorId).Count();
@@ -430,7 +440,9 @@ namespace SpeechAccessibility.Controllers
                     }
                     if (contributor.Etiology.Id == 4)
                     {
-                        return RedirectToPage("/Account/AphasiaConsent", new { area = "Identity" });
+
+                       return RedirectToPage("/Account/AphasiaAssent", new { area = "Identity" });          
+
                     }
                     else
                     {
@@ -481,7 +493,7 @@ namespace SpeechAccessibility.Controllers
 
             //For CP we want to display the open ended instructions on a separate page.
             //It should route to this page at the beginning of the open ended section for each block
-            if(((model.etiologyId == 3 && model.promptCategoryId!=5 && category.Id == 4)||model.etiologyId==4) && !displayedMessageForCurrentBlock)
+            if((((model.etiologyId == 3 ||model.etiologyId==4) && model.promptCategoryId!=5 && category.Id == 4)) && !displayedMessageForCurrentBlock)
             {
                 if (currentBlockOfPromptsCount == model.digitalCommandMax)
                 {
@@ -582,7 +594,7 @@ namespace SpeechAccessibility.Controllers
                 Description = description
             };
             _recordingContext.Block.Add(block);
-            _recordingContext.SaveChanges();
+            //_recordingContext.SaveChanges();
 
             List<Prompt> digitalCommandList = new List<Prompt>();
             List<Prompt> novelSentenceList = new List<Prompt>();
@@ -642,8 +654,22 @@ namespace SpeechAccessibility.Controllers
                 InUsed = "Yes"
             };
 
-            _recordingContext.ContributorAssignedBlock.Add(assignedBlock);
-            _recordingContext.SaveChanges();
+            //Added this logic to prevent double click from adding the same block number twice
+            List<int> assignedBlockIdList = _recordingContext.ContributorAssignedBlock.Where(c => c.ContributorId == contributorId).Select(c => c.Block.Id).ToList();
+
+            Block currentDescriptionBlock = _recordingContext.Block.Where(b => assignedBlockIdList.Contains(b.Id) && b.Description == description).FirstOrDefault();
+
+            //Check if the block description we're trying to add, already exists
+            if (currentDescriptionBlock == null)
+            {
+                _recordingContext.ContributorAssignedBlock.Add(assignedBlock);
+                _recordingContext.SaveChanges();
+            }
+            else
+            {
+                block = currentDescriptionBlock;
+            }
+           
 
             return block;
         }
@@ -653,25 +679,45 @@ namespace SpeechAccessibility.Controllers
             int assignedDigitalCommandListId = 0;
             int assignedSingleWordListId = 0;
             int assignedDigitalCommandBlockCount = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.ContributorId == contributorId).Count();
+            bool useExistingDACBlocks = false;
 
+            DateTime newDACTimeStamp = DateTime.Parse(_config["NewDACTimestamp"]);
+           
             if (assignedDigitalCommandBlockCount > 0)
             {
                 //If the contributor has already been assigned a digital command block, retrieve the Id
                 assignedDigitalCommandListId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.ContributorId == contributorId).Select(a => a.List.Id).FirstOrDefault();
+
+               DateTime firstAssignedDACBlockTimestamp = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.ContributorId == contributorId).OrderBy(a => a.CreateTS).Select(a => a.CreateTS).FirstOrDefault();
+               int dateTimeCompare = DateTime.Compare(firstAssignedDACBlockTimestamp, newDACTimeStamp);
+                if (dateTimeCompare <= 0)
+                {
+                    useExistingDACBlocks=true;
+                }
             }
             else
             {
                 //If the contributor hasn't been assigned a digital command block, assign one
-                assignedDigitalCommandListId = assignDigitalCommandBlock(contributorId, etiologyId);
+                assignedDigitalCommandListId = assignDigitalCommandBlock(contributorId, etiologyId,promptCategoryId);
             }
 
             int blockOfDigitalCommandId = 0;
-            blockOfDigitalCommandId = _recordingContext.BlockOfDigitalCommand.Where(b => b.List.Id == assignedDigitalCommandListId).Select(b => b.Id).Skip(assignedBlockCount - 1).First();
+
+
+            if (useExistingDACBlocks && (assignedDigitalCommandListId>10 && assignedDigitalCommandListId<21))
+            {
+                blockOfDigitalCommandId = _recordingContext.BlockOfDigitalCommand.Where(b => b.List.Id == assignedDigitalCommandListId && b.Active == "No").Select(b => b.Id).Skip(assignedBlockCount - 1).First();
+                          
+            }
+            else {
+                blockOfDigitalCommandId = _recordingContext.BlockOfDigitalCommand.Where(b => b.List.Id == assignedDigitalCommandListId && b.Active == "Yes").Select(b => b.Id).Skip(assignedBlockCount - 1).First();
+            }
+            
 
             List<int> currentEtiologyPromptList = new List<int>();
 
-            currentEtiologyPromptList = _recordingContext.PromptEtiology.Where(e => e.EtiologyId == etiologyId).Select(e => e.PromptId).ToList();
-
+            currentEtiologyPromptList = _recordingContext.PromptEtiology.Where(e => e.EtiologyId == etiologyId).Select(e => e.PromptId).ToList();       
+         
             digitalCommandList = _recordingContext.BlockOfDigitalCommandPrompts.Where(b => b.BlockOfDigitalCommand.Id == blockOfDigitalCommandId).Select(b => b.Prompt).Take(digitalCommandMax).OrderBy(r => Guid.NewGuid()).ToList();
 
             if (promptCategoryId !=5)
@@ -680,15 +726,17 @@ namespace SpeechAccessibility.Controllers
 
             }
 
-            if (etiologyId == 2 || etiologyId==4)
+            if (etiologyId == 2)
             {
                 int blockNumber = Int32.Parse(block.Description);
                 assignOpenEndedPrompts(contributorId, openEndedPromptList, currentEtiologyPromptList, blockNumber,etiologyId);
             }
-            else if (etiologyId == 3)
+            else if (etiologyId == 3 || etiologyId==4 || (etiologyId==6 && promptCategoryId==5))
             {
+              
                 if (promptCategoryId != 5)
                 {
+
                     int blockNumber = Int32.Parse(block.Description);
                     assignOpenEndedPrompts(contributorId, openEndedPromptList, currentEtiologyPromptList, blockNumber,etiologyId);
                 }
@@ -696,9 +744,13 @@ namespace SpeechAccessibility.Controllers
                 {
                     assignedSingleWordListId = assignedDigitalCommandListId - 10;
                     int blockOfSingleWordId = 0;
-                    blockOfSingleWordId = _recordingContext.BlockOfSingleWords.Where(b => b.List.Id == assignedSingleWordListId).Select(b => b.Id).Skip(assignedBlockCount - 1).First();
-                    uaPromptList = _recordingContext.BlockOfSingleWordPrompts.Where(b => b.BlockOfSingleWordsId == blockOfSingleWordId).Select(b => b.Prompt).Take(uaPromptMax).OrderBy(r => Guid.NewGuid()).ToList();
-                    fivekPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.BlockOfPrompts.Select(b => b.Prompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 5 && p.SubCategory.Id == 24 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(fivekPromptMax).ToList();
+                    blockOfSingleWordId = _recordingContext.BlockOfSingleWords.Where(b => b.List.Id == assignedSingleWordListId && b.Active=="Yes").Select(b => b.Id).Skip(assignedBlockCount - 1).First();
+                    uaPromptList = _recordingContext.BlockOfSingleWordPrompts.Where(b => b.BlockOfSingleWordsId == blockOfSingleWordId).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).Take(uaPromptMax).ToList();
+                    List<int> currentEtiologyFivekList = _recordingContext.Prompt.Where(p => p.Category.Id == 5 && p.SubCategory.Id == 24 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Select(p=>p.Id).ToList();
+                    
+                    List<int> assignedFiveKList = _recordingContext.BlockOfPrompts.Where(b=>currentEtiologyFivekList.Contains(b.Prompt.Id)).Select(b=>b.Prompt.Id).ToList();
+                    
+                    fivekPromptList = _recordingContext.Prompt.Where(p=>currentEtiologyFivekList.Contains(p.Id) && !assignedFiveKList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(fivekPromptMax).ToList();
 
                     //If we run out of unique 5k sentences, then we will have to reuse some
                     if (fivekPromptList.Count < fivekPromptMax)
@@ -710,12 +762,14 @@ namespace SpeechAccessibility.Controllers
             else
             {
                 novelSentenceList = _recordingContext.Prompt.Where(p => !_recordingContext.BlockOfPrompts.Select(b => b.Prompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 3 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
-                openEndedPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(openEndedPromptMax).ToList();
+                List<int> recordedPromptList = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).ToList();
+                List<int> currentEtiologyOpenEndedList = _recordingContext.Prompt.Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Select(p => p.Id).ToList();
 
+                openEndedPromptList = _recordingContext.Prompt.Where(p=>currentEtiologyOpenEndedList.Contains(p.Id) && !recordedPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(openEndedPromptMax).ToList();
                 //If we run out of unique novel sentences, then we will have to reuse some
                 if (novelSentenceList.Count < novelSentenceMax)
                 {
-                    novelSentenceList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 3 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
+                    novelSentenceList = _recordingContext.Prompt.FromSqlRaw("select p.Id,p.Transcript,p.CategoryId,p.SubCategoryId,p.QuestionType,p.SeverityLevels,p.CreateTS,p.Active,p.UpdateBy,p.UpdateTS from Prompt as p join PromptEtiology as e on p.Id = e.PromptId where e.EtiologyId =" + etiologyId + " and p.Active = 'Yes' and p.CategoryId = 3 and p.Id not in (select r.OriginalPromptId from Recording as r where r.ContributorId = '" + contributorId + "')").OrderBy(r=>Guid.NewGuid()).Take(novelSentenceMax).ToList();
                 }
             }
 
@@ -725,7 +779,7 @@ namespace SpeechAccessibility.Controllers
         private void assignPromptsForBlock1And10(int etiologyId, int promptCategoryId, ref List<Prompt> digitalCommandList, ref List<Prompt> novelSentenceList, ref List<Prompt> openEndedPromptList, ref List<Prompt> proceduralPromptList, ref List<Prompt> uaPromptList, ref List<Prompt> fivekPromptList, int blockMasterId)
         {
             digitalCommandList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 2).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
-            if (etiologyId == 2 || etiologyId==4)
+            if (etiologyId == 2)
             {
                 openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id != 2).ToList();
 
@@ -743,6 +797,34 @@ namespace SpeechAccessibility.Controllers
                     fivekPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 5).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 24).ToList();
                 }
             }
+            else if (etiologyId == 4)
+            {
+                //Assign open-ended for spontaneous, single words for non-spontaneous
+                if (promptCategoryId != 5)
+                {
+                    openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id != 2).ToList();
+                }
+                else
+                {
+                    uaPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 5).Select(b => b.Prompt).Where(p => p.SubCategory.Id != 24).ToList();
+                    fivekPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 5).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 24).ToList();
+                }
+            }
+            else if (etiologyId == 6)
+            {
+                //Assign open-ended for spontaneous, single words for non-spontaneous
+                if (promptCategoryId != 5)
+                {
+                    novelSentenceList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 3).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
+                    openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 1).OrderBy(r => Guid.NewGuid()).ToList();
+                }
+                else {
+                    uaPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 5).Select(b => b.Prompt).Where(p => p.SubCategory.Id != 24).ToList();
+                    fivekPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 5).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 24).ToList();
+
+                }
+                
+            }
 
             else
             {
@@ -750,7 +832,7 @@ namespace SpeechAccessibility.Controllers
                 openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 1).OrderBy(r => Guid.NewGuid()).ToList();
 
             }
-            //The prompt category will be set to 5 for CP non-verbal participants.
+            //The prompt category will be set to 5 for non-verbal participants.
             //We don't want to assign procedural prompts to them
             if (promptCategoryId != 5)
             {
@@ -770,7 +852,16 @@ namespace SpeechAccessibility.Controllers
             }
             else if (etiologyId == 6)
             {
-                blockMasterId = 3;
+                //Use same blockMaster as CP for non-spontaneous
+                if (promptCategoryId == 5)
+                {
+                    blockMasterId = 4;
+                }
+                else
+                {
+                    blockMasterId = 3;
+                }
+                
             }
             else if (etiologyId == 3)
             {
@@ -788,7 +879,16 @@ namespace SpeechAccessibility.Controllers
             }
             else if (etiologyId == 4)
             {
-                blockMasterId = 5;
+                //Use same blockMaster as CP for non-spontaneous
+                if (promptCategoryId == 5)
+                {
+                    blockMasterId = 4;
+                }
+                else 
+                {
+                    blockMasterId = 5;
+                }
+                
             }
 
             return blockMasterId;
@@ -796,8 +896,7 @@ namespace SpeechAccessibility.Controllers
 
         private void setPromptMax(Guid contributorId, int etiologyId, out int promptCategoryId, out int digitalCommandMax, out int novelSentenceMax, out int openEndedPromptMax, out int proceduralPromptMax, out int uaPromptMax, out int fivekPromptMax)
         {
-            //Default prompt category to Spontaneous Speech  
-            promptCategoryId = 4;
+            promptCategoryId = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.PromptCategoryId).FirstOrDefault();
             digitalCommandMax = 0;
             novelSentenceMax = 0;
             openEndedPromptMax = 0;
@@ -813,8 +912,7 @@ namespace SpeechAccessibility.Controllers
                 proceduralPromptMax = Int32.Parse(_config["DSProceduralPromptMax"]);
             }
             else if (etiologyId == 3)
-            {
-                promptCategoryId = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.PromptCategoryId).FirstOrDefault();
+            {              
                 digitalCommandMax = Int32.Parse(_config["CPDigitalCommandMax"]);
                 if (promptCategoryId == 5)
                 {
@@ -829,9 +927,30 @@ namespace SpeechAccessibility.Controllers
             }
             else if (etiologyId == 4)
             {
-                digitalCommandMax = Int32.Parse(_config["StrokeDigitalCommandMax"]);
-                openEndedPromptMax = Int32.Parse(_config["StrokeOpenEndedPromptMax"]);
-                proceduralPromptMax = Int32.Parse(_config["StrokeProceduralPromptMax"]);
+            
+                if (promptCategoryId == 5)
+                {
+                    //Use same set of prompts as CP for non-spontaneous path
+                    digitalCommandMax = Int32.Parse(_config["CPDigitalCommandMax"]);
+                    uaPromptMax = Int32.Parse(_config["CPUAPromptMax"]);
+                    fivekPromptMax = Int32.Parse(_config["CP5KPromptMax"]);
+                }
+                else
+                {
+                    digitalCommandMax = Int32.Parse(_config["StrokeDigitalCommandMax"]);
+                    openEndedPromptMax = Int32.Parse(_config["StrokeOpenEndedPromptMax"]);
+                    proceduralPromptMax = Int32.Parse(_config["StrokeProceduralPromptMax"]);
+                }
+
+
+            }
+            else if (etiologyId == 6 && promptCategoryId==5)
+            {
+             //Use same set of prompts as CP for non-spontaneous path
+              digitalCommandMax = Int32.Parse(_config["CPDigitalCommandMax"]);
+             uaPromptMax = Int32.Parse(_config["CPUAPromptMax"]);
+             fivekPromptMax = Int32.Parse(_config["CP5KPromptMax"]);
+                             
             }
             else
             {
@@ -895,7 +1014,7 @@ namespace SpeechAccessibility.Controllers
             openEndedPromptList.AddRange(singleOpenEndedPromptList);
         }
 
-        private int assignDigitalCommandBlock(Guid contributorId, int etiologyId)
+        private int assignDigitalCommandBlock(Guid contributorId, int etiologyId,int promptCategoryId)
         {
 
             int lastAssignedDigitalCommandBlockId = 0;
@@ -913,11 +1032,47 @@ namespace SpeechAccessibility.Controllers
             }
             else if (etiologyId == 4)
             {
-                lastAssignedDigitalCommandBlockId = 20;
-                numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 20).Count();
-                if (numberOfAssignedDigitalCommandBlocks > 0)
+                if (promptCategoryId != 5)
                 {
-                    lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 20).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                    lastAssignedDigitalCommandBlockId = 20;
+                    numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 20).Count();
+                    if (numberOfAssignedDigitalCommandBlocks > 0)
+                    {
+                        lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 20).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                    }
+                }
+                //Use the same DAC list as CP for non-spontaneous path
+                else {
+                    List<Guid> currentEtiologyContributorList = _identityContext.Contributor.Where(c => c.Etiology.Id == etiologyId).Select(c => c.Id).ToList();
+                    lastAssignedDigitalCommandBlockId = 10;
+                    numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10 && a.List.Id < 21).Where(a => currentEtiologyContributorList.Contains(a.ContributorId)).Count();
+                    if (numberOfAssignedDigitalCommandBlocks > 0)
+                    {
+                        lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10 && a.List.Id<21).Where(a => currentEtiologyContributorList.Contains(a.ContributorId)).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                    }
+                }
+
+            }
+            else if (etiologyId==6)
+            {
+                if (promptCategoryId != 5)
+                {
+                    numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id < 11).Count();
+                    if (numberOfAssignedDigitalCommandBlocks > 0)
+                    {
+                        lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id < 11).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                    }
+                }
+                //Use the same DAC list as CP for non-spontaneous path
+                else
+                {
+                    List<Guid> currentEtiologyContributorList = _identityContext.Contributor.Where(c => c.Etiology.Id == etiologyId).Select(c => c.Id).ToList();
+                    lastAssignedDigitalCommandBlockId = 10;
+                    numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10).Where(a => currentEtiologyContributorList.Contains(a.ContributorId)).Count();
+                    if (numberOfAssignedDigitalCommandBlocks > 0)
+                    {
+                        lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10).Where(a => currentEtiologyContributorList.Contains(a.ContributorId)).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                    }
                 }
             }
             else
@@ -935,9 +1090,27 @@ namespace SpeechAccessibility.Controllers
 
             int lastDigitalCommandBlock = Int32.Parse(_config["NumberOfDigitalCommandBlocks"]);
 
-            if (etiologyId == 2 || etiologyId==3)
+            if (etiologyId == 2 || etiologyId == 3)
             {
                 lastDigitalCommandBlock = 20;
+            }
+            else if (etiologyId == 4)
+            {
+                if (promptCategoryId != 5)
+                {
+                    lastDigitalCommandBlock = 30;
+                }
+                else
+                {
+                    lastDigitalCommandBlock = 20;
+                }
+            }
+            else if (etiologyId == 6)
+            {
+                if (promptCategoryId == 5)
+                {
+                    lastDigitalCommandBlock = 20;
+                }
             }
 
             //Cycle back to list one once we've used all of the lists
@@ -945,8 +1118,24 @@ namespace SpeechAccessibility.Controllers
             {
                 newCommandBlockId = 1;
 
-                //List 11-20 are for the 2nd etiology (Down Syndrome)
+                //List 11-20 are for Down Syndrome and etiologies where they have selected the non-spontaneous prompts
+                //List 21-30 are for Stroke with spontaneous prompts
                 if (etiologyId == 2 || etiologyId == 3)
+                {
+                    newCommandBlockId = 11;
+                }
+                else if (etiologyId == 4)
+                {
+                    if (promptCategoryId == 5)
+                    {
+                        newCommandBlockId = 11;
+                    }
+                    else
+                    {
+                        newCommandBlockId = 21;
+                    }
+                }
+                else if (etiologyId == 6 && promptCategoryId==5)
                 {
                     newCommandBlockId = 11;
                 }
@@ -1057,14 +1246,17 @@ namespace SpeechAccessibility.Controllers
 
             int totalPromptMax = 450;
 
-            if (etiologyId == 2 || etiologyId==4)
+            if (etiologyId == 2)
             {
                 totalPromptMax = 430;
             }
-            else if (etiologyId == 3 && promptCategoryId != 5)
+            else if ((etiologyId == 3 || etiologyId==4) && promptCategoryId != 5)
             {
                 totalPromptMax = 430;
             }
+
+            string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
 
             if (count == totalPromptMax)
             {
@@ -1072,18 +1264,10 @@ namespace SpeechAccessibility.Controllers
 
                 string emailAddress = _identityContext.Contributor.Where(c => c.Id == userId).Select(c => c.EmailAddress).First();
 
-                string message = "<div>Congratulations! You’ve finished your recordings for the Speech Accessibility Project! We really appreciate all the time you spent participating.</div><br/>" +
-                    "<div><strong>Amazon eCode compensation.</strong></div>" +
-                    "<div>For your study participation, you will receive three $60 installments of Amazon eCodes, with each being sent every one-third of the way through the study. The eCodes are sent to the email address you provided when you signed up. Depending on how quickly you have completed the project, you may have received some eCodes already. It may take several days after you complete the study to receive your final eCodes in your email. If you haven’t received all three by a week from today, please contact <a href = 'mailto:speechaccessibility@beckman.illinois.edu'>speechaccessibility@beckman.illinois.edu </a> for assistance.</div><br/>" +
-                    "<div><strong>A caregiver assisted me.How will they be compensated?</strong></div>" +
-                    "<div>If a caregiver assisted you, their email address was entered at the start of the study. They will receive three $30 eCodes, with each being sent every one-third of the way through the study. If you didn’t enter your caregiver's email at the beginning of the study, please contact your mentor so they can assist you.</div><br/>" +
-                    "<div>Thank You!</div><div>The Speech Accessibility Project Team</div>";
-
+                string message = "<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>Congratulations! You&rsquo;ve finished your recordings for the Speech Accessibility Project! We really appreciate all the time you spent participating.</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>&nbsp;</p>\r\n<p style='margin:0in;font-size:37px;font-family:\"Calibri Light\",sans-serif;'>Share our project</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>We need more participants! Do you know someone who might be qualified and interested in participating in the Speech Accessibility Project? We&rsquo;re recruiting U.S. and Puerto Rican adults who have Parkinson&rsquo;s, ALS, Down syndrome, cerebral palsy, or have had a stroke. We unfortunately cannot include people who live in Illinois, Washington, or Texas.</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>Share our information! You can <a href=\"https://speechaccessibilityproject.beckman.illinois.edu/download-our-flyer\">download our flyer</a> on our website. Let your friends know they can <a href=\"https://saa.beckman.illinois.edu/Identity/Account/DiagnosisRegister\">sign up online</a>.</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>(Bonus: If you email someone about the project and copy <a href=\"mailto:speechaccessibility@beckman.illinois.edu\">speechaccessibility@beckman.illinois.edu</a>, we&rsquo;ll snail mail you some Speech Accessibility Project stickers!)</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>&nbsp;</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>Here are answers to questions that people finishing the project often have:</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'><span style='font-family:\"Calibri Light\",sans-serif;'><span style=\"font-size:37px;\">When will I get my Amazon eCodes?</span></span><br>For your study participation, you will receive up to three $60 installments of Amazon eCodes, with each being sent every one-third of the way through the study. The eCodes are sent to the email address you provided when you signed up. Depending on how quickly you have completed the project, you may have received two eCodes already. It may take several days after you complete the study to receive your final eCode in your email. If you haven&rsquo;t received all three by a week from today, please contact <a href=\"mailto:speechaccessibility@beckman.illinois.edu\">speechaccessibility@beckman.illinois.edu</a> for assistance.</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>&nbsp;</p>\r\n<p style='margin:0in;font-size:37px;font-family:\"Calibri Light\",sans-serif;'><strong><span style='font-family:\"Calibri Light\",sans-serif;'>A caregiver assisted me. How will they be compensated?</span></strong></p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>If a caregiver assisted you, their email address was entered at the start of the study. They will receive up to three $30 eCodes, with each being sent every one-third of the way through the study. If you didn&rsquo;t enter your caregiver at the beginning of the study, please contact your mentor so they can assist you.</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>&nbsp;</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>Thank you!</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>The Speech Accessibility Project Team</p>\r\n<p style='margin:0in;font-size:15px;font-family:\"Calibri\",sans-serif;'>&nbsp;</p>";
 
                 string subject = "You’ve completed the Speech Accessibility Project!";
-
-                string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
+              
                 if (_config["DeveloperMode"].Equals("Yes") || !"Production".Equals(environment))
                 {
                     emailAddress = _config["TestEmail"];
@@ -1091,7 +1275,23 @@ namespace SpeechAccessibility.Controllers
 
                 _emailSender.SendEmailAsync(emailAddress, subject, message);
 
+                string helperInd = _identityContext.Contributor.Where(c => c.Id == userId).Select(c => c.HelperInd).First();
+
+                if ("Yes".Equals(helperInd))
+                {
+                    string helperSubject = "Share our project with a friend!";
+                    string helperEmail = _identityContext.Contributor.Where(c => c.Id == userId).Select(c => c.HelperEmail).First();
+                    string helperMessage = "<div>    <p>        Hello,    </p>    <p>        Thank you so much for your important work on the        <a href='https://speechaccessibilityproject.beckman.illinois.edu/'>            Speech  Accessibility Project        </a>        . Now that the person you’ve been assisting has finished,  we have one        more request: Would you be willing to send information about the        project to other people who may qualify?    </p>    <p>        Our Big Tech partners are already  using recordings from this project to        improve their speech recognition tools. We’re  also        <a            href='https://speechaccessibilityproject.beckman.illinois.edu/article/2024/04/16/speech-accessibility-project-now-sharing-recordings-data'        >            sharing  the data        </a>        with other universities, companies and nonprofits who propose good        ideas for improved speech accessibility (and agree to respect        participants’  privacy).    </p>    <p>        We need more participants to continue this momentum. We’re  recruiting        U.S. and Puerto Rican adults with Parkinson’s, ALS, cerebral palsy,        Down syndrome, or who have had a stroke.    </p>    <p>        You can        <a            href='https://speechaccessibilityproject.beckman.illinois.edu/download-our-flyer'        >            download  our flyer        </a>        and pass it along. If you copy        <a href='mailto:speechaccessibility@beckman.illinois.edu'>            speechaccessibility@beckman.illinois.edu        </a>        on your email, we’ll mail you some project stickers.    </p>    <p>        Thank you again for your contributions! We appreciate it. As  always, if        you have any questions, please contact us!    </p>    <p>        Sincerely,    </p>    <p>        The Speech Accessibility Project Team    </p>    <br/></div>";
+                    if (_config["DeveloperMode"].Equals("Yes") || !"Production".Equals(environment))
+
+                    {
+                        helperEmail = _config["TestEmail"];
+                    }
+
+                    _emailSender.SendEmailAsync(helperEmail, helperSubject, helperMessage);
+                }
             }
+               
         }
 
         [Authorize]

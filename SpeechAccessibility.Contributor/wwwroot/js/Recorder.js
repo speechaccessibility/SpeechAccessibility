@@ -76,6 +76,7 @@ function recording_interface() {
         recordButton.addEventListener(
             'AudioControls.RecordingStarted',
             (event) => {
+                //console.log('entering AudioControls.RecordingStarted')
                     let button = $('#recordButton')
                     let nextButton = $('#nextButton');
                     let recordingStatus = document.getElementById('recordingStatus')
@@ -96,12 +97,13 @@ function recording_interface() {
                     recordingStartedDiv.style.display = "block";
                     delay(1000).then(() => 
                         button.removeAttr('hidden')).then(()=> recordingStartedDiv.style.display="none").finally(() => button.focus())
-                  
+                //console.log('exiting AudioControls.RecordingStarted')
             }
         )
         recordButton.addEventListener(
             'AudioControls.RecordingStopped',
             (event) => {
+                //console.log('entering AudioControls.RecordingStopped')
                 let button = $('#recordButton')
                 let nextButton = $('#nextButton');
                 let recordingStatus = document.getElementById('recordingStatus')
@@ -151,7 +153,6 @@ function recording_interface() {
                     filename
                 )
 
-
                 myData.set('filename', filename)
 
                 myData.set('contributorId', contributorId);
@@ -175,7 +176,9 @@ function recording_interface() {
                 myAudioControls = new AudioControls(codec,
                     'recordButton',
                     undefined,
-                    'waveform', "black", "white", 120000);
+                    'waveform', "black", "white", 180000);
+
+                //console.log('exiting AudioControls.RecordingStarted')
             }
         )     
         recordButton.addEventListener(
@@ -241,7 +244,7 @@ function recording_interface() {
         let myAudioControls = new AudioControls(codec,
             'recordButton',
             undefined,
-            'waveform', "black", "white", 120000);
+            'waveform', "black", "white", 180000);
 
         const other_thing = 4;
 

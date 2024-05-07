@@ -342,26 +342,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         private void SendEnrollmentEmail(string emailAddress)
         {
 
-            string message = "<div>Thank you for enrolling in the Speech Accessibility Project study! </div><br/>" +
-                "<div>Please find below answers to frequently asked questions about how you’ll be compensated. Please email <a href=mailto:speechaccessibility@beckman.illinois.edu>speechaccessibility@beckman.illinois.edu</a> if you have any questions.</div><br/>" +
-                "<div>Thank You!</div><div>The Speech Accessibility Project Team</div><br/>" +
-                "<div><strong>Will I be compensated and how does it work?</strong></div>" +
-                "<div>Participants receive $60 gift codes, three times during their participation. Those completing the full project will receive a total of $180 in three increments, each occurring approximately every one-third of the way through the recordings. Payments are Amazon eCodes, sent to the email address you provided when you signed up. It may take a few days after completion for your gift card to arrive in your email. We often issue eCodes on Wednesday and Fridays.</div><br/>" +
-                "<div>The beginning of the email will read:</div></br>" +
-                "<div>Dear Participant, </div><br/>" +
-                "<div>Thank you for participating in the Speech Accessibility Project! We really appreciate your help. Below is the information about your Amazon.com* claim code.</div><br/>" +
-                "<div>Amount: $0.00</div><br/>" +
-                "<div><strong>Claim code: xxxx-xxxxxx-xxxx</strong></div><br/>" +
-                "<div><strong>I have a caregiver helping me through the project. How will my caregiver be compensated?</strong></div>" +
-                "<div>When you sign up for the study, you have the option to enter an email address for your caregiver. That person will be compensated with up to $90 in Amazon eCodes in three increments, each occurring approximately every one-third of the way through the participant recordings.</div><br/>" +
-                "<div><strong>What if I didn’t enter the name of my caregiver at the beginning?</strong></div>" +
-                "<div>Let your mentor know and they can assist you. You can also email: <a href=mailto:speechaccessibility@beckman.illinois.edu>speechaccessibility@beckman.illinois.edu</a> Or, call 1-888-309-6499.</div><br/>" +
-                "<div><strong>I just finished [1/3rd, 2/3rd or all] of my recordings. Where’s my eCode?</strong></div>" +
-                "<div>Our payment coordinator sends eCodes twice a week: often on Wednesdays and Fridays. If you finish a block on Saturday, you likely won’t receive your eCode until the middle of the following week.</div><br/>" +
-                "<div><strong>I never got my eCode. Why?</strong></div>" +
-                "<div>Sometimes, eCodes go directly to your spam folder. Please check there first. It will come from the Speech Accessibility Project email at <a href=mailto:speechaccessibility@beckman.illinois.edu>speechaccessibility@beckman.illinois.edu</a>. Our payment coordinator does not send eCodes every day and never on weekends. If you finish a block on Saturday, you will not receive your eCode for a few days</div><br/>" +
-                "<div><strong>Can I be compensated with anything other than Amazon eCodes?</strong></div>" +
-                "<div>Unfortunately, our project cannot compensate you in any other form at this time.</div>";
+            string message = "<p>Thank you for your interest in the Speech Accessibility Project. A speech pathologist will review the information your provided and determine if you are eligible for our study. You will receive another email in about 7-10 days to let you know whether you can contribute speech recordings for this study.</p>" +
+                "<p>Thank you for your time and we will be in touch soon!</p><p>The Speech Accessibility Project Team</p>";
+
 
             string subject = "Thank you for enrolling in the Speech Accessibility Project study!";
 

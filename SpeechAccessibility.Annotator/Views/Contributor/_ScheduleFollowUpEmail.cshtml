@@ -1,0 +1,79 @@
+﻿@model SpeechAccessibility.Annotator.Models.ScheduledFollowUpEmailViewModel
+@{
+    Layout = null;
+}
+
+<h3>Send follow-up message to below Contributor:</h3>
+<label id="lblFollowUpMessage"></label>
+<input type="hidden" id="hidFollowUpContributorId" value="@Model.ContributorId" />
+<input type="hidden" id="hidFollowUpHelperEmail" value="@Model.HelperEmail" />
+<input type="hidden" id="hidFollowUpSendDate" value="@Model.ScheduledSendDate.ToShortDateString()" />
+<input type="hidden" id="hidFollowUpSendToContributor" value="@Model.SendToContributor" />
+<input type="hidden" id="hidFollowUpSendToHelper" value="@Model.SendToHelper" />
+<input type="hidden" id="hidFollowUpSendToMentor" value="@Model.SendToMentor" />
+<br /><b>First Name:</b><label id="lblFollowUpFirstName" name="lblFollowUpFirstName">@Model.FirstName</label>
+<br /><b>Last Name:</b><label id="lblFollowUpLastName" name="lblFollowUpLastName">@Model.LastName</label>
+<table>
+    <tr>
+        <td><input type="checkbox"  id="chkSendToContributor"></td>
+        <td>Send to Contributor (@Model.EmailAddress)</td>
+    </tr>
+    @{
+        if (!string.IsNullOrEmpty(@Model.HelperEmail))
+        {
+            var helperEmail = "Send to Helper (" + @Model.HelperEmail + ")";
+            
+            <tr>
+                <td><input type="checkbox"  id="chkSendToHelper"></td>
+                <td>@helperEmail</td>
+            </tr>
+        }
+    }
+    <tr>
+        <td style="vertical-align:top"><input type="checkbox"  id="chkSendToMentor"></td>
+        <td>Enter email address of mentor who will receive follow-up<br/>
+            <input type="text" id="txtSendToMentor" name="txtSendToMentor" size="50" value="@Model.MentorEmailAddress"/>
+        </td>
+    </tr>
+</table>
+<b>Send Date:</b>
+<input type="date" id="txtSendDate" name="txtSendDate" />
+<br /><b>Message to the Contributor:</b>
+<br />
+<textarea id="txtMessage" name="txtMessage" rows="10" cols="50">@Model.EmailContent</textarea>
+
+<script language="javascript" type="text/javascript">
+
+    $(document).ready(function () {
+        //var content = "Dear " + $("#lblFollowUpFirstName").text() + ",\n\nSincerely,\n Speech Accessibility Project Team\nUniversity of Illinois Urbana - Champaign";
+        //$("#txtMessage").val(content);
+        
+        if ($("#hidFollowUpSendToContributor").val()=="Yes")
+            $("#chkSendToContributor").prop("checked", true);
+        else
+            $("#chkSendToContributor").prop("checked", false);
+        
+        if ($("#hidFollowUpSendToHelper").val() == "Yes")
+            $("#chkSendToHelper").prop("checked", true);
+        else
+            $("#chkSendToHelper").prop("checked", false);
+
+        if ($("#hidFollowUpSendToMentor").val() == "Yes")
+            $("#chkSendToMentor").prop("checked", true);
+        else
+            $("#chkSendToMentor").prop("checked", false);
+
+
+        //if ($("#hidFollowUpHelperEmail").val() == "") {
+        //        $("#chkSendToContributor").attr('disabled', 'disabled');
+        //}
+        $("#txtSendDate").val();
+
+        var sendDate = formatDate($("#hidFollowUpSendDate").val());
+        $('#txtSendDate').val(sendDate);
+          
+
+       
+    });//End document ready
+
+</script>

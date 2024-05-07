@@ -38,6 +38,11 @@ namespace SpeechAccessibility.Annotator.Controllers
         [Authorize(Policy = "AnnotatorAdmin")]
         public ActionResult GetUserInfoFromAD(string netId)
         {
+            if (netId.Contains("@"))
+            {
+                return Json(new { Success = false, Message = "Invalid NetID." });
+            }
+
             //check to see if user is already in the system
             var existingUser = _userRepository.Find(u => u.NetId.Equals(netId.Trim())).Include(u=>u.Role).FirstOrDefault();
             var user = new ADMemberViewModel();

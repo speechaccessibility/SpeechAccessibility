@@ -39,10 +39,16 @@ $(function () {
         var subCategoryId = document.getElementById('subCategoryId').value;
         var phonationPromptCount = document.getElementById('phonationPromptCount').value;
         var showOpenEndedMessage = 'false';
+        var showSinglePromptMessage = 'false';
+
 
         if (document.getElementById('showOpenEndedMessage') != null) {
             showOpenEndedMessage = document.getElementById('showOpenEndedMessage').value
-        }
+    }
+
+    if (document.getElementById('showSinglePromptMessage') != null) {
+        showSinglePromptMessage = document.getElementById('showSinglePromptMessage').value
+    }
         var showSection1And2Message = 'false';
         if (document.getElementById('showSection1And2Message') != null) {
             showSection1And2Message = document.getElementById('showSection1And2Message').value;
@@ -69,7 +75,14 @@ $(function () {
             }
 
 
+          }
+
+    if (showSinglePromptMessage == 'true') {
+        var singlePromptMessage = document.getElementById('singlePromptMessage');
+        if (!singlePromptMessage.open) {
+            singlePromptMessage.showModal();
         }
+    }
         if (showSection1And2Message == 'true') {
             var section1AndTwoMessage = document.getElementById('section1And2Message');
             if (!section1AndTwoMessage.open) {
@@ -79,6 +92,7 @@ $(function () {
         } 
 
 });
+
 
 function compareEmails() {
     var email = document.getElementById('contributorEmail').value;
@@ -439,11 +453,13 @@ function speakPrompt() {
         }
         else {
 
+            var etiologyId = document.getElementById("etiologyId").value;
+
             element.classList.add("fa-beat");
             var prompt = new SpeechSynthesisUtterance(document.getElementById("transcript").value);
             prompt.lang = 'en-US';
             prompt.text = document.getElementById("transcript").innerHTML
-            prompt.rate = '.5';
+            prompt.rate = '.2';
 
 
             var os = getOS();
@@ -451,35 +467,65 @@ function speakPrompt() {
             var browser = getBrowser();
 
             var selectedOption = "";
+            var secondaryOption = "";
 
-            if (os == "Windows") {
-                if (browser == "Edge") {
-                    selectedOption = "Microsoft Jenny Online (Natural) - English (United States)"
+            if (etiologyId == "1") {
+                selectedOption = "Google US English";
+                secondaryOption = "Microsoft Mark - English (United States)";
+                prompt.rate = 1;
+            }
+            else if (etiologyId == "4")
+            {
+                selectedOption = "Microsoft Mark - English (United States)";
+                prompt.rate = .3;
+                prompt.pitch = .2;
+            }
+            else {
+                if (os == "Windows") {
+                    if (browser == "Edge") {
+                        selectedOption = "Microsoft Jenny Online (Natural) - English (United States)"
 
+                    }
+                    else if (browser == "Firefox") {
+                        selectedOption = "Microsoft Zira Desktop - English (United States)"
+                    }
+                    else {
+                        selectedOption = "Microsoft Zira - English (United States)"
+
+                    }
                 }
-                else if (browser == "Firefox") {
-                    selectedOption = "Microsoft Zira Desktop - English (United States)"
+                else if (os == "Mac OS" || os == "iOS") {
+                    selectedOption = "Samantha";
                 }
-                else {
-                    selectedOption = "Microsoft Zira - English (United States)"
-                
-                }
-            }
-            else if (os == "Mac OS" || os == "iOS") {
-                selectedOption = "Samantha";
-            }
+            }       
 
             var voiceSelect = document.getElementById('voiceSelect');
+            var foundSelectedOption = false;
 
-            for (var i = 0; i < voiceSelect.length; i++) {
+            for (var i = 0; i < voiceSelect.length; i++) {      
                 if (voiceSelect.options[i].getAttribute("data-name") == selectedOption) {
                     var preferredVoice = synth.getVoices().filter(voice=>voice.name===selectedOption)
                     console.log("preferredVoice: " + preferredVoice[0].name);
                     prompt.voice = preferredVoice[0];
+                    foundSelectedOption = true;
                     break;
                 }
             }
 
+            if (!foundSelectedOption && secondaryOption!="") {
+
+                for (var i = 0; i < voiceSelect.length; i++) {
+                    if (voiceSelect.options[i].getAttribute("data-name") == secondaryOption) {
+                        var preferredVoice = synth.getVoices().filter(voice => voice.name === secondaryOption)
+                        console.log("preferredVoice: " + preferredVoice[0].name);
+                        prompt.voice = preferredVoice[0];
+                        break;
+                    }
+                }
+
+            }
+
+               console.log("rate: " + prompt.rate)
                 synth.speak(prompt);
 
                 prompt.addEventListener("end", (event) => {
@@ -567,11 +613,18 @@ function getOS() {
 function showHidePassword() {
     var password = document.getElementById("password");
     var confirmPassword = document.getElementById("confirmPassword");
+    var oldPassword = document.getElementById("oldPassword");
     if (password.type === "password") {
         password.type = "text";
         confirmPassword.type = "text";
+        if (oldPassword != null) {
+            oldPassword.type="text"
+        }
     } else {
         password.type = "password";
         confirmPassword.type = "password";
+        if (oldPassword != null) {
+            oldPassword.type = "password"
+        }
     }
 }

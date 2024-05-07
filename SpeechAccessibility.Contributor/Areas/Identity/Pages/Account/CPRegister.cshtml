@@ -16,7 +16,8 @@
                     <h2>Register Errors:</h2>
                 </div>
 
-    <input hidden value="3" asp-for="Input.etiologyId" />
+    <input hidden  asp-for="Input.etiologyId" />
+    <input hidden asp-for="Input.otherText" />
 
         <div class="form-row">
             <div class="form-group col-md-4">
@@ -28,7 +29,9 @@
             </div>
 
         </div>
-        <div class="form-row">
+        @if (Model.Input.etiologyId == 3)
+        {
+             <div class="form-row">
             <div class="form-group col-md-8">
                 <label asp-for="Input.DiagnosisAge"><span style="color:red">*</span>How old were you when you were diagnosed with Cerebral Palsy?</label>
                 <select id="age" asp-for="Input.DiagnosisAge" asp-items="@Model.ageList">
@@ -38,9 +41,13 @@
                     <option value="Less than 1 year">Less than 1 year</option>
                     <option value="I don't know">I don't know</option>
                 </select><br />
-                <span asp-validation-for="Input.DiagnosisAge" class="text-danger"></span>
+                    <span class="text-danger">@Html.ValidationMessage("diagnosisAgeValidation")</span>
+                  
             </div>
         </div>
+        
+        }
+       
     <div class="form-row">
         <span style="color:red">*</span>
         <div class="form-group col-md-6">

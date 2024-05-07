@@ -13,6 +13,8 @@ using System.Security.Claims;
 using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using SpeechAccessibility.Infrastructure.Data;
 
 //using System.Configuration;
 
@@ -35,12 +37,13 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IConfiguration _configuration;
         private readonly IUserSubRoleRepository _userSubRoleRepository;
         private readonly IViewSpeechFilesRepository _viewSpeechFilesRepository;
+        private readonly IEtiologyViewRepository _etiologyViewRepository;
 
 
         public SpeechFileController(IRecordingRepository recordingRepository, IRecordingRatingRepository recordingRatingRepository,IDimensionCategoryRepository dimensionCategoryRepository
             , IContributorViewRepository contributorViewRepository, IContributorAssignedBlockRepository contributorAssignedBlockRepository, IBlockOfPromptsRepository blockOfPromptsRepository
             , IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository, IUserRepository userRepository, IBlockRepository blockRepository, IConfiguration configuration
-            , IUserSubRoleRepository userSubRoleRepository, IViewSpeechFilesRepository viewSpeechFilesRepository)
+            , IUserSubRoleRepository userSubRoleRepository, IViewSpeechFilesRepository viewSpeechFilesRepository, IEtiologyViewRepository etiologyViewRepository)
         {
             _recordingRepository = recordingRepository;
             _recordingRatingRepository = recordingRatingRepository;
@@ -54,6 +57,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             _configuration = configuration;
             _userSubRoleRepository = userSubRoleRepository;
             _viewSpeechFilesRepository = viewSpeechFilesRepository;
+            _etiologyViewRepository = etiologyViewRepository;
         }
 
         public IActionResult Index()
@@ -146,7 +150,7 @@ namespace SpeechAccessibility.Annotator.Controllers
         }
 
         [HttpPost]
-        public ActionResult LoadSpeechFiles(int recordingStatus)
+        public ActionResult LoadSpeechFiles(int recordingStatus, int etiologyId)
         {
             var draw = Request.Form["draw"].FirstOrDefault();
             var start = Request.Form["start"].FirstOrDefault();
@@ -185,20 +189,40 @@ namespace SpeechAccessibility.Annotator.Controllers
                     .Select(u => u.ContributorId).ToArray();
 
                 //get recordings that are not Dysarthria Assessment Sentences (categoryId=1)
-                recordings = _viewSpeechFilesRepository
-                    .Find(r => r.ContributorStatusId == 2 && includeStatus.Contains(r.StatusId)
-                                                          && annotatorAssignedContributorIdList.Contains(r.ContributorId))
-                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue)
-                        || r.CategoryName.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue));
-
+                if (etiologyId > 0)
+                {
+                    recordings = _viewSpeechFilesRepository
+                        .Find(r => r.ContributorStatusId == 2 && includeStatus.Contains(r.StatusId) && r.EtiologyId == etiologyId
+                                   && annotatorAssignedContributorIdList.Contains(r.ContributorId))
+                        .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue)
+                            || r.CategoryName.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue));
+                }
+                else
+                {
+                    recordings = _viewSpeechFilesRepository
+                        .Find(r => r.ContributorStatusId == 2 && includeStatus.Contains(r.StatusId)
+                                                              && annotatorAssignedContributorIdList.Contains(r.ContributorId))
+                        .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue)
+                            || r.CategoryName.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue));
+                }
             }
             else
             {
                 //get recordings that are not Dysarthria Assessment Sentences (categoryId=1)
-                recordings = _viewSpeechFilesRepository
-                    .Find(r => r.ContributorStatusId == 2 && includeStatus.Contains(r.StatusId))
-                    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue)
-                        || r.CategoryName.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue));
+                if (etiologyId > 0)
+                {
+                    recordings = _viewSpeechFilesRepository
+                        .Find(r => r.ContributorStatusId == 2 && includeStatus.Contains(r.StatusId) && r.EtiologyId == etiologyId)
+                        .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue)
+                            || r.CategoryName.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue));
+                }
+                else
+                {
+                    recordings = _viewSpeechFilesRepository
+                        .Find(r => r.ContributorStatusId == 2 && includeStatus.Contains(r.StatusId))
+                        .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue)
+                            || r.CategoryName.Contains(searchValue) || r.Id.ToString().Contains(searchValue) || r.Comment.Contains(searchValue));
+                }
 
             }
 
@@ -653,21 +677,28 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         public IActionResult ModifiedSpeechFiles()
         {
+            GetEtiologies();
             return View();
+
+           
         }
 
         public IActionResult ExcludedSpeechFiles()
         {
+            GetEtiologies(); 
             return View();
         }
-
         public IActionResult PublishedSpeechFiles()
         {
+
+            GetEtiologies();
+
             return View();
         }
 
         public IActionResult ToDiscussSpeechFiles()
         {
+            GetEtiologies();
             return View();
         }
         //[HttpPost]
@@ -816,6 +847,17 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             return Json(new { Success = true, Message = "File Uploaded Successfully." });
 
+        }
+        void GetEtiologies()
+        {
+           var etiologies = _etiologyViewRepository.Find(e => e.Active == "Yes").OrderBy(r => r.DisplayOrder)
+                .Select(a => new SelectListItem()
+                {
+                    Value = a.Id.ToString(),
+                    Text = a.Name
+                }).ToList();
+           etiologies.Add(new SelectListItem { Text = "View All", Value = "0" });
+           ViewBag.Etiologies= etiologies;
         }
 
         //media player method

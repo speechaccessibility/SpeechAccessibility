@@ -21,8 +21,11 @@
                 </div>
                 <div class="form-group">
                     <label asp-for="Input.Password">Enter your <strong>Password:</strong></label>
-                    <input asp-for="Input.Password" class="form-control" />
+                    <input id="password" asp-for="Input.Password" class="form-control" />
                     <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <input type="checkbox" onclick="showHidePassword()"> Show Password
                 </div>
                 <div class="form-group">
                     <input class="checkbox" type="checkbox" asp-for="Input.RememberMe" />

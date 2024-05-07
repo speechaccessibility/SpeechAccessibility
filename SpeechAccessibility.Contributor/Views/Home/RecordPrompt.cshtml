@@ -9,7 +9,12 @@
 <div id="errorDiv" class="text-danger"></div>
 
 <div class="container" id="container">
-
+    <noscript>
+        <p class="text-danger">
+            JavaScript is disabled or is not compatible with this browser. Please make sure JavaScript is
+            enabled on your device and your browser is up to date or try a different browser.
+        </p>
+    </noscript>
     
     <div id="consentDiv"></div>
 
@@ -21,8 +26,21 @@
     }
     else if (Model.etiologyId ==4)
     {
-        <p>Remember, there is no right or wrong answer. We only care about hearing you talk. If you are not happy with your first recording, you will have 2 additional opportunities.</p>
-        <p>Caregivers: If you are assisting an adult with aphasia, you may read the phrases or questions out loud. Please only speak at the beginning or end of a phrase without interrupting the adult’s speech.</p>
+        if (Model.prompt.Category.Id == 2)
+        {
+            <p>For this section, you will read digital assistant commands. There is no “right” or “wrong” speech. If you are not happy with your first recording, you have 2 more attempts.</p>
+        }
+        else if (Model.prompt.Category.Id == 4)
+        {
+            <p>Remember, there is no right or wrong answer. We only care about hearing you talk. If you are not happy with your first recording, you will have 2 additional opportunities.</p>
+
+        }
+        else if (Model.prompt.Category.Id == 5)
+        {
+            <p>For this section, you will read single words. There is no “right” or “wrong” speech. If you are not happy with your first recording, you have 2 more attempts.</p>
+
+        }        
+         <p>Caregivers: If you are assisting an adult with aphasia, you may read the phrases or questions out loud. Please only speak at the beginning or end of a phrase without interrupting the adult’s speech.</p>
 
     }
 
@@ -104,11 +122,30 @@
                 <form method="dialog">
                     <button>OK</button>
                 </form>
-            </dialog>
+                </dialog>
             }
+
+            if ((Model.etiologyId == 4 || Model.etiologyId==3 || Model.etiologyId==6) && Model.promptCategoryId==5)
+            {
+                <input hidden id="showSinglePromptMessage" value="true" />
+
+                <dialog id="singlePromptMessage">
+                    <h1>You have completed Section 1 of Block @Model.totalBlockCount!</h1>
+                    <p>
+                        The next section will contain single word prompts.<br />
+                        Please record yourself speaking the prompts.
+                    </p>
+
+                    <form method="dialog">
+                        <button>OK</button>
+                    </form>
+                </dialog>
+            
+            }
+
         }
 
-        if (Model.currentBlockOfPromptsCount == categoryCount && Model.etiologyId!=2 && Model.etiologyId!=3 && Model.etiologyId!=4)
+        if (Model.currentBlockOfPromptsCount == categoryCount && Model.etiologyId!=2 && Model.etiologyId!=3 && Model.etiologyId!=4 && Model.promptCategoryId!=5)
         {
 
             <div class="alert alert-success alert-dismissible" role="alert">
@@ -150,7 +187,7 @@
                      
                 <dialog id="section1And2Message">
                 <h1>You have completed Block @Model.totalBlockCount!</h1>
-                @if (Model.etiologyId == 2 || Model.etiologyId==3 || Model.etiologyId==4)
+                @if (Model.etiologyId == 2 || Model.etiologyId==3 || Model.etiologyId==4 || Model.promptCategoryId==5)
                 {
                     <p>
                         The next section will contain digital command prompts.<br />
@@ -199,7 +236,7 @@
         {
 
            <p>To record your speech, please follow these 3 steps:</p>
-            if (Model.prompt.Category.Id == 2 || Model.prompt.Category.Id==3)
+            if (Model.prompt.Category.Id == 2 || Model.prompt.Category.Id==3 || Model.prompt.Category.Id==5)
             {
                 <p>1. Press the record button.<br /><strong>2. Read the text.</strong><br/> 3. Press Stop Recording.</p>
                <strong>Text</strong>
@@ -231,13 +268,11 @@
 
 
         <p id="prompt" value="@Model.prompt.Transcript">
-            @if (Model.etiologyId == 6 || Model.etiologyId==2 || Model.etiologyId==3)
-            {
                 <select hidden id="voiceSelect"></select>
                 <button class="btn btn-primary" onclick="speakPrompt()">
                     <i title="Click here to speak prompt aloud." id="speakerIcon" class="fa-solid fa-volume-high"></i>
                 </button>
-            }     
+             
             @if (Model.etiologyId == 3)
             {
                 <span id="transcript" style="background-color:yellow">@Model.prompt.Transcript</span>
@@ -283,6 +318,7 @@
             <input hidden id="subCategoryId" asp-for="@Model.prompt.SubCategory.Id" value="@Model.prompt.SubCategory.Id" />
             <input hidden id="phonationPromptCount" asp-for="@Model.phonationPromptCount" value="@Model.phonationPromptCount" />
             <input hidden id="clientStartTS" />
+            <input hidden id="etiologyId" asp-for="@Model.etiologyId" value="@Model.etiologyId"/>
             <button hidden type="submit" class="btn btn-primary" id="nextButton" style="margin-right:10px">Next</button>
         </form>
         @if (Model.etiologyId != 6)

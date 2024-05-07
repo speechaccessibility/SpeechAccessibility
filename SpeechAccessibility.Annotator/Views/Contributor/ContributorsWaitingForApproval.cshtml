@@ -20,7 +20,7 @@
 <input type="hidden" id="RegisterLink" value="@ViewBag.RegisterLink"/>
 
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
-<div style="width: 1500px">
+<div style="width: 1700px">
     <table class="table table-striped table-bordered table-hover" id="WaitingForApprovalContributorTable" cellspacing="0" align="center"></table>
 </div>
 <div id="rating-dialog" style="display: none"></div>
@@ -29,6 +29,7 @@
 <div id="makeChanges-dialog" style="display: none">
     <label id="lblMakeChangesMessage">Contributor:</label>
     <input type="hidden" id="hidMakeChangesContributorId" />
+    <input type="hidden" id="hidMakeChangesOldEtiologyId" />
     <br /><b>First Name:</b><label id="lblMakeChangesFirstName" name="lblMakeChangesFirstName"></label>
     <br /><b>Last Name:</b><label id="lblMakeChangesLastName" name="lblMakeChangesLastName"></label>
     <br />Comment:<br/><textarea id="txtMakeChangesComment" name="txtMakeChangesComment" rows="4" cols="50"></textarea>
@@ -45,6 +46,8 @@
     </table>
     <br/>
     <div id="PromptCategory">Approve with Prompt Category: @Html.DropDownList("PromptCategoryId", new SelectList(ViewBag.PromptCategories, "Value", "Text"))</div>
+    <div id="Etiologies">Change Etiology: @Html.DropDownList("EtiologyId", new SelectList(ViewBag.Etiologies, "Value", "Text"))</div>
+
 </div>
 
 
@@ -94,8 +97,11 @@
     <script src="~/js/listenrecording.js"></script>
     <script src="~/js/Contributor.js"></script>
     <script type="text/javascript">
-        $(document).ready(function () {           
-            
+        $(document).ready(function () {       
+            //add below for Chrome. 
+            $("#tableChangePassword").removeAttr('hidden');
+            $("#PromptCategory").removeAttr('hidden');
+            $("#Etiologies").removeAttr('hidden');
 
             //bind datatable for Prompts
             var oContributorsTable = $("#WaitingForApprovalContributorTable").on('error.dt',
@@ -115,7 +121,7 @@
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[6, 'desc']],
+                    "aaSorting": [[7, 'desc']],
                     "columns": [
                         {
                             "className": 'details-control',
@@ -131,7 +137,7 @@
                             "orderable": true,
                             "visible": true,
                             "name": "Id",
-                            "width": "250px"
+                            "width": "260px"
                         },
                     
                         {
@@ -165,6 +171,15 @@
                             "orderable": true,
                             "visible": true,
                             "name": "EmailAddress"
+                            
+                        },
+                        {
+                            "title": "Phone#",
+                            "data": "phoneNumber",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "PhoneNumber"
                         },
                         {
                             "title": "RegisterDate",
@@ -218,7 +233,15 @@
                             "visible": true,
                             "name": "comments"
                         },
-                      
+                        {
+                            "title": "EtiologyText",
+                            "data": "otherEtiologyText",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "OtherEtiologyText"
+                        },
+                        
                         {
                             "title": "Actions",
                             "data": "id",
@@ -231,9 +254,9 @@
                             "name": "Id",
                             "render": function (data, type, row) {
                                 if ($("#UserRole").val() === "SLPAnnotator" || $("#UserRole").val() === "SLPAnnotatorAdmin" || $("#UserRole").val() === "ExternalSLPAnnotator" || $("#UserRole").val() === "SystemAdmin") {
-                                    var link = '<a href="#" class="deny">Deny</a> | <a href="#" class="NonResponsive">Non-Responsive</a> '
-                                        + '<br>| <a href="#" class="viewRating">View Rating</a> | <a href="#" class="sendFollowUp">Send Follow-up</a>'
-                                        + '| <a href="#" class="editInfo">Edit Info</a> ';
+                                    var link = '<a href="#" class="deny">Deny</a> | <a href="#" class="NonResponsive">Non-Responsive</a>'
+                                        + '<br>| <a href="#" class="ChangeEti">Change Eti</a> | <a href="#" class="sendFollowUp">Send Follow-up</a>'
+                                        + '| <a href="#" class="editInfo">Edit Info</a> | <a href="#" class="viewRating">View Rating</a>';
 
                                     ////if DS and Contributor is not register, should not have the Approve button
                                     // if ($("#SubRole").val() == 2) 
@@ -274,10 +297,15 @@
                     "ordering": true,
                     "paging": true,
                     "pageLength": 100,
-                    "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]]
+                    "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]],
+                    "initComplete": function (settings, json) {
+                        if ($("#SubRole").val()==5){
+                            oContributorsTable.column(10).visible(true);
+                        }
+                    }
 
                 });
-                
+            
                 //view the contributor's recordings
             $('#WaitingForApprovalContributorTable tbody').on('click', 'td.details-control',function() {
                 var tr = $(this).closest('tr');
@@ -347,8 +375,11 @@
            // approve the recording
             $('#WaitingForApprovalContributorTable').on('click', 'a.approve', function (e) {
                 e.preventDefault();
+                $("#EtiologyId").val($("#SubRole").val());
+                $("#EtiologyId").trigger("chosen:updated");
+
                 $("#tableChangePassword").removeAttr('hidden');
-                if ($("#SubRole").val() == 3) //the Prompt Category option is now only available for Cerebral Palsy
+                if ($("#SubRole").val() == 3 || $("#SubRole").val() == 4 || $("#SubRole").val() == 6) //the Prompt Category option is now only available for Cerebral Palsy
                 {
                     $("#PromptCategory").removeAttr('hidden');
                     //$("#PromptCategoryId").val(4).change();                    
@@ -357,6 +388,16 @@
                 {
                     $("#PromptCategory").attr('hidden', 'hidden');
                 }
+                if ($("#SubRole").val() == 5) //the Change Etiology dropdown only available for Other 
+                {
+                    
+                    $("#Etiologies").removeAttr('hidden');                                
+                }   
+                else
+                {
+                    $("#Etiologies").attr('hidden', 'hidden');
+                }
+               
                 var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
                 $("#lblMakeChangesMessage").text("Approve Contributor:");
@@ -377,6 +418,7 @@
                     e.preventDefault();
                     $("#tableChangePassword").attr('hidden', 'hidden');
                     $("#PromptCategory").attr('hidden', 'hidden');
+                    $("#Etiologies").attr('hidden', 'hidden');
                     var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
                     $("#lblMakeChangesMessage").text("Deny Contributor:");
@@ -397,6 +439,7 @@
                     e.preventDefault();
                     $("#tableChangePassword").attr('hidden', 'hidden');
                     $("#PromptCategory").attr('hidden', 'hidden');
+                    $("#Etiologies").attr('hidden', 'hidden');
                     var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
                     $("#lblMakeChangesMessage").text("Set Non-Responsive for Contributor:");
@@ -423,6 +466,29 @@
             });
 
          
+             //change Etitolgoy
+            $('#WaitingForApprovalContributorTable').on('click', 'a.ChangeEti', function (e) {
+                e.preventDefault();
+                $("#Etiologies").removeAttr('hidden');
+                $("#tableChangePassword").attr('hidden', 'hidden');
+                $("#PromptCategory").attr('hidden', 'hidden');
+                $("#EtiologyId").val($("#SubRole").val());
+                $("#EtiologyId").trigger("chosen:updated");
+
+                $("#hidMakeChangesOldEtiologyId").val($("#EtiologyId").val());
+                var selectedRowData = oContributorsTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                $("#lblMakeChangesMessage").text("Change Etiology for Contributor:");
+                $("#hidMakeChangesContributorId").val(row.id);
+                $("#lblMakeChangesFirstName").text(row.firstName);
+                $("#lblMakeChangesLastName").text(row.lastName);
+                $("#txtMakeChangesComment").val(row.comments);
+                var postUrl = '@Url.Action("UpdateContributor", "Contributor")';
+                changeContributor(postUrl, oContributorsTable, 1, 'Change Contributor Etiology');
+                $("#makeChanges-dialog").dialog('open');
+            });
+
+
             //Edit Info
              $('#WaitingForApprovalContributorTable').on('click',
                 'a.editInfo',
@@ -443,16 +509,13 @@
                     {
                         $("#chkHasHelper").prop('checked', true);
                         $("#txtEditHelperEmail").prop("disabled", false);
-                        $("#txtEditHelperPhone").prop("disabled", false);
-                        
-                    }
-                        
+                        $("#txtEditHelperPhone").prop("disabled", false);                        
+                    }                        
                     else
                     {
                         $("#chkHasHelper").prop('checked', false);
                         $("#txtEditHelperEmail").prop("disabled", true);
-                        $("#txtEditHelperPhone").prop("disabled", true);
-                        
+                        $("#txtEditHelperPhone").prop("disabled", true);                        
                     }
                        
                     $("#txtEditInfoComment").val(row.comments);

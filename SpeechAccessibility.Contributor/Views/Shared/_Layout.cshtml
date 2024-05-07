@@ -55,7 +55,7 @@
             <div class="navbar-collapse">
                 <ul class="navbar-nav flex-grow-1">
                     <li class="nav-item">
-                        <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="RecordPrompt">Record Prompt</a>
+                        <a id="recordPromptLink" class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="RecordPrompt">Record Prompt</a>
                     </li>
                     @if (SignInManager.IsSignedIn(User))
                     {
@@ -115,6 +115,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/lib/font-awesome/js/all.min.js"></script>
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>

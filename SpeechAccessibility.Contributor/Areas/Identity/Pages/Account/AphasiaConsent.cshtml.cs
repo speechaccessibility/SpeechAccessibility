@@ -185,7 +185,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 {
                     return RedirectToPage("AphasiaCaregiverConsent");
                 }
-                
+
                 return RedirectToAction("RecordPrompt");
             }
             else

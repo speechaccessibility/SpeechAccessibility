@@ -19,12 +19,13 @@
 
 <div>
     <b>Toggle column: </b>
-    <a class="toggle-vis" data-column="4" style="color: #0366d6 !important; cursor: pointer;">Birth Year</a>
-    - <a class="toggle-vis" data-column="5" style="color: #0366d6 !important; cursor: pointer;">Gender</a>
-    - <a class="toggle-vis" data-column="6" style="color: #0366d6 !important; cursor: pointer;">Helper Email</a>
-    - <a class="toggle-vis" data-column="7" style="color: #0366d6 !important; cursor: pointer;">Helper Phone</a>
-    - <a class="toggle-vis" data-column="12" style="color: #0366d6 !important; cursor: pointer;">SentFollowUpDate</a>
-    - <a class="toggle-vis" data-column="14" style="color: #0366d6 !important; cursor: pointer;">Comments</a>
+    <a class="toggle-vis" data-column="4" style="color: #0366d6 !important; cursor: pointer;">Phone Number</a>
+    - <a class="toggle-vis" data-column="5" style="color: #0366d6 !important; cursor: pointer;">Birth Year</a>
+    - <a class="toggle-vis" data-column="6" style="color: #0366d6 !important; cursor: pointer;">Gender</a>
+    - <a class="toggle-vis" data-column="7" style="color: #0366d6 !important; cursor: pointer;">Helper Email</a>
+    - <a class="toggle-vis" data-column="8" style="color: #0366d6 !important; cursor: pointer;">Helper Phone</a>
+    - <a class="toggle-vis" data-column="13" style="color: #0366d6 !important; cursor: pointer;">SentFollowUpDate</a>
+    - <a class="toggle-vis" data-column="15" style="color: #0366d6 !important; cursor: pointer;">Comments</a>
 </div>
 <div style="width: 1800px">
     <table class="table table-striped table-bordered table-hover" id="ContributorTable" cellspacing="0" align="center"></table>
@@ -138,6 +139,14 @@
                             "orderable": true,
                             "visible": true,
                             "name": "LastName"
+                        },
+                        {
+                            "title": "Phone",
+                            "data": "phoneNumber",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "PhoneNumber"
                         },
                         {
                             "title": "BYear",

@@ -6,13 +6,11 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using SpeechAccessibility.Annotator.Extensions;
 using SpeechAccessibility.Annotator.Models;
 using SpeechAccessibility.Annotator.Services;
@@ -39,13 +37,15 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IContributorRepository _contributorRepository;
         private readonly IRegisterLinkRepository _registerLinkRepository;
         private readonly ICategoryRepository _categoryRepository;
-        
+        private readonly IEtiologyContactEmailAddressRepository _etiologyContactEmailAddressRepository;
+        private readonly IAspNetUsersRepository _usersRepository;
+
         public ContributorController(IContributorViewRepository contributorViewRepository, IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository
             , IUserRepository userRepository, IConfiguration configuration, IRecordingRepository recordingRepository, IContributorFollowUpRepository contributorFollowUpRepository
             , IEmailLoggingRepository emailLoggingRepository, IUserSubRoleRepository userSubRoleRepository, ISubRoleRepository subRoleRepository
             , IContributorSubStatusRepository contributorSubStatusRepository, IEtiologyViewRepository etiologyRepository
             , IApprovedDeniedContributorRepository aprovedDeniedContributorRepository, IContributorRepository contributorRepository, IRegisterLinkRepository registerLinkRepository
-            , ICategoryRepository categoryRepository)
+            , ICategoryRepository categoryRepository, IEtiologyContactEmailAddressRepository etiologyContactEmailAddressRepository, IAspNetUsersRepository usersRepository)
         {
             _contributorViewRepository = contributorViewRepository;
             _contributorAssignedAnnotatorRepository = contributorAssignedAnnotatorRepository;
@@ -62,7 +62,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             _contributorRepository = contributorRepository;
             _registerLinkRepository = registerLinkRepository;
             _categoryRepository = categoryRepository;
-            
+            _etiologyContactEmailAddressRepository = etiologyContactEmailAddressRepository;
+            _usersRepository = usersRepository;
         }
 
         //[Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdmin")]
@@ -125,9 +126,11 @@ namespace SpeechAccessibility.Annotator.Controllers
             }
 
             List<SelectListItem> promptCatForMentor = new SelectList(_categoryRepository.Find(c => c.Active == "Yes" && c.DisplayForMentor == "Yes").OrderBy(c=>c.Id), "Id", "Description").ToList();
-            //promptCatForMentor.Insert(0, (new SelectListItem { Text = "", Value = "0" }));
             ViewBag.PromptCategories = promptCatForMentor;
 
+            List<SelectListItem> etiologies = new SelectList(_etiologyRepository.Find(c => c.Active == "Yes" )
+                .OrderBy(c => c.DisplayOrder), "Id", "Name").ToList();
+            ViewBag.Etiologies = etiologies;
 
 
             ViewBag.SubRole = etiologyId;
@@ -184,7 +187,11 @@ namespace SpeechAccessibility.Annotator.Controllers
            
             ViewBag.SubRole = etiologyId;
             ViewBag.SubRoleName = _etiologyRepository.Find(e => e.Id == etiologyId).FirstOrDefault()?.Name;
-            
+
+            List<SelectListItem> etiologies = new SelectList(_etiologyRepository.Find(c => c.Active == "Yes")
+                .OrderBy(c => c.DisplayOrder), "Id", "Name").ToList();
+            ViewBag.Etiologies = etiologies;
+
             return View();
         }
 
@@ -218,7 +225,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             int pageSize = length != null ? Convert.ToInt32(length) : 0;
             int skip = start != null ? Convert.ToInt32(start) : 0;
-
+            
             //only display Contributors that are assigned to logged in annotator
             //get assigned contributor list for annotator
             IQueryable<ApprovedDeniedContributor> contributors = null;
@@ -315,35 +322,42 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         [Authorize(Policy = "SLPAnnotatorAndExternalSLPAnnotator")]
         [HttpPost]
-        public async Task<ActionResult> UpdateContributor(Guid contributorId, string comment, string passwordChange, int subRole, int action, int promptCategory)
+        public async Task<ActionResult> UpdateContributor(Guid contributorId, string comment, string passwordChange, int subRole, int action, int promptCategory, int etiologyId)
         {
+            //action: 1-un-deny or move Etiology; 2-approve;3-deny;
+            var sendTeamForEtiologyChanged = false;
+            var oldEtiologyName = "Other";
             //make sure the External annotator has permission for this subrole
             var hasSubRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.OtherPhone)?.Value;
             if (hasSubRole == "Yes")
             {
                 if (UtilsExtension.IsMatchedRole(_userSubRoleRepository, subRole, User.Identity.Name) == false)
                     return Json(new { Success = false, Message = "You do not have permission for this contributor." });
-
             }
 
-            var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+            var contributor = _contributorRepository.Find(c => c.Id == contributorId).Include(c=>c.Etiology).FirstOrDefault();
             
             if (contributor == null)
             {
                 return Json(new { Success = false, Message = "Contributor is not found." });
             }
 
-           
-           
-            if (action == 1 && string.IsNullOrEmpty(contributor.IdentityUserId)) //un-deny and contributor is not registered
+            if (action == 1) //un-deny and contributor is not registered
             {
-                contributor.StatusId = 5;
+                if (contributor.EtiologyId != etiologyId)
+                {
+                    oldEtiologyName = contributor.Etiology.Name;
+                    sendTeamForEtiologyChanged = true;
+                }
+                contributor.EtiologyId = etiologyId;
+                
+                contributor.StatusId = string.IsNullOrEmpty(contributor.IdentityUserId) ? 5 : action; //un-deny and contributor is not registered if contributor.IdentityUserId is null
             }
             else
             {
                 contributor.StatusId = action;
             }
-           
+
             contributor.Comments = comment;
 
             if (action == 2) //approve
@@ -351,7 +365,19 @@ namespace SpeechAccessibility.Annotator.Controllers
                 contributor.ChangePassword = passwordChange == "Yes";
                 contributor.ApproveTS = DateTime.Now;
                 contributor.SubStatusId = 3; //set to Not-Started
-                if (promptCategory>0)
+                //only change Contributor's Etioglogy for Other 
+                if (contributor.EtiologyId == 5)
+                {
+                    if(contributor.EtiologyId != etiologyId)
+                    {
+                        contributor.EtiologyId = etiologyId;
+                        //send email the the team in charge for the new Etiology
+                        sendTeamForEtiologyChanged = true;
+                    }
+
+                }
+                //contributor.EtiologyId = etiologyId;
+                if ((etiologyId == 3 || etiologyId == 4 || etiologyId == 6) && promptCategory > 0) // only change prompt for Cerebral Palsy, Stroke and ALS
                     contributor.PromptCategoryId = promptCategory;
             }
             else
@@ -389,12 +415,52 @@ namespace SpeechAccessibility.Annotator.Controllers
                     message.Append("You are required to change your password when you login in.");
                 }
 
+                message.Append("<br>Below you will find details and information about the ecodes, which are how you will be compensated for participation in the study.");
                 message.Append("<br>Thank you for sharing your voice! ");
                 message.Append("If you have any questions, please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] + ".");
                 message.Append("<br><br>Sincerely,");
                 message.Append("<br>The Speech Accessibility Project Team");
                 message.Append("<br>University of Illinois Urbana - Champaign");
 
+                //added for ecodes information
+                message.Append("<br><br>");
+                message.Append("<b>Will I be compensated and how does it work?</b>");
+                message.Append("<br>");
+                message.Append(
+                    "Participants receive $60 gift codes, three times during their participation. Those completing the full project will receive a total of $180 in three increments, each occurring approximately every one-third of the way through the recordings. Payments are Amazon eCodes, sent to the email address you provided when you signed up. It may take a few days after completion for your gift card to arrive in your email. We often issue eCodes on Wednesday and Fridays.");
+                message.Append("<br>");
+                message.Append("The beginning of the email will read:");
+                message.Append("<br>");
+                message.Append(
+                    "Dear Participant, <br>Thank you for participating in the Speech Accessibility Project! We really appreciate your help. Below is the information about your Amazon.com* claim code.");
+                message.Append("<br>Amount: $0.00");
+                message.Append("<br><b>Claim code: xxxx-xxxxxx-xxxx</b>");
+                message.Append("<br><br>");
+                message.Append(
+                    "<b>I have a caregiver helping me through the project. How will my caregiver be compensated?</b>");
+                message.Append("<br>");
+                message.Append(
+                    "When you sign up for the study, you have the option to enter an email address for your caregiver. That person will be compensated with up to $90 in Amazon eCodes in three increments, each occurring approximately every one-third of the way through the participant recordings.");
+                message.Append("<br><br>");
+                message.Append("<b>What if I didn’t enter the name of my caregiver at the beginning?</b>");
+                message.Append("<br>");
+                message.Append(
+                    "Let your mentor know and they can assist you. You can also email: "  +_configuration["AppSettings:SpeechAccessibilityTeamEmail"] + " Or, call 1-888-309-6499.");
+                message.Append("<br><br>");
+                message.Append("<b>I just finished [1/3rd, 2/3rd or all] of my recordings. Where’s my eCode?</b>");
+                message.Append("<br>");
+                message.Append(
+                    "Our payment coordinator sends eCodes twice a week: often on Wednesdays and Fridays. If you finish a block on Saturday, you likely won’t receive your eCode until the middle of the following week.");
+                message.Append("<br><br>");
+                message.Append("<b>I never got my eCode. Why?</b>");
+                message.Append("<br>");
+                message.Append(
+                    "Sometimes, eCodes go directly to your spam folder. Please check there first. It will come from the Speech Accessibility Project email at "  +_configuration["AppSettings:SpeechAccessibilityTeamEmail"] + ". Our payment coordinator does not send eCodes every day and never on weekends. If you finish a block on Saturday, you will not receive your eCode for a few days");
+
+                message.Append("<br><br>");
+                message.Append("<b>Can I be compensated with anything other than Amazon eCodes?</b>");
+                message.Append("<br>");
+                message.Append("Unfortunately, our project cannot compensate you in any other form at this time.");
                 emailSubject = "Your registration has been approved.";
 
                 error = await SendEmailToContributor(contributor, emailSubject, message, _configuration["AppSettings:EmailServer"]);
@@ -405,7 +471,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                 message.Append("<br>Thank you so much for your interest in participating in the Speech Accessibility Project.");
                 message.Append("<br>Unfortunately, you do not meet the current criteria for the project. If you have specific questions about this,");
                 message.Append("please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] + ".");
-                message.Append("<br>Sincerely,");
+                message.Append("<br><br>Sincerely,");
                 message.Append("<br>The Speech Accessibility Project Team");
                 message.Append("<br>University of Illinois Urbana - Champaign");
 
@@ -418,24 +484,67 @@ namespace SpeechAccessibility.Annotator.Controllers
             //logging the email
             if (action is 2 or 3)
             {
-                var emailLogging = new EmailLogging
-                {
-                    ContributorId = contributor.Id,
-                    Subject = emailSubject,
-                    SendTo = contributor.EmailAddress,
-                    Message = message.ToString(),
-                    Error = error,
-                    SendTS = DateTime.Now,
-                    SendBy = User.Identity.Name
-                };
-                _emailLoggingRepository.Insert(emailLogging);
+              
+                AddEmailLogging(contributor.Id, emailSubject, contributor.EmailAddress, message, error);
             }
-           
+
+            if (sendTeamForEtiologyChanged)
+            {
+                //get team email address
+                var teamEmailAddress = _etiologyContactEmailAddressRepository.Find(e => e.EtiologyId == etiologyId)
+                    .FirstOrDefault();
+                if (teamEmailAddress != null)
+                {
+                    StringBuilder teamMessage = new StringBuilder();
+                    var teamEmailSubject = "";
+                    var teamError = "";
+
+                    teamMessage.Append("Hello,<br/>Participant, " +
+                                       contributor.FirstName + " " + contributor.LastName + ", ");
+                    if (action == 1)
+                    {
+                        teamMessage.Append("was moved from " + oldEtiologyName + " etiology to your team.<br/><br/>");
+                        teamEmailSubject = "A participant was moved from " + oldEtiologyName + " etiology to your team";
+                    }
+                    else
+                    {
+                        teamMessage.Append("was approved and moved from " + oldEtiologyName + " etiology to your team.< br />< br /> ");
+                        teamEmailSubject = "A participant was moved from " + oldEtiologyName + " etiology to your team";
+                    }
+
+                 
+
+                    teamMessage.Append("The Speech Accessibility Project Team<br/>University of Illinois Urbana-Champaign");
+                   
+
+
+                    teamError = await SendEmailToTeamForEtiologyChanged(teamEmailAddress.EmailAddress, teamEmailSubject, teamMessage, _configuration["AppSettings:EmailServer"]);
+                    if (string.IsNullOrEmpty(teamError))
+                    {
+                        AddEmailLogging(contributor.Id, teamEmailSubject, teamEmailAddress.EmailAddress, teamMessage, error);
+                    }
+
+                }
+
+            }
 
             return Json(!string.IsNullOrEmpty(error) ? new { Success = false, Message = error } : new { Success = true, Message = "" });
         }
 
-       
+        private void AddEmailLogging(Guid contributorId, string subject, string sendTo, StringBuilder message, string error)
+        {
+            var emailLogging = new EmailLogging
+            {
+                ContributorId = contributorId,
+                Subject = subject,
+                SendTo = sendTo,
+                Message = message.ToString(),
+                Error = error,
+                SendTS = DateTime.Now,
+                SendBy = User.Identity.Name
+            };
+            _emailLoggingRepository.Insert(emailLogging);
+        }
 
         [Authorize(Policy = "SLPAnnotatorAndExternalSLPAnnotator")]
         [HttpPost]
@@ -522,6 +631,12 @@ namespace SpeechAccessibility.Annotator.Controllers
         public async Task<ActionResult> EditContributorInfo(Guid contributorId,string contributorEmail, string helperInd, string helperEmail,string birthYear,int subStatusId
             , int subRole, string comments, string helperPhone)
         {
+            //contributor email cannot be empty
+            if (string.IsNullOrEmpty(contributorEmail))
+            {
+                return Json(new { Success = false, Message = "Contributor email cannot be empty." });
+            }
+
             //make sure the External annotator has permission for this subrole
             var hasSubRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.OtherPhone)?.Value;
             if (hasSubRole == "Yes")
@@ -531,13 +646,32 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             }
 
-            var contributor = _contributorRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+            var contributor = _contributorRepository.Find(c => c.Id == contributorId).Include(c=>c.IdentityUser).FirstOrDefault();
             if (contributor == null)
             {
                 return Json(new { Success = false, Message = "Contributor is not found." });
             }
 
-            contributor.EmailAddress = contributorEmail;
+            if (contributor.EmailAddress!= null && !contributor.EmailAddress.Equals(contributorEmail))
+            {
+                contributor.EmailAddress = contributorEmail;
+                if (contributor.IdentityUser != null)
+                {
+                    contributor.IdentityUser.UserName = contributorEmail;
+                    contributor.IdentityUser.NormalizedEmail = contributorEmail;
+                    contributor.IdentityUser.Email = contributorEmail;
+                    contributor.IdentityUser.NormalizedUserName = contributorEmail;
+                }
+            }
+            //else
+            //{
+            //    contributor.EmailAddress = contributorEmail;
+            //    contributor.IdentityUser.UserName = contributorEmail;
+            //    contributor.IdentityUser.NormalizedEmail = contributorEmail;
+            //    contributor.IdentityUser.Email = contributorEmail;
+            //    contributor.IdentityUser.NormalizedUserName = contributorEmail;
+            //}
+
             contributor.HelperInd = helperInd;
             if (helperInd.Trim() == "No")
             {
@@ -746,8 +880,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             {
                 toEmailAddress = _configuration["AppSettings:TestingEmail"];
                 subject = "Testing: " + emailSubject;
-                body.Append("This email was sent in a testing mode. The actual email should be sent to " + actualToEmailAddress +
-                            ".<br>");
+                body.Append("<span style='background-color:yellow;'>This email was sent in a testing mode. The actual email should be sent to " + actualToEmailAddress +
+                            ".</span><br>");
 
                 toEmails = new[] { toEmailAddress };
             }
@@ -755,8 +889,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             {
                 toEmailAddress = User.Identity.Name + "@illinois.edu";
                 subject = "Testing: " + emailSubject;
-                body.Append("This email was sent in a testing mode.The actual email should be sent to " + actualToEmailAddress +
-                            ".<br>");
+                body.Append("<span style='background-color:yellow;'>This email was sent in a testing mode.The actual email should be sent to " + actualToEmailAddress +
+                            ".</span><br>");
                 toEmails = new[] { toEmailAddress };
             }
             else
@@ -773,6 +907,48 @@ namespace SpeechAccessibility.Annotator.Controllers
                 emailServer);
             return error;
         }
+
+        private async Task<string> SendEmailToTeamForEtiologyChanged(string toEmail, string emailSubject, StringBuilder emailContent, string emailServer)
+        {
+            string toEmailAddress;
+            string subject;
+            StringBuilder body = new StringBuilder();
+            var fromEmailAddress = _configuration["AppSettings:SpeechAccessibilityTeamEmail"];
+            var emailService = new EmailService();
+            var actualToEmailAddress = toEmail;
+            string[] toEmails;
+            if (_configuration["AppSettings:DeveloperMode"] == "Yes")
+            {
+                toEmailAddress = _configuration["AppSettings:TestingEmail"];
+                subject = "Testing: " + emailSubject;
+                body.Append("<span style='background-color:yellow;'>This email was sent in a testing mode. The actual email should be sent to " + actualToEmailAddress +
+                            ".</span><br>");
+
+                toEmails = new[] { toEmailAddress };
+            }
+            else if (_configuration["AppSettings:TestingMode"] == "Yes")
+            {
+                toEmailAddress = User.Identity.Name + "@illinois.edu";
+                subject = "Testing: " + emailSubject;
+                body.Append("<span style='background-color:yellow;'>This email was sent in a testing mode.The actual email should be sent to " + actualToEmailAddress +
+                            ".</span><br>");
+                toEmails = new[] { toEmailAddress };
+            }
+            else
+            {
+                toEmailAddress = actualToEmailAddress;
+                subject = emailSubject;
+                toEmails = new[] { toEmailAddress };
+            }
+
+
+            body.Append(emailContent);
+
+            var error = await emailService.SendEmail(fromEmailAddress, toEmails, null, null, subject, body,
+                emailServer);
+            return error;
+        }
+
 
         [HttpPost]
         public IActionResult ExportNonResponsiveContributors(int subRole)

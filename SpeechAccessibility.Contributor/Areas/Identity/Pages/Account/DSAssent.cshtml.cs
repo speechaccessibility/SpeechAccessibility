@@ -28,9 +28,11 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Display(Name = "Assent")]
             public string CapableOfReadingInd { get; set; }
 
+            [MaxLength(50)]
             [Required]
             public string Name { get; set; }
 
+            [MaxLength(50)]
             [Required]
             [Display(Name = "Name of Person Obtaining Assent")]
             public string PersonObtainingAssent { get; set; }
