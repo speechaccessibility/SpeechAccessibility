@@ -59,7 +59,31 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             "None"
         };
 
-        
+        public List<SelectListItem> countryList { get; } = new List<SelectListItem>
+        {
+               new SelectListItem { Value = "United States", Text = "United States" },
+                new SelectListItem { Value = "Canada", Text = "Canada" },
+        };
+
+        //public List<SelectListItem> provinceList { get; } = new List<SelectListItem>
+        //{ 
+        //new SelectListItem { Value = "Alberta", Text = "Alberta" },
+        //new SelectListItem { Value = "British Columbia", Text = "British Columbia" },
+        //new SelectListItem { Value = "Manitoba", Text = "Manitoba" },
+        //new SelectListItem { Value = "New Brunswick", Text = "New Brunswick" },
+        //new SelectListItem { Value = "Newfoundland and Labrador<", Text = "Newfoundland and Labrador" },
+        //new SelectListItem { Value = "Northwest Territories", Text = "Northwest Territories" },
+        //new SelectListItem { Value = "Nova Scotia", Text = "Nova Scotia" },
+        //new SelectListItem { Value = "Nunavut", Text = "Nunavut" },
+        //new SelectListItem { Value = "Ontario", Text = "Ontario" },
+        //new SelectListItem { Value = "Prince Edward Island", Text = "Prince Edward Island" },
+        //new SelectListItem { Value = "Quebec", Text = "Quebec" },
+        //new SelectListItem { Value = "Saskatchewan", Text = "Saskatchewan" },
+        //new SelectListItem { Value = "Yukon", Text = "Yukon" }
+
+        //};
+
+
         public List<SelectListItem> stateList { get; } = new List<SelectListItem>
          {
                     new SelectListItem { Value = "AL", Text = "Alabama" },
@@ -145,10 +169,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             public string otherText { get; set; }
 
             [Required]
-            [Display(Name ="EighteenOrOlder")]
+            [Display(Name = "EighteenOrOlder")]
             public string eighteenOrOlderInd { get; set; }
 
-            [Required]
             [Display(Name = "State")]
             public string state { get; set; }
 
@@ -164,10 +187,10 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             public string lastName { get; set; }
 
             [Required]
-            [MinLength(10, ErrorMessage="Phone number must be 10 digits")]
+            [MinLength(10, ErrorMessage = "Phone number must be 10 digits")]
             [MaxLength(10)]
             [RegularExpression("^[0-9]*$", ErrorMessage = "Phone number must be numeric")]
-            [Display(Name ="Phone Number")]
+            [Display(Name = "Phone Number")]
             public string phoneNumber { get; set; }
 
             [Required]
@@ -175,7 +198,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Display(Name = "Email")]
             public string Email { get; set; }
 
-             public string ConfirmEmail { get; set; }
+            public string ConfirmEmail { get; set; }
 
             [Required]
             [Display(Name = "Helper Indicator")]
@@ -183,9 +206,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             [EmailAddress]
             [Display(Name = "Helper's Email")]
-            public string HelperEmail { get; set; }     
+            public string HelperEmail { get; set; }
 
-            [Display(Name ="Helper's First Name")]
+            [Display(Name = "Helper's First Name")]
             public string HelperFirstName { get; set; }
 
             [Display(Name = "Helper's Last Name")]
@@ -209,10 +232,17 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Required]
             public bool ContactLSVT { get; set; }
 
-            [Display(Name ="Birth Year")]
+            [Display(Name = "Birth Year")]
             public string BirthYear { get; set; }
 
             public int etiologyId { get; set; }
+
+            public string Country { get; set; }
+
+            [Required]
+            [MaxLength (150)]
+            [Display(Name="Reference Source")]
+            public string ReferenceSource { get; set; }
 
         }
 
@@ -279,6 +309,16 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                     {
                         ModelState.AddModelError("confirmEmailValidation", "The email and confirmation email do not match.");
                         return Page();
+                    }
+
+                    if ("United States".Equals(Input.Country))
+                    {
+
+                        if (String.IsNullOrEmpty(Input.state))
+                        {
+                            ModelState.AddModelError("stateError", "State is required.");
+                            return Page();
+                        }
                     }
 
                     if (unqualifiedStates.Contains(Input.state) || "No".Equals(Input.eighteenOrOlderInd))
@@ -411,6 +451,8 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             contributor.PhoneNumber = Input.phoneNumber;
             contributor.OtherEtiologyText = Input.otherText;
             contributor.BirthYear = Input.BirthYear;
+            contributor.Country = Input.Country;
+            contributor.ReferenceSource = Input.ReferenceSource;
             return contributor;
         }
 

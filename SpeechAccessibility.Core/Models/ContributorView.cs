@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SpeechAccessibility.Core.Models
 {
@@ -36,7 +37,19 @@ namespace SpeechAccessibility.Core.Models
         public string StatusName { get; set; }
         public string SubStatusName { get; set; }
         public string EtiologyName { get; set; }
-        public string RegisterRequired { get; set; } 
+        public int? LegalGuardianId { get; set; }
+        public string RegisterRequired { get; set; }
+        public string LegalGuardianFirstName { get; set; }
+        public string LegalGuardianLastName { get; set; }
+        public string LegalGuardianEmail { get; set; }
+        public string LegalGuardianPhoneNumber { get; set; }
 
+        [NotMapped]
+        public int SubRole { get; set; }
+        [NotMapped]
+        public string LegalGuardianInd { get; set; }
+
+        [NotMapped]
+        public string HelperNotPaid { get; set; }
     }
 }

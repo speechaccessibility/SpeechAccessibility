@@ -1,9 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace SpeechAccessibility.Core.Models
 {
     public class Contributor
     {
+
+        public Contributor()
+        {
+           LegalGuardian = new HashSet<LegalGuardian>();
+        }
 
         public Guid Id { get; set; }
         //public string UnderstandSpeechInd { get; set; }
@@ -36,6 +42,7 @@ namespace SpeechAccessibility.Core.Models
 
         public Etiology Etiology { get; set; }
         public AspNetUsers IdentityUser { get; set; }
+        public  ICollection<LegalGuardian> LegalGuardian { get; set; }
 
         //public  ContributorStatus ContributorStatus { get; set; }
         //public ContributorSubStatus ContributorSubStatus { get; set; }

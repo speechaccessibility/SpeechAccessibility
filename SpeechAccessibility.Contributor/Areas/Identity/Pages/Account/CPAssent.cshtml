@@ -1,0 +1,112 @@
+﻿@page
+@model SpeechAccessibility.Areas.Identity.Pages.Account.CPAssentModel
+@{
+}
+
+<div class="container" id="container" style="font-size:x-large">
+   
+    <div class="text-center">
+    <h1>Assent to Participate in a Research Study</h1>
+    </div><br/>
+
+    <div asp-validation-summary="All" class="text-danger">
+        <h2>Validation Errors:</h2>
+    </div>
+
+<div>
+    <strong>Who are we and what are we doing?</strong>
+    <p>We are from the University of Illinois Urbana-Champaign. We would like to ask if you would be in a research study. A research study is a way to find out new information about something. This is the way we try to find out how to help computers learn to understand people with different types of speech.</p>
+</div>
+
+<div>
+    <strong>Why are we asking you to be in this research study?</strong>
+        <p>We are asking you to be in this research study because we want to learn more about how you speak. We will use this information to help computers learn to recognize speech from different types of people like you. We want you to be in this study because we think that computers should learn to understand speech like yours.</p>
+</div>
+
+<div>
+    <strong>What happens in the research study?</strong>
+        <p>If you decide to be in this research study and your legally authorized representative agrees, this is what will happen. We will give you and your caregiver access to a website where you can record up to 600 speech recordings. For each recording, you will be asked to either read a sentence or repeat a sentence that the caregiver says, or you will be asked a question. Your caregiver will help you learn what to do. You will also have a mentor who will help you learn how to make the recordings. You and your caregiver will do these recordings together at any time, whenever you want. You can take up to three months to finish your recordings. If you need more time, please let us know.</p>
+</div>
+
+<div><strong>Will any part of the research study hurt you?</strong>
+<p>There is a chance that during this research study you could get tired. To help with that, you can record your speech at your own pace, whenever is best for you. There is also a chance that somebody could steal your speech recordings from us. To keep that from happening, we will not put your name on your speech recordings, and we will follow the rules to keep your information safe.</p>
+</div>
+
+<div><strong>Will the research study help you or anyone else?</strong>
+<p>We do not know for sure if being in this research study will help you. It is possible that we could learn something to help other people like you some day.</p>
+</div>
+
+<div><strong>Who will see the information about you?</strong>
+        <p>Only the researchers or others who are doing their jobs will be able to see the information about you from this research study. We will not tell anyone else that you are in the study.</p>
+</div>
+
+<div><strong>What if you have any questions about the research study?</strong>
+        <p>It is okay to ask questions. If you don’t understand something, you can ask us. We want you to ask questions now and anytime you think of them. If you have a question later that you didn’t think of now, you can contact Professor Hasegawa-Johnson (jhasegaw@illinois.edu) or ask us the next time we see you.</p>
+</div>
+
+<div><strong>Do you have to be in the research study?</strong>
+        <p>You do not have to be in this study if you don’t want to. Being in this study is up to you. No one will be upset if you don’t want to do it. Even if you say yes now, you can change your mind later and tell us you want to stop. You can take your time to decide. You can talk to your caregiver before you decide. We will also ask your legally authorized representative to give their permission for you to be in this study. But even if your legally authorized representative says “yes” you can still decide not to be in the research study.</p>
+</div>
+
+<div><strong>Agreeing to be in the study</strong>
+        <p>I was able to ask questions about this study. Signing my name at the bottom means that I agree to be in this study. My legally authorized representative and I will be given a copy of this form after I have signed it.</p>
+</div>
+<br />
+<form method="post" id="assentForm">
+        <div class="form-row">
+            <div class="form-group col-md-6">                
+                <input asp-for="Input.Name" class="form-control" />
+                <label><span style="color:red">*</span>Name</label>
+                <span class="text-danger"></span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <input asp-for="Input.PersonObtainingAssent" class="form-control" />
+                <label><span style="color:red">*</span>Name of Person Obtaining Assent</label>                
+                <span class="text-danger"></span>
+            </div>
+        </div>
+
+<br />
+        <div class="form-row">
+            <span style="color:red">*</span>
+            <div class="form-group col-md-8">
+                <div class="form-group">
+                    <fieldset>
+                        <legend>The following should be completed by the study member conducting the assent process if the participant agrees to be in the study. </legend>
+
+                        <label><input asp-for="Input.CapableOfReadingInd" type="radio" value="Yes" /> The participant is capable of reading the assent form and has signed above as documentation of assent to take part in this study.</label>
+
+                        <label><input asp-for="Input.CapableOfReadingInd" type="radio" value="No" /> The participant is not capable of reading the assent form, but the information was verbally explained to him/her. The participant signed above as documentation of assent to take part in this study. </label>
+                    </fieldset>
+                    <br /><span class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <button id="assentSubmit" type="submit" class="btn btn-primary">Submit</button>
+        </form>
+</div>
+
+                        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+
+        $("#assentForm").submit(function () {
+
+            //disable the submit button
+            $("#assentSubmit").attr("disabled", true);
+            return true;
+        });
+    });
+
+    function enableSubmit() {
+        $("#assentSubmit").attr("disabled", false);
+    }
+
+    const form = document.querySelector('form');
+    form.addEventListener('change', function () {
+        enableSubmit();
+    });
+
+</script>

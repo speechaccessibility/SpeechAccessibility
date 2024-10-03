@@ -7,6 +7,27 @@
 
 <h1>@ViewData["Title"]</h1>
 
+@{
+    if ("Yes".Equals(Model.AphasiaInd))
+    {
+
+        <p>On this page, please only enter information about the person with aphasia:</p>
+
+    }
+}
+
+<dialog id="existingEmailError">
+    <p>
+        Thank you for registering for the Speech Accessibility Project! It appears you already have an account for this project. Please select the option below closest to your case and follow those instructions. If you are unsure which one to select, please follow the instructions for Option 3.
+        <br />Option 1: Recent Registration. If you have recently registered, please await for further instructions. A mentor will contact you via email to let you know if you are eligible for the study.
+        <br />Option 2: Study Completed. If you have recently completed the study, thank you! You cannot re-enroll. But please tell your friends that meet eligibility requirements and encourage them to participate in this study.
+        <br /> Option 3: New Participant. If you believe you have not previously completed speech recordings for the Speech Accessibility Project, please email scarter@lingraphica.com, with the subject line, ‘Duplicate Registration Error.’ In the body of the email, briefly describe why you believe you are eligible to participate.
+    </p>
+    <form method="dialog">
+        <button>OK</button>
+    </form>
+</dialog>
+
 <body onload="loadAphasiaPage()" class="largeFont">
     <form method="post" id="aphasiaRegisterForm">
     <hr/>
@@ -46,13 +67,24 @@
                     </div>
                     <div class="form-row">
                         <span style="color:red">*</span>
-                        <div class="form-group col-md-8">
+                        <div class="form-group col-md-6">
                             <div class="form-group">
-                                <label for="Input_state">What state do you currently live in?<br /><span style="font-size:x-large">(We are currently recruiting U.S. residents only.)</span></label>
-                                <select asp-for="Input.State" asp-items="@Model.stateList" data-dropup-auto="false">
+                                <label for="Input_state">What country do you currently live in?<br /></label>
+                                <select id="selectCountry" asp-for="Input.Country" asp-items="@Model.countryList" data-dropup-auto="false" onchange="checkCountry()">
+                                </select>
+                                <br /><span asp-validation-for="Input.Country" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-4" id="stateDiv">
+                            <div class="form-group">
+                                <label for="Input_state"><span style="color:red">*</span> What state do you live in?<br /></label>
+                                <select id="stateSelect" asp-for="Input.State" asp-items="@Model.stateList" data-dropup-auto="false">
                                     <option value="" selected>Please Select</option>
                                 </select>
                                 <br /><span asp-validation-for="Input.State" class="text-danger"></span>
+                                <span id="stateError" class="text-danger"></span>
                             </div>
                         </div>
                     </div>
@@ -80,7 +112,7 @@
                     <div class="form-row">
                         <div class="form-group col-md-7">
                             <label asp-for="Input.Email"><span style="color:red">*</span>What is your Email?</label>
-                            <input id="contributorEmail" asp-for="Input.Email" class="form-control" onkeyup="compareEmails()" />
+                            <input onchange="duplicateEmailCheck" id="contributorEmail" asp-for="Input.Email" class="form-control" onkeyup="compareEmails()" />
                             <span asp-validation-for="Input.Email" class="text-danger"></span>
                         </div>
                     </div>
@@ -130,7 +162,7 @@
                             <div class="form-group col-md-6">
                             <span style="color:red">*</span>
                                 <label id="helperEmailLabel">Your Email</label>
-                                <input id="helperEmail" asp-for="Input.HelperEmail" class="form-control" onkeyup="compareHelperEmails()" />
+                                <input onchange="duplicateEmailCheck" id="helperEmail" asp-for="Input.HelperEmail" class="form-control" onkeyup="compareHelperEmails()" />
                                 <span class="text-danger" asp-validation-for="Input.HelperEmail"></span>
                                 <span class="text-danger">@Html.ValidationMessage("helperEmailValidation")</span>
                             </div>
@@ -176,13 +208,24 @@
                     </div>
                     <div class="form-row">
                         <span style="color:red">*</span>
-                        <div class="form-group col-md-8">
+                        <div class="form-group col-md-6">
                             <div class="form-group">
-                                <label for="Input_state">What state does the individual currently live in?<br /><span style="font-size:x-large">(We are currently recruiting U.S. residents only.)</span></label>
-                                <select asp-for="Input.State" asp-items="@Model.stateList" data-dropup-auto="false">
+                                <label for="Input_state">What country does the individual currently live in?<br /></label>
+                                <select id="selectCountry" asp-for="Input.Country" asp-items="@Model.countryList" data-dropup-auto="false" onchange="checkCountry()">
+                                </select>
+                                <br /><span asp-validation-for="Input.Country" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-4" id="stateDiv">
+                            <div class="form-group">
+                                <label for="Input_state"><span style="color:red">*</span> What state does the individual currently live in?<br /></label>
+                                <select id="stateSelect" asp-for="Input.State" asp-items="@Model.stateList" data-dropup-auto="false">
                                     <option value="" selected>Please Select</option>
                                 </select>
                                 <br /><span asp-validation-for="Input.State" class="text-danger"></span>
+                                <span id="stateError" class="text-danger"></span>
                             </div>
                         </div>
                     </div>
@@ -190,7 +233,7 @@
                         <div id="correspondenceDiv" class="form-row">                        
                         <div class="form-group col-md-10">
                             <div class="form-group">        
-                                <fieldset>
+                                <fieldset id="correspondenceInd">
                                     <legend id="correspondenceLabel"><span style="color:red">*</span>Would you like correspondence about this project to go to you, as the caregiver, or to the individual participating in the study?</legend>
 
                                     <label><input id="correspondenceSelf" asp-for="Input.Correspondence" type="radio" value="Self" onchange="checkCorrespondence()" /> Self</label>
@@ -206,7 +249,7 @@
                         <div class="form-row">
                             <div class="form-group col-md-12">
                                 <label><span style="color:red">*</span>Individual with aphasia - Email <br /><span style="font-size:x-large">(If the individual with aphasia does not have an email, please add the caregiver's email.)</span></label>
-                                <input id="contributorEmail" asp-for="Input.Email" class="form-control" onkeyup="compareEmails()" />
+                                <input onchange="duplicateEmailCheck()" id="contributorEmail" asp-for="Input.Email" class="form-control" onkeyup="compareEmails()" />
                                 <span class="text-danger" asp-validation-for="Input.Email"></span>
                                 </div>
                         </div>
@@ -245,8 +288,16 @@
                 </div>
             
             }
-        }    
+        }
+        <div class="form-row">
+        <div class="form-group col-md-10">
+            <label asp-for="Input.ReferenceSource"><span style="color:red">*</span>Where did you hear about the Speech Accessibility Project study?</label>
+            <input asp-for="Input.ReferenceSource" class="form-control" />
+            <span asp-validation-for="Input.ReferenceSource" class="text-danger"></span>
+        </div>
+        </div>
         <input hidden asp-for="AphasiaInd" id="aphasiaInd" />
+        <input asp-for="Input.DuplicateEmailInd" id="duplicateEmailInd" hidden />
     <button class="btn btn-primary" id="AphasiaRegisterSubmit">Submit</button>
 </form>
 </body>
@@ -265,17 +316,71 @@
         });
     });
 
+
+    function duplicateEmailCheck() {
+        var myArray = [];
+        
+        var aphasiaInd = document.getElementById("aphasiaInd").value
+        var correspondenceIndividual = document.getElementById("correspondenceIndividual")
+
+        var currentEmail = ""
+
+
+        if (aphasiaInd == "No" && (correspondenceIndividual==null || !correspondenceIndividual.checked))
+        {
+            currentEmail = document.getElementById("helperEmail").value
+        }
+        else
+        {
+           currentEmail = document.getElementById("contributorEmail").value
+        }
+
+    @foreach (var e in Model.ExistingEmailList)
+    {
+        @:myArray.push("@e")
+    }
+
+        if (myArray.includes(currentEmail)) {
+            document.getElementById('duplicateEmailInd').value = "Yes"
+        }
+        else {
+            document.getElementById('duplicateEmailInd').value = "No"
+        }
+
+    }
+
     function enableSubmit() {
         $("#AphasiaRegisterSubmit").attr("disabled", false);
     }
 
-    const form = document.querySelector('form');
+    const form = document.getElementById("aphasiaRegisterForm");
     form.addEventListener('change', function () {
         enableSubmit();
     });
     form.addEventListener('keyup', function () {
         enableSubmit();
     });
+    const contributorEmail = document.getElementById('contributorEmail');
+
+    contributorEmail.addEventListener('change', function () {
+        duplicateEmailCheck();
+    })
+
+     const helperEmail = document.getElementById('helperEmail');
+
+    helperEmail.addEventListener('change', function () {
+        duplicateEmailCheck();
+    })
+
+    const correspondenceInd = document.getElementById('correspondenceInd');
+
+    if(correspondenceInd!=null)
+    {
+        correspondenceInd.addEventListener('change', function () {
+            duplicateEmailCheck()
+        })
+    }
+
 
 </script>
 

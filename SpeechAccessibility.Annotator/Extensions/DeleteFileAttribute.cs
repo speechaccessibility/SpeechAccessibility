@@ -18,12 +18,8 @@ namespace SpeechAccessibility.Annotator.Extensions
         public override void OnResultExecuted(ResultExecutedContext filterContext)
         {
             //filterContext.HttpContext.Response.Flush();
-
-         
-
-
             //convert the current filter context to file and get the file path
-            var filePath = _configuration["AppSettings:UploadFileFolder"] + "\\GiftCards\\" + (filterContext.Result as FileContentResult).FileDownloadName;
+            var filePath = _configuration["AppSettings:UploadFileFolder"] + "\\Download\\" + (filterContext.Result as FileContentResult).FileDownloadName;
            
 
             //delete the file after download

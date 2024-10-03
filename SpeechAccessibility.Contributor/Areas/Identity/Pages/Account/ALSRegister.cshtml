@@ -8,6 +8,8 @@
 <body onload="loadRegisterPage()">
 <h1>@ViewData["Title"]</h1>
 
+    <p>On this page, please only enter information about the person with ALS:</p>
+
 <form asp-route-returnUrl="@Model.ReturnUrl" method="post" id="registerForm">
     <hr />
 
@@ -45,18 +47,29 @@
             </div>
         </div>
         </div>
-    <div class="form-row">
-        <span style="color:red">*</span>
-        <div class="form-group col-md-6">
-            <div class="form-group">
-                <label for="Input_state">What state do you live in?<br /> (We are currently recruiting U.S. residents only.)</label>
-                <select  asp-for="Input.state" asp-items="@Model.stateList" data-dropup-auto="false">
-                    <option value="" selected>Please Select</option>
-                </select>
-                <br /><span asp-validation-for="Input.state" class="text-danger"></span>
+        <div class="form-row">
+            <span style="color:red">*</span>
+            <div class="form-group col-md-6">
+                <div class="form-group">
+                    <label for="Input_state">What country do you currently live in?<br /></label>
+                    <select id="selectCountry" asp-for="Input.Country" asp-items="@Model.countryList" data-dropup-auto="false" onchange="checkCountry()">
+                    </select>
+                    <br /><span asp-validation-for="Input.Country" class="text-danger"></span>
+                </div>
             </div>
         </div>
-    </div>
+        <div class="form-row">
+            <div class="form-group col-md-4" id="stateDiv">
+                <div class="form-group">
+                    <label for="Input_state"><span style="color:red">*</span> What state do you live in?<br /></label>
+                    <select id="stateSelect" asp-for="Input.state" asp-items="@Model.stateList" data-dropup-auto="false">
+                        <option value="" selected>Please Select</option>
+                    </select>
+                    <br /><span asp-validation-for="Input.state" class="text-danger"></span>
+                    <span id="stateError" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
 
     <div class="form-row">
         <div class="form-group col-md-3">
@@ -166,6 +179,12 @@
                          <span asp-validation-for="Input.HelperPhoneNumber" class="text-danger"></span>
             </div>
         </div>
+        <div class="form-row">
+        <div class="form-group col-md-10">
+            <label asp-for="Input.ReferenceSource"><span style="color:red">*</span>Where did you hear about the Speech Accessibility Project study?</label>
+            <input asp-for="Input.ReferenceSource" class="form-control" />
+            <span asp-validation-for="Input.ReferenceSource" class="text-danger"></span>
+        </div></div><br/>
 
     <button class="btn btn-primary" id="registerSubmit">Submit</button>
 

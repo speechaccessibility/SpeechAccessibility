@@ -410,8 +410,18 @@ namespace SpeechAccessibility.Annotator.Controllers
                 recording.LastUpdateBy = User.Identity.Name;
                 _recordingRepository.Update(recording);
                 return Json(new { Success = true, Message = "Speech File is moved to To-Discuss list." });
+            }
+            if (action == "onHold")
+            {
+                recording.StatusId = 6;
+                recording.Comment = comment;
+                recording.UpdateTS = DateTime.Now;
+                recording.LastUpdateBy = User.Identity.Name;
+                _recordingRepository.Update(recording);
+                return Json(new { Success = true, Message = "Speech File is moved to On-Hold list." });
 
             }
+
             if (action == "editComments")
             {
                 if(recording.StatusId== 1)
@@ -696,81 +706,20 @@ namespace SpeechAccessibility.Annotator.Controllers
             return View();
         }
 
-        public IActionResult ToDiscussSpeechFiles()
+        public IActionResult HoldOrDiscussSpeechFiles(int recordingStatusId)
         {
+            ViewBag.RecordingStatusId = recordingStatusId;
             GetEtiologies();
             return View();
         }
-        //[HttpPost]
-        //public ActionResult LoadExcludedSpeechFiles()
+
+
+        //public IActionResult ToDiscussSpeechFiles()
         //{
-        //    var draw = Request.Form["draw"].FirstOrDefault();
-        //    var start = Request.Form["start"].FirstOrDefault();
-        //    var length = Request.Form["length"].FirstOrDefault();
-        //    var searchValue = Request.Form["search[value]"].FirstOrDefault();
-        //    int pageSize = length != null ? Convert.ToInt32(length) : 0;
-        //    int skip = start != null ? Convert.ToInt32(start) : 0;
-
-
-        //    var approvedContributors = _contributorRepository.Find(c => c.StatusId == 2).ToList();
-        //    Guid[] idList = approvedContributors.Select(c => c.Id).ToArray();
-
-        //    var userRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-
-        //    IQueryable<Recording> recordings;
-        //    if (userRole == "TextAnnotator")
-        //    {
-        //        var currentUser = _userRepository.Find(u => u.NetId == User.Identity.Name).FirstOrDefault();
-        //        Guid[] annotatorAssignedContributorIdList = _contributorAssignedAnnotatorRepository.Find(c => c.UserId == currentUser.Id)
-        //            .Select(u => u.ContributorId).ToArray();
-
-        //        recordings = _recordingRepository
-        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && r.StatusId==4
-        //                       && annotatorAssignedContributorIdList.Contains(r.ContributorId))
-        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.OriginalPrompt.Category.Description.Contains(searchValue))
-        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
-        //    }
-        //    else
-        //    {
-        //        recordings = _recordingRepository
-        //            .Find(r => idList.Contains(r.ContributorId) && r.OriginalPrompt.CategoryId != 1 && r.StatusId==4)
-        //            .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.OriginalPrompt.Category.Description.Contains(searchValue))
-        //            .Include(r => r.OriginalPrompt).ThenInclude(c => c.Category);
-        //    }
-
-        //    //IQueryable<Recording> recording = _recordingRepository.Find(r => r.StatusId==4)
-        //    //    .Where(r => r.ContributorId.ToString().Contains(searchValue) || r.ModifiedTranscript.Contains(searchValue) || r.OriginalPrompt.Category.Description.Contains(searchValue))
-        //    //    .Include(r => r.OriginalPrompt).ThenInclude(p => p.Category);
-
-        //    var recordsTotal = recordings.Count();
-
-        //    var appName = _configuration["AppSettings:Environment"] switch
-        //    {
-        //        "Development" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Dev/",
-        //        "Test" => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Test/",
-        //        _ => _configuration["AppSettings:AnnotatorWebLink"] + "/UploadFiles/Prod/"
-        //    };
-
-        //    recordings = DynamicSortingExtensions<Recording>.SetOrderByDynamic(recordings, Request.Form);
-
-        //    var recordingList = recordings.Skip(skip).Take(pageSize).Select(r => new Recording()
-        //    {
-        //        Id = r.Id,
-        //        OriginalPromptId = r.OriginalPromptId,
-        //        ContributorId = r.ContributorId,
-        //        OriginalPrompt = r.OriginalPrompt,
-        //        Status = r.Status,
-        //        Comment = r.Comment,
-        //        CreateTS = r.CreateTS,
-        //        ModifiedTranscript = string.IsNullOrEmpty(r.ModifiedTranscript) ? r.OriginalPrompt.Transcript : r.ModifiedTranscript,
-        //        FileName = r.FileName,
-        //        SpeechFilePath = appName + r.ContributorId + "/" + r.BlockId + "/modified/" + r.FileName
-        //    });
-
-
-        //    return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = recordingList });
-
+        //    GetEtiologies();
+        //    return View();
         //}
+     
         public async Task<IActionResult> DownloadSpeechFile(int recordingId, string location)
         {
             var recording = _recordingRepository.Find(r => r.Id == recordingId).FirstOrDefault();
@@ -833,10 +782,13 @@ namespace SpeechAccessibility.Annotator.Controllers
 
                 try
                 {
-                    using (var stream = new FileStream(fullFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
-                    {
-                        await recordingFile.CopyToAsync(stream);
-                    }
+                    await using var stream = new FileStream(fullFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+                    await recordingFile.CopyToAsync(stream);
+
+                    //await using (var stream = new FileStream(fullFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+                    //{
+                    //    await recordingFile.CopyToAsync(stream);
+                    //}
                 }
                 catch (Exception ex)
                 {
@@ -848,6 +800,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             return Json(new { Success = true, Message = "File Uploaded Successfully." });
 
         }
+      
         void GetEtiologies()
         {
            var etiologies = _etiologyViewRepository.Find(e => e.Active == "Yes").OrderBy(r => r.DisplayOrder)

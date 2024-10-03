@@ -57,7 +57,12 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             "None"
         };
 
-        
+        public List<SelectListItem> countryList { get; } = new List<SelectListItem>
+        {
+               new SelectListItem { Value = "United States", Text = "United States" },
+                new SelectListItem { Value = "Canada", Text = "Canada" },
+        };
+
         public List<SelectListItem> stateList { get; } = new List<SelectListItem>
          {
                     new SelectListItem { Value = "AL", Text = "Alabama" },
@@ -146,7 +151,6 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Display(Name ="EighteenOrOlder")]
             public string eighteenOrOlderInd { get; set; }
 
-            [Required]
             [Display(Name = "State")]
             public string state { get; set; }
 
@@ -211,6 +215,13 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             public int etiologyId { get; set; }
 
+            [Required]
+            [MaxLength(150)]
+            [Display(Name = "Reference Source")]
+            public string ReferenceSource { get; set; }
+
+            public string Country { get; set; }
+
         }
 
         public IActionResult OnGet(int etiology)
@@ -271,8 +282,17 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
+                if ("United States".Equals(Input.Country))
+                {
 
-                if (!Input.Email.Equals(Input.ConfirmEmail, StringComparison.OrdinalIgnoreCase))
+                    if (String.IsNullOrEmpty(Input.state))
+                    {
+                        ModelState.AddModelError("stateError", "State is required.");
+                        return Page();
+                    }
+                }
+
+                    if (!Input.Email.Equals(Input.ConfirmEmail, StringComparison.OrdinalIgnoreCase))
                 {
                     ModelState.AddModelError("confirmEmailValidation", "The email and confirmation email do not match.");
                     return Page();
@@ -379,6 +399,8 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             contributor.PhoneNumber = Input.phoneNumber;
             contributor.OtherEtiologyText = Input.otherText;
             contributor.BirthYear = Input.BirthYear;
+            contributor.ReferenceSource = Input.ReferenceSource;
+            contributor.Country = Input.Country;
             return contributor;
         }
 

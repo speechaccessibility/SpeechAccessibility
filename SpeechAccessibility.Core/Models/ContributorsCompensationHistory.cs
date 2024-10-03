@@ -21,5 +21,6 @@ namespace SpeechAccessibility.Core.Models
         public string HelperLastName { get; set; }
         public string EtiologyName { get; set; }
         public string PromptCategory { get; set; }
+        public string PaymentType { get; set;}
     }
 }

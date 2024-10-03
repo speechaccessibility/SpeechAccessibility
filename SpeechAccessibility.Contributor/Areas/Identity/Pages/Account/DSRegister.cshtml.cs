@@ -51,6 +51,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         [BindProperty]
         public string DownSyndromeInd { get; set; }
 
+        [BindProperty]
+        public List<String> ExistingEmailList { get; set; }
+
         public List<String> resultErrorList = new List<String>();
 
         public List<String> unqualifiedStates = new List<String>
@@ -61,6 +64,11 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             "None"
         };
 
+        public List<SelectListItem> countryList { get; } = new List<SelectListItem>
+        {
+               new SelectListItem { Value = "United States", Text = "United States" },
+                new SelectListItem { Value = "Canada", Text = "Canada" },
+        };
 
         public List<SelectListItem> stateList { get; } = new List<SelectListItem>
          {
@@ -149,7 +157,6 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             public string Email { get; set; }
 
             [EmailAddress]
-            [Compare("Email", ErrorMessage = "The email and confirmation email do not match.")]
             public string ConfirmEmail { get; set; }
 
             [MinLength(10, ErrorMessage = "Phone number must be 10 digits")]
@@ -166,7 +173,6 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Display(Name = "Diagnosis Age")]
             public string DiagnosisAge { get; set; }
 
-            [Required]
             [Display(Name = "State")]
             public string State { get; set; }
 
@@ -195,8 +201,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             public string HelperEmail { get; set; }
 
             [EmailAddress]
-            [Compare("HelperEmail", ErrorMessage = "The email and confirm email do not match")]
-            public string ConfirmHelperEmail { get; set; }
+             public string ConfirmHelperEmail { get; set; }
 
             [Display(Name = "Helper First Name")]
             public string HelperFirstName { get; set; }
@@ -216,6 +221,15 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             public string AssistanceAvaialableInd { get; set; }
 
             public string Correspondence { get; set; }
+
+            public string DuplicateEmailInd { get; set; }
+
+            [Required]
+            [MaxLength(150)]
+            [Display(Name = "Reference Source")]
+            public string ReferenceSource { get; set; }
+
+            public string Country { get; set; }
         }
 
         public IActionResult OnGet(string downSyndromeInd)
@@ -227,6 +241,8 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             {
                 return RedirectToPage("./DSPreRegister");
             }
+
+            ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
 
             return Page();
         }
@@ -303,39 +319,66 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 }
             }
 
-                if (ModelState.IsValid)
+            if (Input.Email != null && !Input.Email.Equals(Input.ConfirmEmail, StringComparison.OrdinalIgnoreCase))
             {
+                ModelState.AddModelError("compareEmailValidation", "The email and confirmation email do not match.");
+            }
+
+            if (Input.HelperEmail != null && !Input.HelperEmail.Equals(Input.ConfirmHelperEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("compareHelperEmailValidation", "The helper email and confirmation email do not match.");
+            }
+
+            if ("Yes".Equals(Input.DuplicateEmailInd))
+            {
+                ModelState.AddModelError("duplicateEmailValidation", "This email is already registered.");
+            }
+
+            if (ModelState.IsValid)
+            {
+                if ("United States".Equals(Input.Country))
+                {
+
+                    if (String.IsNullOrEmpty(Input.State))
+                    {
+                        ModelState.AddModelError("stateError", "State is required.");
+                        return Page();
+                    }
+                }
+
+
+
                 int age = Int32.Parse(Input.CurrentAge);
 
 
-                if (unqualifiedStates.Contains(Input.State) || age<18)
+                if (unqualifiedStates.Contains(Input.State) || age < 18)
                 {
                     return RedirectToPage("./Unqualified");
                 }
 
 
-                    Contributor contributor = PopulateContributor();
-                    _context.Contributor.Add(contributor);
-             
-                    _context.Etiology.Remove(contributor.Etiology);
+                Contributor contributor = PopulateContributor();
+                _context.Contributor.Add(contributor);
 
-                    if ("Someone else is my legal guardian".Equals(Input.LegalGuardianInd) || "Someone else is their legal guardian".Equals(Input.LegalGuardianInd))
-                    {
-                        LegalGuardian legalGuardian = new LegalGuardian();
-                        legalGuardian.FirstName = Input.LegalGuardianFirstName;
-                        legalGuardian.LastName = Input.LegalGuardianLastName;
-                        legalGuardian.PhoneNumber = Input.LegalGuardianPhoneNumber;
-                        legalGuardian.Email = Input.LegalGuardianEmail;
-                        legalGuardian.ContributorId = contributor.Id;                 
-                        _context.LegalGuardian.Add(legalGuardian);
-                        
-                        _context.SaveChanges();
-                    }
-                  
+                _context.Etiology.Remove(contributor.Etiology);
+
+                if ("Someone else is my legal guardian".Equals(Input.LegalGuardianInd) || "Someone else is their legal guardian".Equals(Input.LegalGuardianInd))
+                {
+                    LegalGuardian legalGuardian = new LegalGuardian();
+                    legalGuardian.FirstName = Input.LegalGuardianFirstName;
+                    legalGuardian.LastName = Input.LegalGuardianLastName;
+                    legalGuardian.PhoneNumber = Input.LegalGuardianPhoneNumber;
+                    legalGuardian.Email = Input.LegalGuardianEmail;
+                    legalGuardian.ContributorId = contributor.Id;
+                    _context.LegalGuardian.Add(legalGuardian);
+
                     _context.SaveChanges();
+                }
 
-                    _logger.LogInformation("User created a new account with password.");
-                  
+                _context.SaveChanges();
+
+                _logger.LogInformation("User created a new account with password.");
+
 
                 string email = Input.Email;
                 string phone = Input.PhoneNumber;
@@ -349,11 +392,15 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 {
                     phone = Input.HelperPhoneNumber;
                 }
-               
-                SendNotificationEmail(email,phone);
-               
-                return RedirectToAction("ApprovalRequired" , new {etiologyId=2});
 
+                SendNotificationEmail(email, phone);
+
+                return RedirectToAction("ApprovalRequired", new { etiologyId = 2 });
+
+            }
+            else {
+
+                ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
             }
 
             // If we got this far, something failed, redisplay form
@@ -393,6 +440,8 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             contributor.EighteenOrOlderInd = "Yes";
             contributor.CurrentAge = Input.CurrentAge;
             contributor.DiagnosisAge = Input.DiagnosisAge;
+            contributor.ReferenceSource = Input.ReferenceSource;
+            contributor.Country = Input.Country;
 
             if ("Yes".Equals(DownSyndromeInd))
             {

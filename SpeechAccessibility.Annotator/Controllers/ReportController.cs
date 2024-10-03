@@ -1,6 +1,8 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -32,11 +34,14 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IConfiguration _configuration;
         private readonly IContributorAssignedListRepository _contributorAssignedListRepository;
         private readonly INumberOfRecordingByEtiologyRepository _numberOfRecordingByEtiologyRepository;
-
+        private readonly IContributorsPaidByCheckRepository _contributorsPaidByCheckRepository;
+        private readonly IHelperNotPaidGiftCardsRepository _helperNotPaidGiftCardsRepository;
+        private readonly IContributorStatusRepository _contributorStatusRepository;
+        private readonly IContributorSubStatusRepository _contributorSubStatusRepository;
 
         public ReportController(IUserRepository userRepository, IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository
             , IContributorViewRepository contributorViewRepository, IRecordingRepository recordingRepository, IContributorCompensationRepository contributorCompensationRepository
-            , IConfiguration configuration, IContributorCompensationViewRepository contributorCompensationViewRepository, IContributorCompensationHistoryRepository contributorCompensationHistoryRepository, IEtiologyViewRepository etiologyViewRepository, IContributorAssignedListRepository contributorAssignedListRepository, INumberOfRecordingByEtiologyRepository numberOfRecordingByEtiologyRepository)
+            , IConfiguration configuration, IContributorCompensationViewRepository contributorCompensationViewRepository, IContributorCompensationHistoryRepository contributorCompensationHistoryRepository, IEtiologyViewRepository etiologyViewRepository, IContributorAssignedListRepository contributorAssignedListRepository, INumberOfRecordingByEtiologyRepository numberOfRecordingByEtiologyRepository, IContributorsPaidByCheckRepository contributorsPaidByCheckRepository, IHelperNotPaidGiftCardsRepository helperNotPaidGiftCardsRepository, IContributorStatusRepository contributorStatusRepository, IContributorSubStatusRepository contributorSubStatusRepository)
         {
             _userRepository = userRepository;
             _contributorAssignedAnnotatorRepository = contributorAssignedAnnotatorRepository;
@@ -49,6 +54,10 @@ namespace SpeechAccessibility.Annotator.Controllers
             _etiologyViewRepository = etiologyViewRepository;
             _contributorAssignedListRepository = contributorAssignedListRepository;
             _numberOfRecordingByEtiologyRepository = numberOfRecordingByEtiologyRepository;
+            _contributorsPaidByCheckRepository = contributorsPaidByCheckRepository;
+            _helperNotPaidGiftCardsRepository = helperNotPaidGiftCardsRepository;
+            _contributorStatusRepository = contributorStatusRepository;
+            _contributorSubStatusRepository = contributorSubStatusRepository;
         }
 
         public IActionResult Index()
@@ -80,7 +89,7 @@ namespace SpeechAccessibility.Annotator.Controllers
            
 
             var assignedContributors =
-                _contributorViewRepository.Find(c => assignedContributorIdList.Contains(c.Id)).ToList();
+                _contributorViewRepository.Find(c => assignedContributorIdList.Contains(c.Id)).OrderBy(c => c.EtiologyName).ToList();
 
             return assignedContributors.Any() ? Json(new { Counter = assignedContributors.Count, Contributors = assignedContributors }) : Json(new { Counter = 0 });
         }
@@ -188,6 +197,10 @@ namespace SpeechAccessibility.Annotator.Controllers
         //Compensation report
         public IActionResult ViewContributorsCompensation()
         {
+            var contributorsPayByCheck = _contributorsPaidByCheckRepository.GetAll().Select(c => c.EmailDomain).ToList();
+            var helperNotGetPay = _helperNotPaidGiftCardsRepository.GetAll().Select(h => h.HelperEmailAddress).ToList();
+            //List<string> contributorsPayByCheck = new List<string>() { "@aol.com", "@att", "@icloud.com" };
+            //List<string> helperNotGetPay = new List<string>() { "facamer2@gmail.com", "charr68@gmail.com" };
 
             var contributorCompensation = new ContributorCompensationViewModel
             {
@@ -197,87 +210,354 @@ namespace SpeechAccessibility.Annotator.Controllers
                 ContributorsQualifyForThirdCard = new List<ContributorCompensationView>()
             };
 
-            var allGiftCards = _contributorCompensationViewRepository.Find(g=>g.FirstCard=="Yes" || g.SecondCard=="Yes" || g.ThirdCard=="Yes");
-          
-            contributorCompensation.ContributorsQualifyForFirstCard= allGiftCards.Where(g => g.FirstCard == "Yes")
-                .OrderBy(g=>g.LastName).ThenBy(g=>g.FirstName).ToList();
-            contributorCompensation.ContributorsQualifyForSecondCard = allGiftCards.Where(g => g.SecondCard == "Yes")
+            var allGiftCards = _contributorCompensationViewRepository
+                .Find(g=>g.FirstCard=="Yes" || g.SecondCard=="Yes" || g.ThirdCard=="Yes");
+
+            var firstCardList =  allGiftCards.Where(g => g.FirstCard == "Yes").OrderBy(g => g.LastName).ThenBy(g => g.FirstName).ToList();
+            int i;
+            for (i = firstCardList.Count - 1; i >= 0; i--)
+            {
+                var card = firstCardList[i];
+               
+                foreach (var contributor in contributorsPayByCheck)
+                {
+                    //remove contributors paid by check
+                    if (card.EmailAddress.Contains(contributor))
+                    {
+                        firstCardList.Remove(card);
+                        break;
+                    }
+                    //remove helpers should not get paid
+                    foreach (var helper in helperNotGetPay)
+                    {
+                        if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                            card.HelperInd = "No";
+                    }
+                }
+                
+            }
+            contributorCompensation.ContributorsQualifyForFirstCard = firstCardList;
+
+            var secondCardList = allGiftCards.Where(g => g.SecondCard == "Yes")
                 .OrderBy(g => g.LastName).ThenBy(g => g.FirstName).ToList();
-            contributorCompensation.ContributorsQualifyForThirdCard = allGiftCards.Where(g => g.ThirdCard == "Yes")
+            for (i = secondCardList.Count - 1; i >= 0; i--)
+            {
+                var card = secondCardList[i];
+                foreach (var contributor in contributorsPayByCheck)
+                {
+                    //remove contributors paid by check
+                    if (card.EmailAddress.Contains(contributor))
+                    {
+                        secondCardList.Remove(card);
+                        break;
+                    }
+                    //remove helpers should not get paid
+                    foreach (var helper in helperNotGetPay)
+                    {
+                        if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                            card.HelperInd = "No";
+                    }
+                }
+               
+            }
+            contributorCompensation.ContributorsQualifyForSecondCard = secondCardList;
+
+            var thirdCardList = allGiftCards.Where(g => g.ThirdCard == "Yes")
                 .OrderBy(g => g.LastName).ThenBy(g => g.FirstName).ToList();
+            for (i = thirdCardList.Count - 1; i >= 0; i--)
+            {
+                var card = thirdCardList[i];
+                foreach (var contributor in contributorsPayByCheck)
+                {
+                    //remove helpers should not get paid
+                    if (card.EmailAddress.Contains(contributor))
+                    {
+                        thirdCardList.Remove(card);
+                        break;
+                    }
+                    //remove helpers should not get paid
+                    foreach (var helper in helperNotGetPay)
+                    {
+                        if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                            card.HelperInd = "No";
+                    }
+                }
+               
+               
+            }
+            contributorCompensation.ContributorsQualifyForThirdCard = thirdCardList;
 
 
            
             return View(contributorCompensation);
         }
 
+        public IActionResult ViewContributorsCompensationByCheck()
+        {
+            //List<string> contributorsPayByCheck = new List<string>() { "@aol.com", "@att", "@icloud.com" };
+            //List<string> helperNotGetPay = new List<string>() { "facamer2@gmail.com", "charr68@gmail.com" };
+            var contributorsPayByCheck = _contributorsPaidByCheckRepository.GetAll().Select(c => c.EmailDomain).ToList();
+            var helperNotGetPay = _helperNotPaidGiftCardsRepository.GetAll().Select(h => h.HelperEmailAddress).ToList();
+            var contributorCompensation = new ContributorCompensationViewModel
+            {
+
+                ContributorsQualifyForFirstCard = new List<ContributorCompensationView>(),
+                ContributorsQualifyForSecondCard = new List<ContributorCompensationView>(),
+                ContributorsQualifyForThirdCard = new List<ContributorCompensationView>()
+            };
+
+            var allGiftCards = _contributorCompensationViewRepository
+                .Find(g => g.FirstCard == "Yes" || g.SecondCard == "Yes" || g.ThirdCard == "Yes");
+
+            var firstCardList = allGiftCards.Where(g => g.FirstCard == "Yes").OrderBy(g => g.LastName)
+                .ThenBy(g => g.FirstName);
+          
+            var contributorsPaidByCheckFirstCard = new List<ContributorCompensationView>();
+
+            foreach (var card in firstCardList)
+            {
+                //only keep contributors paid by check 
+                foreach (var contributor in contributorsPayByCheck)
+                {
+                    //only keep contributors paid by check 
+                    if (card.EmailAddress.Contains(contributor))
+                    {
+                        //remove helpers should not get paid
+                        foreach (var helper in helperNotGetPay)
+                        {
+                            if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                            {
+                                card.HelperInd = "No";
+                            }
+                        }
+                        contributorsPaidByCheckFirstCard.Add(card);
+                        break;
+                    }
+                }
+            }
+
+            
+            contributorCompensation.ContributorsQualifyForFirstCard = contributorsPaidByCheckFirstCard;
+
+            var secondCardList = allGiftCards.Where(g => g.SecondCard == "Yes")
+                .OrderBy(g => g.LastName).ThenBy(g => g.FirstName).ToList();
+
+            var contributorsPaidByCheckSecondCard = new List<ContributorCompensationView>();
+
+            foreach (var card in secondCardList)
+            {
+                //only keep contributors paid by check 
+                foreach (var contributor in contributorsPayByCheck)
+                {
+                    //only keep contributors paid by check 
+                    if (card.EmailAddress.Contains(contributor))
+                    {
+                        //remove helpers should not get paid
+                        foreach (var helper in helperNotGetPay)
+                        {
+                            if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                            {
+                                card.HelperInd = "No";
+                            }
+                        }
+                        contributorsPaidByCheckSecondCard.Add(card);
+                        break;
+                    }
+                }
+            }
+            contributorCompensation.ContributorsQualifyForSecondCard = contributorsPaidByCheckSecondCard;
+
+            var thirdCardList = allGiftCards.Where(g => g.ThirdCard == "Yes")
+                .OrderBy(g => g.LastName).ThenBy(g => g.FirstName).ToList();
+            var contributorsPaidByCheckThirdCard = new List<ContributorCompensationView>();
+
+            foreach (var card in thirdCardList)
+            {
+                //only keep contributors paid by check 
+                foreach (var contributor in contributorsPayByCheck)
+                {
+                    //only keep contributors paid by check 
+                    if (card.EmailAddress.Contains(contributor))
+                    {
+                        //remove helpers should not get paid
+                        foreach (var helper in helperNotGetPay)
+                        {
+                            if (!string.IsNullOrEmpty(card.HelperEmail) &&  card.HelperEmail.Contains(helper))
+                            {
+                                card.HelperInd = "No";
+                            }
+                        }
+                        contributorsPaidByCheckThirdCard.Add(card);
+                        break;
+                    }
+                }
+            }
+            contributorCompensation.ContributorsQualifyForThirdCard = contributorsPaidByCheckThirdCard;
+
+
+            return View(contributorCompensation);
+        }
+
+
         [HttpPost]
-        public JsonResult GenerateGiftCard(Guid[] contributorIDs, int cardType)
+        public JsonResult GenerateGiftCard(Guid[] contributorIDs, int cardType, string paymentType)
         {
             List<ContributorCompensation> newCompensations = new List<ContributorCompensation>();
             List<GiftCardViewModel> giftCards = new List<GiftCardViewModel>();
-            //generate gift card
-            var fileName = cardType switch
-            {
-                1 => "FirstGiftCard" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv",
-                2 => "SecondGiftCard" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv",
-                _ => "ThirdGiftCard" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv"
-            };
+            List< GiftCardByCheckViewModel> giftCardsByCheck = new List<GiftCardByCheckViewModel>();
 
-            //mark the first gift card paid
+            //generate gift card
+            var fileName = "";
+            if (paymentType == "check") //if payment by check, we issue only one check for all gift cards, the cardType should always=3
+            {
+                //fileName = cardType switch
+                //{
+                //    1 => "FirstGiftCardByCheck" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv",
+                //    2 => "SecondGiftCardByCheck" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv",
+                //    _ => "ThirdGiftCardByCheck" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv"
+                //};
+                fileName = "AllGiftCardsCheck" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv";
+            }
+            else
+            {
+                fileName = cardType switch
+                {
+                    1 => "FirstGiftCard" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv",
+                    2 => "SecondGiftCard" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv",
+                    _ => "ThirdGiftCard" + DateTime.Now.ToString("yyyyMMddHHmm") + ".csv"
+                };
+            }
+            
+            
             foreach (var id in contributorIDs)
             {
+                var contributor = _contributorViewRepository.Find(c => c.Id == id).FirstOrDefault();
+                bool includeHelper = true;
+                if (contributor != null)
+                {
+                    if (contributor.HelperInd.Trim() == "Yes")
+                    {
+                        //check to make that this helper is not in the "should not get payment" list
+                        var helpersShouldNotGetPaid = _helperNotPaidGiftCardsRepository.GetAll();
+
+                        foreach (var helper in helpersShouldNotGetPaid)
+                        {
+                            if (helper.HelperEmailAddress.Equals(contributor.HelperEmail))
+                            {
+                                includeHelper = false;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        includeHelper = false;
+                    }
+                }
+
                 //check if this contributor is already paid for the first gift card
+                //if paid by check, should return null if not paid yet, otherwise this contributor should not be on the list
                 var paid = _contributorCompensationRepository.Find(c => c.ContributorId == id).FirstOrDefault();
                 if (paid != null)
                 {
                     switch (cardType)
                     {
                         case 1:
+                            paid.PaidHelper = includeHelper ? contributor.HelperEmail : "";
+                            paid.PaymentType = paymentType;
                             paid.SendFirstCard = DateTime.Now;
                             paid.SendFirstCardBy = User.Identity.Name;
                             break;
                         case 2:
+                            paid.PaidHelper = includeHelper ? contributor.HelperEmail : "";
+                            paid.PaymentType = paymentType;
                             paid.SendSecondCard = DateTime.Now;
                             paid.SendSecondCardBy = User.Identity.Name;
                             break;
                         default:
+                            paid.PaidHelper = includeHelper ? contributor.HelperEmail : "";
+                            paid.PaymentType = paymentType;
                             paid.SendThirdCard = DateTime.Now;
                             paid.SendThirdCardBy = User.Identity.Name;
                             break;
                     }
+
                     _contributorCompensationRepository.Update(paid);
                 }
-                else
+                else //if paid by check, should mark all gift cards paid
                 {
                     var contributorComp = new ContributorCompensation
                     {
                         ContributorId = id
                     };
-                    switch (cardType)
+                    if (paymentType == "check")
                     {
-                        case 1:
-                            contributorComp.SendFirstCard = DateTime.Now;
-                            contributorComp.SendFirstCardBy = User.Identity.Name;
-                            break;
-                        case 2:
-                            contributorComp.SendSecondCard = DateTime.Now;
-                            contributorComp.SendSecondCardBy = User.Identity.Name;
-                            break;
-                        default:
-                            contributorComp.SendThirdCard = DateTime.Now;
-                            contributorComp.SendThirdCardBy = User.Identity.Name;
-                            break;
+                        contributorComp.PaidHelper = includeHelper ? contributor.HelperEmail : "";
+                        contributorComp.SendFirstCard = DateTime.Now;
+                        contributorComp.SendFirstCardBy = User.Identity.Name;
+                       
+                        contributorComp.PaidHelper = includeHelper ? contributor.HelperEmail : "";
+                        contributorComp.SendSecondCard = DateTime.Now;
+                        contributorComp.SendSecondCardBy = User.Identity.Name;
+                        
+                        contributorComp.PaidHelper = includeHelper ? contributor.HelperEmail : "";
+                        contributorComp.SendThirdCard = DateTime.Now;
+                        contributorComp.SendThirdCardBy = User.Identity.Name;
+
+                        contributorComp.PaymentType = paymentType;
+
                     }
+                    else
+                    {
+                        switch (cardType)
+                        {
+                            case 1:
+                                contributorComp.PaidHelper = includeHelper ? contributor.HelperEmail : "";
+                                contributorComp.PaymentType = paymentType;
+                                contributorComp.SendFirstCard = DateTime.Now;
+                                contributorComp.SendFirstCardBy = User.Identity.Name;
+                                break;
+                            case 2:
+                                contributorComp.PaidHelper = includeHelper ? contributor.HelperEmail : "";
+                                contributorComp.PaymentType = paymentType;
+                                contributorComp.SendSecondCard = DateTime.Now;
+                                contributorComp.SendSecondCardBy = User.Identity.Name;
+                                break;
+                            default:
+                                contributorComp.PaidHelper = includeHelper ? contributor.HelperEmail : "";
+                                contributorComp.PaymentType = paymentType;
+                                contributorComp.SendThirdCard = DateTime.Now;
+                                contributorComp.SendThirdCardBy = User.Identity.Name;
+                                break;
+                        }
+                    }
+
+                    
                     newCompensations.Add(contributorComp);
                 }
                 //add to gift card list
-                var contributor = _contributorViewRepository.Find(c => c.Id == id).FirstOrDefault();
+                //var contributor = _contributorViewRepository.Find(c => c.Id == id).FirstOrDefault();
+               
                 if (contributor != null)
                 {
-                    giftCards.Add(new GiftCardViewModel { Amount = 60.00, Delay = 0, EmailAddress = contributor.EmailAddress });
-                    if (contributor.HelperInd == "Yes")
-                        giftCards.Add(new GiftCardViewModel { Amount = 30.00, Delay = 0, EmailAddress = contributor.HelperEmail });
+                    if (paymentType == "check") //we write one check for all 3 gift cards, contributor gets $180, helper gets $90
+                    {
+                        giftCardsByCheck.Add(new GiftCardByCheckViewModel() { Amount = 180.00, EmailAddress = contributor.EmailAddress, FirstName = contributor.FirstName, LastName = contributor.LastName });
+
+                        if (includeHelper)
+                        {
+                            giftCardsByCheck.Add(new GiftCardByCheckViewModel { Amount = 90.00,  EmailAddress = contributor.HelperEmail, FirstName = contributor.HelperFirstName, LastName = contributor.HelperLastName });
+                        }
+                    }
+                    else
+                    {
+                        giftCards.Add(new GiftCardViewModel { Amount = 60.00, Delay = 0, EmailAddress = contributor.EmailAddress });
+
+                        if (includeHelper)
+                        {
+                            giftCards.Add(new GiftCardViewModel { Amount = 30.00, Delay = 0, EmailAddress = contributor.HelperEmail });
+                        }
+                    }
                 }
             }
 
@@ -286,18 +566,38 @@ namespace SpeechAccessibility.Annotator.Controllers
                 _contributorCompensationRepository.AddRange(newCompensations);
             }
 
-            if (giftCards.Count > 0)
+            if (paymentType == "check")
             {
-                ////save the file to server folder
-                var basePath = _configuration["AppSettings:UploadFileFolder"] + "\\GiftCards";
-                var fullPath = Path.Combine(basePath, fileName);
+                if (giftCardsByCheck.Count > 0)
+                {
+                    ////save the file to server folder
+                    var basePath = _configuration["AppSettings:UploadFileFolder"] + "\\Download";
+                    var fullPath = Path.Combine(basePath, fileName);
 
-                using var writer = new StreamWriter(fullPath);
-                using var csv = new CsvWriter(writer,
-                    new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = false });
-                csv.WriteRecords(giftCards);
-                return Json(new { Success = true, Message = fileName });
+                    using var writer = new StreamWriter(fullPath);
+                    using var csv = new CsvWriter(writer,
+                        new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = true });
+                    csv.WriteRecords(giftCardsByCheck);
+                    return Json(new { Success = true, Message = fileName });
+                }
             }
+            else
+            {
+                if (giftCards.Count > 0)
+                {
+                    ////save the file to server folder
+                    var basePath = _configuration["AppSettings:UploadFileFolder"] + "\\Download";
+                    var fullPath = Path.Combine(basePath, fileName);
+
+                    using var writer = new StreamWriter(fullPath);
+                    using var csv = new CsvWriter(writer,
+                        new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = false });
+                    csv.WriteRecords(giftCards);
+                    return Json(new { Success = true, Message = fileName });
+                }
+            }
+
+           
 
             return Json(new { Success = false, Message = "Please select a contributor to generate gift card." });
         }
@@ -445,6 +745,7 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         public IActionResult ViewContributorAssignedList()
         {
+            ViewBag.DownLoadBasePath = _configuration["AppSettings:UploadFileFolder"] + "\\Download"; 
             return View();
         }
 
@@ -528,5 +829,49 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             //return publishedRecordingsByEtiology.Any() ? Json(new { Counter = publishedRecordingsByEtiology.Count, recordings = publishedRecordingsByEtiology }) : Json(new { Counter = 0 });
         }
+
+        [HttpPost]
+        public JsonResult ExportContributorAssignedListToExcel()
+        {
+            //string basePath = "";
+            var dataTableToExcel = new DataTableToExcel();
+            var assignedList = _contributorAssignedListRepository.GetAll()
+                .Select(c=> new{ c.ContributorId, c.ListName, c.BlockName }).ToList();
+            //.Select(c => new { c.FirstName, c.LastName, c.EmailAddress,c.HelperFirstName,c.HelperLastName, c.HelperEmail }).ToList();
+            var fileName = "ContributorAssignedList_" + DateTime.Now.ToString("yyyyMMddHHmm") + ".xls";
+
+
+            ////save the file to server DownloadReports folder
+            var basePath = _configuration["AppSettings:UploadFileFolder"] + "\\Download";
+            var fullPath = Path.Combine(basePath, fileName);
+
+
+            DataTable dataSet = dataTableToExcel.ToDataTable(assignedList);
+
+            using (var exportData = new MemoryStream())
+            {
+                dataTableToExcel.DataToExcel(dataSet, exportData);
+                var file = new FileStream(fullPath, FileMode.Create, FileAccess.Write);
+                exportData.WriteTo(file);
+                file.Close();
+            }
+
+            return Json(new { Success = true, Message = fileName });
+        }
+
+        public IActionResult RecruitingRecordingProgress()
+        {
+            var report = new RecruitingRecordingProgressViewModel();
+            var etiologies = _etiologyViewRepository.GetAll().OrderBy(e=>e.DisplayOrderForReports).ToList();
+            report.Etiologies = etiologies;
+
+            var status = _contributorStatusRepository.GetAll().Where(s=> s.Id!=5).Include(s=>s.ContributorSubStatus).OrderBy(s=>s.DisplayOrderForReports).ToList();
+            
+            report.ContributorStatus = status;
+            var allContributors = _contributorViewRepository.GetAll().ToList();
+            report.Contributors = allContributors;
+            return View(report);
+        }
+
     }
 }

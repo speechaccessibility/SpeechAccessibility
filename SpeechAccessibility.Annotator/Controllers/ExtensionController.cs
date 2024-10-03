@@ -203,99 +203,98 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         //}
 
-        public static bool IsSilence(float amplitude, sbyte threshold)
-        {
-            if (amplitude == 0)
-                return true;
-            double dB = 20 * Math.Log10(Math.Abs(amplitude));
-            return dB < threshold;
-        }
+        //public static bool IsSilence(float amplitude, sbyte threshold)
+        //{
+        //    if (amplitude == 0)
+        //        return true;
+        //    double dB = 20 * Math.Log10(Math.Abs(amplitude));
+        //    return dB < threshold;
+        //}
 
-        private sbyte GetThresholdBaseline(float[] buffer, int samplesRead, sbyte silenceThreshold)
-        {
-            //silenceThreshold = -20;
-            List<double> data = new List<double>();
-            for (int n = 0; n < samplesRead; n++)
-            {
-                if (!IsSilence(buffer[n], silenceThreshold))
-                    data.Add(Math.Abs(buffer[n]));
-            }
-            return (sbyte)(20 * Math.Log10(data.Median()));
-        }
+        //private sbyte GetThresholdBaseline(float[] buffer, int samplesRead, sbyte silenceThreshold)
+        //{
+        //    //silenceThreshold = -20;
+        //    List<double> data = new List<double>();
+        //    for (int n = 0; n < samplesRead; n++)
+        //    {
+        //        if (!IsSilence(buffer[n], silenceThreshold))
+        //            data.Add(Math.Abs(buffer[n]));
+        //    }
+        //    return (sbyte)(20 * Math.Log10(data.Median()));
+        //}
 
-        private Tuple<string, string> GetRecordingTimeSpan(string filePath, sbyte minThreshold = -40, sbyte maxThreshold = -60, sbyte incThreshold = -10, int series = 2 )
-        {
-            var path = "\\\\bi-isilon-smb.beckman.illinois.edu\\NovaH\\Dev\\Bic\\";
-            filePath = path + filePath;
-            AudioFileReader reader = new AudioFileReader(filePath);
-            var buffer = new float[reader.Length];
+        //private Tuple<string, string> GetRecordingTimeSpan(string filePath, sbyte minThreshold = -40, sbyte maxThreshold = -60, sbyte incThreshold = -10, int series = 2 )
+        //{
+        //    var path = "\\\\bi-isilon-smb.beckman.illinois.edu\\NovaH\\Dev\\Bic\\";
+        //    filePath = path + filePath;
+        //    AudioFileReader reader = new AudioFileReader(filePath);
+        //    var buffer = new float[reader.Length];
 
-            int startPos = 0; // Initial detection of noise meeting threshold
-            int endPos = 0; // Final detection of noise meeting threshold
-            int samplesRead = reader.Read(buffer, 0, (int)reader.Length);
+        //    int startPos = 0; // Initial detection of noise meeting threshold
+        //    int endPos = 0; // Final detection of noise meeting threshold
+        //    int samplesRead = reader.Read(buffer, 0, (int)reader.Length);
 
-            sbyte currentThreshold = minThreshold;
+        //    sbyte currentThreshold = minThreshold;
 
-            // Get threshold base line
-            do
-            {
-                minThreshold = GetThresholdBaseline(buffer, samplesRead, currentThreshold);
+        //    // Get threshold base line
+        //    do
+        //    {
+        //        minThreshold = GetThresholdBaseline(buffer, samplesRead, currentThreshold);
 
-                if (minThreshold != 0)
-                    break;
-                currentThreshold = (sbyte)(currentThreshold + incThreshold);
-            } while (currentThreshold >= maxThreshold);
+        //        if (minThreshold != 0)
+        //            break;
+        //        currentThreshold = (sbyte)(currentThreshold + incThreshold);
+        //    } while (currentThreshold >= maxThreshold);
 
 
-            int cycles = 0;
+        //    int cycles = 0;
 
-            for (int n = 0; n < samplesRead; n++)
-                if (!IsSilence(buffer[n], minThreshold))
-                {
-                    cycles++;
-                    if (cycles > series)
-                    {
-                        if (startPos == 0)
-                            startPos = n - series;
-                        endPos = n;
-                    }
-                }
-                else
-                {
-                    cycles = 0;
-                }
+        //    for (int n = 0; n < samplesRead; n++)
+        //        if (!IsSilence(buffer[n], minThreshold))
+        //        {
+        //            cycles++;
+        //            if (cycles > series)
+        //            {
+        //                if (startPos == 0)
+        //                    startPos = n - series;
+        //                endPos = n;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            cycles = 0;
+        //        }
 
-            //since there are audio file that has more than one channel, we need to get the trueSample value
-            double trueSample = (double)reader.WaveFormat.SampleRate * reader.WaveFormat.Channels / 1000;
-            var startTime = Math.Round((startPos / trueSample) / 10) * 10;
-            var endTime = Math.Round((endPos / trueSample) / 10) * 10;
+        //    //since there are audio file that has more than one channel, we need to get the trueSample value
+        //    double trueSample = (double)reader.WaveFormat.SampleRate * reader.WaveFormat.Channels / 1000;
+        //    var startTime = Math.Round((startPos / trueSample) / 10) * 10;
+        //    var endTime = Math.Round((endPos / trueSample) / 10) * 10;
 
-            return new Tuple<string, string>(TimeSpan.FromMilliseconds(startTime).ToString("hh':'mm':'ss'.'ff"), TimeSpan.FromMilliseconds(endTime).ToString("hh':'mm':'ss'.'ff"));
-        }
+        //    return new Tuple<string, string>(TimeSpan.FromMilliseconds(startTime).ToString("hh':'mm':'ss'.'ff"), TimeSpan.FromMilliseconds(endTime).ToString("hh':'mm':'ss'.'ff"));
+        //}
 
-        [HttpPost]
-        public ActionResult FileInformation(string filePath)
-        {
+        //[HttpPost]
+        //public ActionResult FileInformation(string filePath)
+        //{
 
-            //sbyte silenceThreshold = -18; //decibels
-            Tuple<string, string> times = GetRecordingTimeSpan(filePath);
+        //    //sbyte silenceThreshold = -18; //decibels
+        //    Tuple<string, string> times = GetRecordingTimeSpan(filePath);
 
-            return Json(new
-            {
-                Success = true,
-                Message = "start time: " + times.Item1 + "; end time: " + times.Item2
-            });
+        //    return Json(new
+        //    {
+        //        Success = true,
+        //        Message = "start time: " + times.Item1 + "; end time: " + times.Item2
+        //    });
 
-        }
+        //}
 
         [HttpGet]
-       
         [ServiceFilter(typeof(DeleteFileAttribute))]
         public ActionResult DownloadFile(string fileName)
         {
             
             //Build the File Path.
-            var basePath = _configuration["AppSettings:UploadFileFolder"] + "\\GiftCards";
+            var basePath = _configuration["AppSettings:UploadFileFolder"] + "\\Download";
             var fullPath = Path.Combine(basePath, fileName);
 
 
@@ -305,9 +304,26 @@ namespace SpeechAccessibility.Annotator.Controllers
             //Send the File to Download.
             return File(bytes, "text/csv", fileName);
 
-           
-
         }
+
+        //[HttpGet]
+        //[ServiceFilter(typeof(DeleteFileAttribute))]
+        //public ActionResult DownloadFile2(string basePath, string fileName)
+        //{
+
+        //    //Build the File Path.
+        //    //var basePath = _configuration["AppSettings:UploadFileFolder"] + "\\Download";
+        //    var fullPath = Path.Combine(basePath, fileName);
+
+
+        //    //Read the File data into Byte Array.
+        //    byte[] bytes = System.IO.File.ReadAllBytes(fullPath);
+
+        //    //Send the File to Download.
+        //    return File(bytes, "text/csv", fileName);
+
+        //}
+
 
 
     }

@@ -74,6 +74,14 @@
     </p>
 </div>
 
+<div class="spinner" style="display:none">
+    <div class="center-div">
+        <div class="inner-div">
+            <div class="loader"></div>
+        </div>
+    </div>
+</div>
+
 @section scripts {
     <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
@@ -191,7 +199,8 @@
                                 if ($("#UserRole").val() === "TextAnnotator" || $("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
                                     link = '<a href="#" class="listen">Listen</a> | <a href="@Url.Action("DownloadSpeechFile", "SpeechFile")?recordingId=' + data 
                                         + '&location=modified">Download</a> | <a href="#" class="upload" >Update Recording</a> | <a href="#" class="exclude">Exclude</a> '
-                                        + '<br>| <a href="#" class="publish">Publish</a> | <a href="#" class="toDiscuss">To Discuss</a> | <a href="#" class="editComment">Edit Comments</a > ';
+                                        + '<br>| <a href="#" class="publish">Publish</a> | <a href="#" class="toDiscuss">To Discuss</a> | <a href="#" class="onHold">On Hold</a> '
+                                        + '| <a href="#" class="editComment">Edit Comments</a > ';
                                       return link;
                                 }
 
@@ -341,6 +350,30 @@
             $("#updateStatus-dialog").dialog('open');
             return false;
         });
+        
+          //Move to onHold list
+            $('#SpeechFileTable').on('click', 'a.onHold', function (e) {
+            e.preventDefault();
+            var selectedRowData = oSpeechFileTable.row($(this).closest('tr'));
+            var row = selectedRowData.data();
+            //set selected row
+            if ($(selectedRowData).hasClass('selected')) {
+                $(selectedRowData).removeClass('selected');
+            } else {
+                oSpeechFileTable.$('tr.selected').removeClass('selected');
+                $(selectedRowData).addClass('selected');
+            }
+            $('#lblUpdateStatusMessage').text("Are you sure to move this speech file to On-Hold list?");
+            $("#hidUpdateStatusRecordingId").val(row.id);
+            $("#lblUpdateStatusTranscript").text(row.modifiedTranscript);
+            $("#lblUpdateStatusContributorId").text(row.contributorId);
+            $("#txtUpdateStatusComment").val(row.comment);
+
+                UpdateRecordingStatus($("#updateStatus-dialog"), "Move Speech File to On-Hold List", "onHold", '@Url.Action("UpdateStatusRecording", "SpeechFile")', oSpeechFileTable, $("#lblMessage"));
+            $("#updateStatus-dialog").dialog('open');
+            return false;
+        });
+
 
 
             //upload new recording

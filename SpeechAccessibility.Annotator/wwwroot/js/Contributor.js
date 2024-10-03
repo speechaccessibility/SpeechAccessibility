@@ -99,59 +99,6 @@
     });
 }
 
-//function sendFollowUpContributor(postUrl, table) {
-//    $("#sendFollowUp-dialog").dialog({
-//        title: "Send follow-up message to contributor",
-//        autoOpen: false,
-//        resizable: false,
-//        width: 700,
-//        show: { effect: 'drop', direction: "up" },
-//        modal: true,
-//        draggable: true,
-//        closeOnEscape: true,
-//        position: { my: "left top", at: "left+50 top+100", of: window },
-//        open: function () {
-//            $('#sendFollowUp-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
-//        },
-//        close: function () {
-//            clearFollowUpDialog();
-//        },
-//        buttons: {
-//            "Send": function () {
-//                $('.spinner').css('display', 'block');
-//                var contributorId = $("#hidFollowUpContributorId").val();               
-//                var emailContent = $("#txtFollowUpMessage").val();
-//                $.ajax({
-//                    url: postUrl,
-//                    type: "POST",
-//                    data: {
-//                        "contributorId": contributorId, "message": emailContent, "subRole": $("#SubRole").val()
-//                    },
-//                    success: function (response) {
-//                        $('.spinner').css('display', 'none');
-//                        if (response.success === true) {
-//                            clearFollowUpDialog();
-//                            $('#sendFollowUp-dialog').dialog('close');
-//                            $("#lblMessage").text("Message was sent to the contributor at " + response.message);
-//                            table.draw(false);
-//                            //$.scrollTo($("#top"), { offset: { top: -150, left: -100 } });
-//                        } else {
-//                            $("#lblFollowUpMessage").text(response.message);
-//                            $("#lblFollowUpMessage").addClass("errorMessage");
-//                        }
-//                    },
-//                    error: function () { alert('Error Send Follow Up! It could be the timeout issue. Please try to reload your browser.'); }
-//                });
-//            },
-//            close: function () {
-//                clearFollowUpDialog();
-//                $(this).dialog('close');
-//            }
-//        }
-
-//    });
-//}
-
 function getRecordingRating(getUrl) {
     $("#rating-dialog").dialog({
         title: "SIT Speech File Rating",
@@ -183,6 +130,124 @@ function getRecordingRating(getUrl) {
 }
 
 
+/*function editContributorInfo(getUrl, postUrl,table, status,heperlink) {*/
+function editContributorInfo(getUrl, postUrl, table, status) {
+    $("#editInfo-dialog").dialog({
+        title: "Edit Contributor Information",
+        autoOpen: false,
+        resizable: false,
+        width: 1000,
+        height: 850,
+        show: { effect: 'drop', direction: "up" },
+        modal: true,
+        draggable: true,
+        closeOnEscape: true,
+        position: { my: "left top", at: "left+50 top+50", of: window },
+
+        open: function () {
+            $(this).load(getUrl);
+           
+        },
+        close: function () {
+            $(this).dialog('close');
+        },
+        buttons: {
+            "Submit": function () {
+
+                var subStatusId = status == 2 ? $("#dlSubStatus").val() : 0; //Sub Status is only for Approved Contributors
+                var helperInd = "No";
+                var legalGuardianInd = "No";
+
+                if ($("#chkHasHelper").is(":checked")) {
+                    helperInd = "Yes";
+                    if ($("#txtEditHelperEmail").val() == "" ) {
+                        alert("Helper Email is required.");
+                        $("#txtEditHelperEmail").focus();
+                        return false;
+                    }
+                    ////check to see if the helper is in the not paid list
+                    //$.ajax({
+                    //    url: heperlink,
+                    //    type: 'POST',
+                    //    data: {
+                    //        'email': $("#txtEditHelperEmail").val()
+                    //    },
+                    //    success: function (response) {
+                    //        if (response.exist === true) {
+                    //            if ($('input[name="radHelperPaid"]:checked').val() === "Yes") {                                   
+                    //                alert("This email address is in the 'helpers not getting payment' list. Pleaase select Yes again if you would like to remove this email address from the list.");
+                    //            }
+                    //        }
+                    //    },
+                    //    error: function () {
+                    //        alert("Error loading Contributor Assigned Blocks");
+                    //    }
+                    //});
+
+                }
+                if ($('#chkHasLegalGuardian').is(":checked")) {
+                    legalGuardianInd = "Yes";
+                    if ($("#txtEditLegalGuardianFirstName").val() == "" || $("#txtEditLegalGuardianLastName").val() == "" || $("#txtEditLegalGuardianEmail").val() == "" || $("#txtEditLegalGuardianPhone").val()=="")  {
+                        alert("All Legal Guardian fields are required.");
+                        $("#txtEditLegalGuardianFirstName").focus();
+                        return false;
+                    }
+                }
+                $('.spinner').css('display', 'block');
+                var jsonObject = {
+                    "Id": $("#hidEditInfoContributorId").val(),
+                    "EmailAddress": $("#txtEditContributorEmail").val(),
+                    "HelperInd": helperInd,
+                    "HelperFirstName": $("#txtEditHelperFirstName").val(),
+                    "HelperLastName": $("#txtEditHelperLastName").val(),
+                    "HelperEmail": $("#txtEditHelperEmail").val(),
+                    "BirthYear": $("#txtEditInfoBirthYear").val(),
+                    "SubStatusId": subStatusId,
+                    "SubRole": $("#SubRole").val(),
+                    "Comments": $("#txtEditInfoComment").val(),
+                    "HelperPhoneNumber": $("#txtEditHelperPhone").val(),
+                    "LegalGuardianId": $("#hidEditLegalGuardianId").val(),
+                    "LegalGuardianFirstName": $("#txtEditLegalGuardianFirstName").val(),
+                    "LegalGuardianLastName": $("#txtEditLegalGuardianLastName").val(),
+                    "LegalGuardianEmail": $("#txtEditLegalGuardianEmail").val(),
+                    "LegalGuardianPhoneNumber": $("#txtEditLegalGuardianPhone").val(),
+                    "LegalGuardianInd": legalGuardianInd,
+                    "HelperNotPaid": $('input[name="radHelperPaid"]:checked').val()
+                    //$("input[name='optradio']:checked").val();
+                };
+
+                $.ajax({
+                    url: postUrl,
+                    type: "POST",
+                    data: {
+                        "contributorView": jsonObject
+                    },
+                    success: function (response) {
+                        $('.spinner').css('display', 'none');
+                        if (response.success === true) {
+                            clearEditInfoDialog();
+                            $('#editInfo-dialog').dialog('close');
+                            $("#lblMessage").text("Contributor information was updated.");
+                            table.draw(true);
+                        } else {
+                            $("#lblEditInfoMessage").text(response.message);
+                            $("#lblEditInfoMessage").addClass("errorMessage");
+                        }
+                    },
+                    error: function () { alert('Error Update Information. It could be the timeout issue. Please try to reload your browser.'); }
+                });
+
+
+            },
+            close: function () {
+                clearEditInfoDialog();
+                $(this).dialog('close');
+            }
+        }
+
+    });
+            
+}
 
 function changeContributor(postUrl, table,action, title) {
     $("#makeChanges-dialog").dialog({
@@ -243,7 +308,6 @@ function changeContributor(postUrl, table,action, title) {
                     error: function () { alert('Error Update Contributor! It could be the timeout issue. Please try to reload your browser.'); }
                 });
 
-
             },
             close: function () {
                 clearMakeChangesDialog();
@@ -254,79 +318,148 @@ function changeContributor(postUrl, table,action, title) {
     });
 }
 
-
-
-function editContributorInfo(postUrl, table,  title, status) {
-    $("#editInfo-dialog").dialog({
-        title: title,
+function changePassword(postUrl ) {
+    $("#changePassword-dialog").dialog({
+        title: 'Change Contributor Password',
         autoOpen: false,
         resizable: false,
-        width: 900,
+        width: 700,
         show: { effect: 'drop', direction: "up" },
         modal: true,
         draggable: true,
         closeOnEscape: true,
         position: { my: "left top", at: "left+50 top+100", of: window },
         open: function () {
-            $('#editInfo-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+            $('#changePassword-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
         },
         close: function () {
-            clearEditInfoDialog();
+            clearChangePasswordDialog();
         },
         buttons: {
             "Submit": function () {
-              
-                var subStatusId = status == 2 ? $("#dlSubStatus").val() : 0; //Sub Status is only for Approved Contributors
-                var helperInd = "No";
-
-                if ($("#chkHasHelper").is(":checked")) {
-                    helperInd = "Yes";
-                    if ($("#txtEditHelperEmail").val() == "") {
-                        alert("Helper Email is required.");
-                        $("#txtEditHelperEmail").focus();
-                        return false;
-                    }
-                }
                 $('.spinner').css('display', 'block');
                 $.ajax({
                     url: postUrl,
                     type: "POST",
                     data: {
-                        "contributorId": $("#hidEditInfoContributorId").val(),
-                        "contributorEmail": $("#txtEditContributorEmail").val(),
-                        "helperInd": helperInd,
-                        "helperEmail": $("#txtEditHelperEmail").val(),
-                        "birthYear": $("#txtEditInfoBirthYear").val(),
-                        "subStatusId": subStatusId, 
-                        "subRole": $("#SubRole").val(),
-                        "comments": $("#txtEditInfoComment").val(),
-                        "helperPhone": $("#txtEditHelperPhone").val()
+                        "contributorId": $("#lblChangePasswordContributorId").text(), "password": $("#txtNewPassword").val()
                     },
                     success: function (response) {
                         $('.spinner').css('display', 'none');
                         if (response.success === true) {
-                            clearEditInfoDialog();
-                            $('#editInfo-dialog').dialog('close');
-                            $("#lblMessage").text("Contributor information was updated.");
-                            table.draw(false);
+                            clearChangePasswordDialog();
+                            $('#changePassword-dialog').dialog('close');
+                            $("#lblMessage").text("Contributor's password was changed. The contributor is required to change password on first login.");
                         } else {
-                            $("#lblEditInfoMessage").text(response.message);
-                            $("#lblEditInfoMessage").addClass("errorMessage");
+                            $("#lblChangePasswordMessage").text(response.message);
+                            $("#lblChangePasswordMessage").addClass("errorMessage");
                         }
                     },
-                    error: function () { alert('Error Update Information. It could be the timeout issue. Please try to reload your browser.'); }
+                    error: function () { alert('Error Update Contributor! It could be the timeout issue. Please try to reload your browser.'); }
                 });
-
 
             },
             close: function () {
-                clearEditInfoDialog();
+                clearChangePasswordDialog()
                 $(this).dialog('close');
             }
         }
 
     });
 }
+
+
+//function editContributorInfo(postUrl, table,  title, status) {
+//    $("#editInfo-dialog").dialog({
+//        title: title,
+//        autoOpen: false,
+//        resizable: false,
+//        width: 900,
+//        show: { effect: 'drop', direction: "up" },
+//        modal: true,
+//        draggable: true,
+//        closeOnEscape: true,
+//        position: { my: "left top", at: "left+50 top+100", of: window },
+//        open: function () {
+//            $('#editInfo-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+//        },
+//        close: function () {
+//            clearEditInfoDialog();
+//        },
+//        buttons: {
+//            "Submit": function () {
+              
+//                var subStatusId = status == 2 ? $("#dlSubStatus").val() : 0; //Sub Status is only for Approved Contributors
+//                var helperInd = "No";
+//                var legalGuardianInd = "No";
+
+//                if ($("#chkHasHelper").is(":checked")) {
+//                    helperInd = "Yes";
+//                    if ($("#txtEditHelperEmail").val() == "") {
+//                        alert("Helper Email is required.");
+//                        $("#txtEditHelperEmail").focus();
+//                        return false;
+//                    }
+//                }
+//                if ($('#chkHasLegalGuardian').is(":checked")) {
+//                    legalGuardianInd = "Yes";                    
+//                    if ($("#txtEditLegalGuardianFirstName").val() == "" || $("#txtEditLegalGuardianLastName").val() == "" || $("#txtEditLegalGuardianEmail").val() == "" || $("#txtEditLegalGuardianPhone").val()=="")  {
+//                        alert("All Legal Guardian fields are required.");
+//                        $("#txtEditLegalGuardianFirstName").focus();
+//                        return false;
+//                    }
+//                }
+//                $('.spinner').css('display', 'block');
+//                var jsonObject = {
+//                    "Id": $("#hidEditInfoContributorId").val(),
+//                    "EmailAddress": $("#txtEditContributorEmail").val(),
+//                    "HelperInd": helperInd,
+//                    "HelperEmail": $("#txtEditHelperEmail").val(),
+//                    "BirthYear": $("#txtEditInfoBirthYear").val(),
+//                    "SubStatusId": subStatusId,
+//                    "SubRole": $("#SubRole").val(),
+//                    "Comments": $("#txtEditInfoComment").val(),
+//                    "HelperPhoneNumber": $("#txtEditHelperPhone").val(),
+//                    "LegalGuardianId": $("#hidEditLegalGuardianId").val(),
+//                    "LegalGuardianFirstName": $("#txtEditLegalGuardianFirstName").val(),
+//                    "LegalGuardianLastName": $("#txtEditLegalGuardianLastName").val(),
+//                    "LegalGuardianEmail": $("#txtEditLegalGuardianEmail").val(),
+//                    "LegalGuardianPhoneNumber": $("#txtEditLegalGuardianPhone").val(),
+//                    "LegalGuardianInd": legalGuardianInd
+                   
+//                };
+
+//                $.ajax({
+//                    url: postUrl,
+//                    type: "POST",
+//                    data: {
+//                        "contributorView": jsonObject
+//                    },
+//                    success: function (response) {
+//                        $('.spinner').css('display', 'none');
+//                        if (response.success === true) {
+//                            clearEditInfoDialog();
+//                            $('#editInfo-dialog').dialog('close');
+//                            $("#lblMessage").text("Contributor information was updated.");
+//                            table.draw(false);
+//                        } else {
+//                            $("#lblEditInfoMessage").text(response.message);
+//                            $("#lblEditInfoMessage").addClass("errorMessage");
+//                        }
+//                    },
+//                    error: function () { alert('Error Update Information. It could be the timeout issue. Please try to reload your browser.'); }
+//                });
+
+
+//            },
+//            close: function () {
+//                clearEditInfoDialog();
+//                $(this).dialog('close');
+//            }
+//        }
+
+//    });
+//}
 
 //function editContributorSubStatus(postUrl, table, title) {
 //    $("#editSubStatus-dialog").dialog({
@@ -426,4 +559,8 @@ function clearEditSubStatusDialog() {
     //$("#SubStatus")
    
     $("#lblEditSubStatusMessage").removeClass("errorMessage");
+}
+function clearChangePasswordDialog() {
+    $("#lblChangePasswordContributorId").val("");
+    $("#txtNewPassword").text("");    
 }

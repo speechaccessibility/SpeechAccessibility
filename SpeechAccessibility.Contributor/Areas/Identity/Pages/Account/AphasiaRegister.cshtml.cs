@@ -51,6 +51,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         [BindProperty]
         public string AphasiaInd { get; set; }
 
+        [BindProperty]
+        public List<String> ExistingEmailList { get; set; }
+
 
         public List<String> resultErrorList = new List<String>();
 
@@ -62,6 +65,11 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             "None"
         };
 
+        public List<SelectListItem> countryList { get; } = new List<SelectListItem>
+        {
+               new SelectListItem { Value = "United States", Text = "United States" },
+                new SelectListItem { Value = "Canada", Text = "Canada" },
+        };
 
         public List<SelectListItem> stateList { get; } = new List<SelectListItem>
          {
@@ -165,7 +173,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Display(Name = "Length of Diagnosis")]
             public string LengthOfDiagnosis { get; set; }
 
-            [Required]
+       
             [Display(Name = "State")]
             public string State { get; set; }
 
@@ -186,12 +194,23 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             public string HelperPhoneNumber { get; set; }
 
             public string Correspondence { get; set; }
+
+            public string DuplicateEmailInd { get; set; }
+
+            [Required]
+            [MaxLength(150)]
+            [Display(Name = "Reference Source")]
+            public string ReferenceSource { get; set; }
+
+            public string Country { get; set; }
         }
 
         public IActionResult OnGet(string aphasiaInd)
         {
             Input = new InputModel();
             AphasiaInd = aphasiaInd;
+
+            ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
 
             if (aphasiaInd == null)
             {
@@ -255,26 +274,40 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 ModelState.AddModelError("compareHelperEmailValidation", "The helper email and confirmation email do not match.");
             }
 
+            if ("Yes".Equals(Input.DuplicateEmailInd))
+            {
+                ModelState.AddModelError("duplicateEmailValidation", "This email is already registered.");
+            }
+
             if (ModelState.IsValid)
             {
-             
+                if ("United States".Equals(Input.Country))
+                {
+
+                    if (String.IsNullOrEmpty(Input.State))
+                    {
+                        ModelState.AddModelError("stateError", "State is required.");
+                        return Page();
+                    }
+                }
+
                 int age = Int32.Parse(Input.CurrentAge);
 
 
-                if (unqualifiedStates.Contains(Input.State) || age<18)
+                if (unqualifiedStates.Contains(Input.State) || age < 18)
                 {
                     return RedirectToPage("./Unqualified");
                 }
 
 
-                    Contributor contributor = PopulateContributor();
-                    _context.Contributor.Add(contributor);
-             
-                    _context.Etiology.Remove(contributor.Etiology);
-                  
-                    _context.SaveChanges();
+                Contributor contributor = PopulateContributor();
+                _context.Contributor.Add(contributor);
 
-                    _logger.LogInformation("User created a new account with password.");
+                _context.Etiology.Remove(contributor.Etiology);
+
+                _context.SaveChanges();
+
+                _logger.LogInformation("User created a new account with password.");
 
 
                 string email = Input.Email;
@@ -292,7 +325,11 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
                 SendNotificationEmail(email, phone);
 
-                return RedirectToAction("ApprovalRequired" , new {etiologyId=4});
+                return RedirectToAction("ApprovalRequired", new { etiologyId = 4 });
+
+            }
+            else {
+                ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
 
             }
 
@@ -333,7 +370,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             contributor.EighteenOrOlderInd = "Yes";
             contributor.CurrentAge = Input.CurrentAge;
             contributor.LengthOfDiagnosis = Input.LengthOfDiagnosis;
-
+            contributor.ReferenceSource = Input.ReferenceSource;
+            contributor.Country = Input.Country;
+           
             if ("Yes".Equals(AphasiaInd))
             {
                 contributor.EmailAddress = Input.Email;

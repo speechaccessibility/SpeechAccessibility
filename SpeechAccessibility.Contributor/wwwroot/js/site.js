@@ -147,9 +147,10 @@ function isChecked(id) {
     }
 }
 
+
 function checkHelperInd()
 {
-    if (document.getElementById("helperYes").checked) {
+    if (document.getElementById("helperYes")!=null && document.getElementById("helperYes").checked) {
         document.getElementById("helperDiv").style.display = "flex";
     }
     else
@@ -187,7 +188,8 @@ function loadRegisterPage() {
 
 function loadAphasiaPage() {
     checkCorrespondence();
-    checkHelperInd();
+    //checkHelperInd();
+    validateEmail();
 }
 
 function loadDSCreateAccountPage() {
@@ -199,6 +201,7 @@ function loadDSCreateAccountPage() {
 function loadCPRegisterPage() {
     checkLegalGuardian();
     checkHelperInd();
+    validateEmail();
 }
 
 function checkOtherRaceInd()
@@ -270,6 +273,17 @@ function checkDiagnois() {
     else {
         document.getElementById("otherDiv").style.display = "none";
         document.getElementById("OtherText").value = "";
+    }
+}
+
+function checkCountry() {
+
+    if (document.getElementById("selectCountry").value == 'Canada') {
+        document.getElementById("stateDiv").style.display = "none";
+        document.getElementById("stateSelect").value = "";
+    }
+    else {
+        document.getElementById("stateDiv").style.display = "block";     
     }
 }
 
@@ -379,18 +393,27 @@ function checkAssistanceAvailable() {
 
 function checkCorrespondence() {
 
-    if (document.getElementById("correspondenceSelf").checked) {
+    if (document.getElementById("correspondenceSelf")!=null && document.getElementById("correspondenceSelf").checked) {
         document.getElementById("contributorContactDiv").style.display = "none";
         document.getElementById("contributorEmail").value = "";
         document.getElementById("compareEmail").value = "";
         document.getElementById("individualPhoneNumber").value = "";
     }
     else {
-        document.getElementById("contributorContactDiv").style.display = "block";
+
+        if (document.getElementById("contributorContactDiv") != null) {
+            document.getElementById("contributorContactDiv").style.display = "block";
+        }
+       
     }
+    
 }
 
+
 function dsRegisterLoad() {
+
+    validateEmail();
+
     if (document.getElementById("downSyndromeInd").value == "Yes") {
         checkLegalGuardian();
     }
@@ -398,7 +421,17 @@ function dsRegisterLoad() {
         checkAssistInd();
         checkAssistanceAvailable();
         checkCaregiverLegalGuardian();
-        checkCorrespondence();
+        checkCorrespondence();     
+    }
+
+}
+
+function validateEmail() {
+    var duplicateEmailInd = document.getElementById('duplicateEmailInd').value 
+
+    console.log(duplicateEmailInd);
+    if (duplicateEmailInd == 'Yes') {
+        document.getElementById('existingEmailError').showModal()
     }
 
 }
@@ -469,35 +502,38 @@ function speakPrompt() {
             var selectedOption = "";
             var secondaryOption = "";
 
+            if (os == "Windows") {
+                if (browser == "Edge") {
+                    selectedOption = "Microsoft Jenny Online (Natural) - English (United States)"
+
+                }
+                else if (browser == "Firefox") {
+                    selectedOption = "Microsoft Zira Desktop - English (United States)"
+                }
+                else {
+                    selectedOption = "Microsoft Zira - English (United States)"
+
+                }
+            }
+            else if (os == "Mac OS" || os == "iOS") {
+                selectedOption = "Samantha";
+            }
+
             if (etiologyId == "1") {
                 selectedOption = "Google US English";
                 secondaryOption = "Microsoft Mark - English (United States)";
                 prompt.rate = 1;
             }
-            else if (etiologyId == "4")
-            {
+            else if (etiologyId == "4") {
                 selectedOption = "Microsoft Mark - English (United States)";
                 prompt.rate = .3;
                 prompt.pitch = .2;
             }
-            else {
-                if (os == "Windows") {
-                    if (browser == "Edge") {
-                        selectedOption = "Microsoft Jenny Online (Natural) - English (United States)"
-
-                    }
-                    else if (browser == "Firefox") {
-                        selectedOption = "Microsoft Zira Desktop - English (United States)"
-                    }
-                    else {
-                        selectedOption = "Microsoft Zira - English (United States)"
-
-                    }
-                }
-                else if (os == "Mac OS" || os == "iOS") {
-                    selectedOption = "Samantha";
-                }
-            }       
+            else if (etiologyId == "3") {
+                prompt.rate = .5;
+                prompt.pitch = .9;
+            }
+           
 
             var voiceSelect = document.getElementById('voiceSelect');
             var foundSelectedOption = false;
