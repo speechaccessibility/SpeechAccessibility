@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SpeechAccessibility.Core.Models
 {
@@ -40,6 +41,13 @@ namespace SpeechAccessibility.Core.Models
         public int? AssignedBlocksCnt { get; set; }
         public DateTime? LastRecordingDate { get; set; }
         public string AssignedAnnotator { get; set; }
-      
+        public string LegalGuardianFirstName { get; set; }
+        public string LegalGuardianLastName { get; set; }
+        public string LegalGuardianEmail { get; set; }
+        public string LegalGuardianPhoneNumber { get; set; }
+        public int? LegalGuardianId { get; set; }
+        //[NotMapped]
+        //public string LegalGuardianInd { get; set; }
+
     }
 }

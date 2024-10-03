@@ -7,8 +7,10 @@ using System.Text;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SpeechAccessibility.Annotator.Extensions;
@@ -16,6 +18,7 @@ using SpeechAccessibility.Annotator.Models;
 using SpeechAccessibility.Annotator.Services;
 using SpeechAccessibility.Core.Interfaces;
 using SpeechAccessibility.Core.Models;
+using SpeechAccessibility.Infrastructure.Data;
 
 namespace SpeechAccessibility.Annotator.Controllers
 {
@@ -38,14 +41,17 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly IRegisterLinkRepository _registerLinkRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IEtiologyContactEmailAddressRepository _etiologyContactEmailAddressRepository;
-        private readonly IAspNetUsersRepository _usersRepository;
+        private readonly ILegalGuardianRepository _legalGuardianRepository;
+        private readonly IHelperNotPaidGiftCardsRepository _helperNotPaidGiftCardsRepository;
+        private readonly IAspNetUsersRepository _aspNetUsersRepository;
 
         public ContributorController(IContributorViewRepository contributorViewRepository, IContributorAssignedAnnotatorRepository contributorAssignedAnnotatorRepository
             , IUserRepository userRepository, IConfiguration configuration, IRecordingRepository recordingRepository, IContributorFollowUpRepository contributorFollowUpRepository
             , IEmailLoggingRepository emailLoggingRepository, IUserSubRoleRepository userSubRoleRepository, ISubRoleRepository subRoleRepository
             , IContributorSubStatusRepository contributorSubStatusRepository, IEtiologyViewRepository etiologyRepository
             , IApprovedDeniedContributorRepository aprovedDeniedContributorRepository, IContributorRepository contributorRepository, IRegisterLinkRepository registerLinkRepository
-            , ICategoryRepository categoryRepository, IEtiologyContactEmailAddressRepository etiologyContactEmailAddressRepository, IAspNetUsersRepository usersRepository)
+            , ICategoryRepository categoryRepository, IEtiologyContactEmailAddressRepository etiologyContactEmailAddressRepository, ILegalGuardianRepository legalGuardianRepository
+            , IHelperNotPaidGiftCardsRepository helperNotPaidGiftCardsRepository, IAspNetUsersRepository aspNetUsersRepository)
         {
             _contributorViewRepository = contributorViewRepository;
             _contributorAssignedAnnotatorRepository = contributorAssignedAnnotatorRepository;
@@ -63,7 +69,9 @@ namespace SpeechAccessibility.Annotator.Controllers
             _registerLinkRepository = registerLinkRepository;
             _categoryRepository = categoryRepository;
             _etiologyContactEmailAddressRepository = etiologyContactEmailAddressRepository;
-            _usersRepository = usersRepository;
+            _legalGuardianRepository = legalGuardianRepository;
+            _helperNotPaidGiftCardsRepository = helperNotPaidGiftCardsRepository;
+            _aspNetUsersRepository = aspNetUsersRepository;
         }
 
         //[Authorize(Policy = "SLPAnnotatorAndTextAnnotatorAdmin")]
@@ -157,9 +165,11 @@ namespace SpeechAccessibility.Annotator.Controllers
             int pageSize = length != null ? Convert.ToInt32(length) : 0;
             int skip = start != null ? Convert.ToInt32(start) : 0;
 
-            List<int> includeStatus = new List<int>();
-            includeStatus.Add(1);
-            includeStatus.Add(5);
+            var includeStatus = new List<int>
+            {
+                1,
+                5
+            };
 
             var contributors = _contributorViewRepository.Find(c => includeStatus.Contains(c.StatusId) && c.EtiologyId== etiologyId)
             .Where(c => c.FirstName.Contains(searchValue) || c.LastName.Contains(searchValue) || c.Id.ToString().Contains(searchValue)
@@ -205,6 +215,10 @@ namespace SpeechAccessibility.Annotator.Controllers
                     return RedirectToRoute(new { controller = "Home", action = "Error" });
 
             }
+            List<SelectListItem> promptCatForMentor = new SelectList(_categoryRepository.Find(c => c.Active == "Yes" && c.DisplayForMentor == "Yes").OrderBy(c => c.Id), "Id", "Description").ToList();
+            ViewBag.PromptCategories = promptCatForMentor;
+
+
             //todo: use Etiology view here
             //var subRoleName = _subRoleRepository.Find(s => s.EtiologyId == etiologyId).Include(e => e.Etiology).FirstOrDefault();
             var subRoleName = _subRoleRepository.Find(s => s.EtiologyId == etiologyId).FirstOrDefault();
@@ -350,7 +364,12 @@ namespace SpeechAccessibility.Annotator.Controllers
                     sendTeamForEtiologyChanged = true;
                 }
                 contributor.EtiologyId = etiologyId;
-                
+                ////if new Etiology is Parkinson's Disease or Down Syndrome or Other, change PromptCategoryId to 0 for Gift Cards
+                //if (etiologyId is 1 or 2 or 5)
+                //{
+                //    contributor.PromptCategoryId = 0;
+                //}
+
                 contributor.StatusId = string.IsNullOrEmpty(contributor.IdentityUserId) ? 5 : action; //un-deny and contributor is not registered if contributor.IdentityUserId is null
             }
             else
@@ -382,6 +401,12 @@ namespace SpeechAccessibility.Annotator.Controllers
             }
             else
                 contributor.UpdateTS = DateTime.Now;
+
+            //if new Etiology is Parkinson's Disease or Down Syndrome or Other, change PromptCategoryId to 0 for Gift Cards
+            if (etiologyId is 1 or 2 or 5)
+            {
+                contributor.PromptCategoryId = 0;
+            }
 
             contributor.ApproveDenyBy = User.Identity.Name;
             _contributorRepository.Update(contributor);
@@ -627,12 +652,28 @@ namespace SpeechAccessibility.Annotator.Controllers
         }
 
         [Authorize(Policy = "AllAnnotatorAndExternalSLPAnnotator")]
+        [HttpGet]
+        public ActionResult EditContributorInfo(Guid contributorId, int etiologyId)
+        {
+            ViewBag.SubRole = etiologyId;
+            ViewBag.SubRoleName = _etiologyRepository.Find(e => e.Id == etiologyId).FirstOrDefault()?.Name;
+            ViewBag.SubStatus = GetSubStatus();
+
+            var contributorVM = _contributorViewRepository.Find(c => c.Id == contributorId).FirstOrDefault();
+            var helperNotPaid = _helperNotPaidGiftCardsRepository
+                .Find(h => h.HelperEmailAddress == contributorVM.HelperEmail).FirstOrDefault();
+            if (helperNotPaid != null)
+                contributorVM.HelperNotPaid = "No";
+
+            return PartialView("_EditContributorInfo", contributorVM);
+        }
+
+        [Authorize(Policy = "AllAnnotatorAndExternalSLPAnnotator")]
         [HttpPost]
-        public async Task<ActionResult> EditContributorInfo(Guid contributorId,string contributorEmail, string helperInd, string helperEmail,string birthYear,int subStatusId
-            , int subRole, string comments, string helperPhone)
+        public async Task<ActionResult> EditContributorInfo(ContributorView contributorView)
         {
             //contributor email cannot be empty
-            if (string.IsNullOrEmpty(contributorEmail))
+            if (string.IsNullOrEmpty(contributorView.EmailAddress))
             {
                 return Json(new { Success = false, Message = "Contributor email cannot be empty." });
             }
@@ -641,62 +682,141 @@ namespace SpeechAccessibility.Annotator.Controllers
             var hasSubRole = @User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.OtherPhone)?.Value;
             if (hasSubRole == "Yes")
             {
-                if (UtilsExtension.IsMatchedRole(_userSubRoleRepository, subRole, User.Identity.Name) == false)
+                if (UtilsExtension.IsMatchedRole(_userSubRoleRepository, contributorView.SubRole, User.Identity.Name) == false)
                     return Json(new { Success = false, Message = "You do not have permission for this contributor." });
 
             }
 
-            var contributor = _contributorRepository.Find(c => c.Id == contributorId).Include(c=>c.IdentityUser).FirstOrDefault();
+            var contributor = _contributorRepository.Find(c => c.Id == contributorView.Id).Include(c=>c.IdentityUser)
+                .Include(c=>c.LegalGuardian).FirstOrDefault();
             if (contributor == null)
             {
                 return Json(new { Success = false, Message = "Contributor is not found." });
             }
 
-            if (contributor.EmailAddress!= null && !contributor.EmailAddress.Equals(contributorEmail))
+            if (contributor.EmailAddress!= null && !contributor.EmailAddress.Equals(contributorView.EmailAddress))
             {
-                contributor.EmailAddress = contributorEmail;
+                contributor.EmailAddress = contributorView.EmailAddress;
                 if (contributor.IdentityUser != null)
                 {
-                    contributor.IdentityUser.UserName = contributorEmail;
-                    contributor.IdentityUser.NormalizedEmail = contributorEmail;
-                    contributor.IdentityUser.Email = contributorEmail;
-                    contributor.IdentityUser.NormalizedUserName = contributorEmail;
+                    contributor.IdentityUser.UserName = contributorView.EmailAddress;
+                    contributor.IdentityUser.NormalizedEmail = contributorView.EmailAddress;
+                    contributor.IdentityUser.Email = contributorView.EmailAddress;
+                    contributor.IdentityUser.NormalizedUserName = contributorView.EmailAddress;
                 }
             }
-            //else
-            //{
-            //    contributor.EmailAddress = contributorEmail;
-            //    contributor.IdentityUser.UserName = contributorEmail;
-            //    contributor.IdentityUser.NormalizedEmail = contributorEmail;
-            //    contributor.IdentityUser.Email = contributorEmail;
-            //    contributor.IdentityUser.NormalizedUserName = contributorEmail;
-            //}
-
-            contributor.HelperInd = helperInd;
-            if (helperInd.Trim() == "No")
+            
+            contributor.HelperInd = contributorView.HelperInd;
+            if (contributorView.HelperInd.Trim() == "No")
             {
+                contributor.HelperFirstName = "";
+                contributor.HelperLastName = "";
                 contributor.HelperEmail = "";
                 contributor.HelperPhoneNumber = "";
+
             }
             else
             {
-                contributor.HelperEmail = helperEmail;
-                contributor.HelperPhoneNumber = helperPhone;
+                contributor.HelperFirstName= contributorView.HelperFirstName;
+                contributor.HelperLastName=contributorView.HelperLastName;
+                contributor.HelperEmail = contributorView.HelperEmail;
+                contributor.HelperPhoneNumber = contributorView.HelperPhoneNumber;
             }
 
-            contributor.BirthYear = birthYear;
-            if(subStatusId>0)
-                contributor.SubStatusId= subStatusId;
-            if (!string.IsNullOrEmpty(comments))
-                contributor.Comments = comments;
+            contributor.BirthYear = contributorView.BirthYear;
+            if(contributorView.SubStatusId> 0)
+                contributor.SubStatusId= contributorView.SubStatusId;
+            if (!string.IsNullOrEmpty(contributorView.Comments))
+                contributor.Comments = contributorView.Comments;
             contributor.UpdateTS = DateTime.Now;
             contributor.ApproveDenyBy = User.Identity.Name;
+            
+            //update contributor legal guardian
+            if (contributorView.LegalGuardianInd == "Yes")
+            {
+                if (contributor.LegalGuardian.Count == 0) //this contributor does not have a legal guardian yet
+                {
+                    var newLegalGuardian = new LegalGuardian
+                    {
+                        FirstName = contributorView.LegalGuardianFirstName,
+                        LastName = contributorView.LegalGuardianLastName,
+                        Email = contributorView.LegalGuardianEmail,
+                        PhoneNumber = contributorView.LegalGuardianPhoneNumber
+                    };
+                    var newLegalGuardianList = new List<LegalGuardian> { newLegalGuardian };
+                    contributor.LegalGuardian = newLegalGuardianList;
+
+                }
+                else //currently each contributor only has one Legal Guardian
+                {
+                    contributor.LegalGuardian.FirstOrDefault().FirstName = contributorView.LegalGuardianFirstName;
+                    contributor.LegalGuardian.FirstOrDefault().LastName = contributorView.LegalGuardianLastName;
+                    contributor.LegalGuardian.FirstOrDefault().Email = contributorView.LegalGuardianEmail;
+                    contributor.LegalGuardian.FirstOrDefault().PhoneNumber = contributorView.LegalGuardianPhoneNumber;
+                    contributor.LegalGuardian.FirstOrDefault().UpdateTs = DateTime.Now;
+                }
+            }
+            else //delete the current legal guardian if exists
+            {
+                if (contributor.LegalGuardian.Count > 0)
+                {
+                    var existingLegalGuardian = contributor.LegalGuardian.FirstOrDefault();
+                   _legalGuardianRepository.Delete(existingLegalGuardian);
+                }
+            }
             _contributorRepository.Update(contributor);
+
+            //If HelperNotPaid is Yes, add to the HelperNotPaidGiftCards table
+            if (contributorView.HelperInd.Trim() == "Yes")
+            {
+                var helper = _helperNotPaidGiftCardsRepository
+                    .Find(h => h.HelperEmailAddress == contributorView.HelperEmail).FirstOrDefault();
+               
+                if (contributorView.HelperNotPaid == "No" && helper==null)//add new helper
+                {
+                    var newHelper = new HelperNotPaidGiftCards
+                    {
+                        HelperEmailAddress = contributorView.HelperEmail,
+                        FirstName = contributorView.HelperFirstName,
+                        LastName = contributorView.HelperLastName
+                    };
+                    _helperNotPaidGiftCardsRepository.Insert(newHelper);
+                }
+
+                if (contributorView.HelperNotPaid == "Yes" && helper != null) //remove the existing helper
+                {
+                    _helperNotPaidGiftCardsRepository.Delete(helper);
+                }
+            }
 
             return Json(new { Success = true, Message = "updated" });
 
         }
 
+        [Authorize(Policy = "AllAnnotatorAndExternalSLPAnnotator")]
+        [HttpPost]
+        public ActionResult ChangeContributorPassword(Guid contributorId, string password)
+        {
+            var contributor = _contributorRepository.Find(c => c.Id == contributorId).Include(c => c.IdentityUser).FirstOrDefault();
+            if(contributor == null)
+                return Json(new { Success = false, Message = "Contributor not found." });
+            if (contributor.IdentityUser == null)
+                return Json(new { Success = false, Message = "Contributor does not have an account for login." });
+   
+            var hasher = new PasswordHasher<IdentityUser>();
+            var identityUser = new IdentityUser(contributor.EmailAddress);
+
+            var passwordHash = hasher.HashPassword(identityUser, password);
+
+            contributor.IdentityUser.PasswordHash = passwordHash;
+            contributor.ChangePassword = true;
+
+            _contributorRepository.Update(contributor);
+
+            return Json(new { Success = true, Message = "Password is Updated" });
+        }
+
+       
         [Authorize(Policy = "AllAnnotatorAndExternalSLPAnnotator")]
         public ActionResult ScheduleFollowUpEmail(Guid contributorId)
         {
@@ -986,5 +1106,14 @@ namespace SpeechAccessibility.Annotator.Controllers
                 })
                 .ToList();
         }
+
+       
+        public ActionResult CheckIfHelperNotPaid(string email)
+        {
+            var helper = _helperNotPaidGiftCardsRepository.Find(h => h.HelperEmailAddress == email).FirstOrDefault();
+            return Json(helper != null ? new { exist = true } : new { exist = false });
+        }
+
+
     }
 }

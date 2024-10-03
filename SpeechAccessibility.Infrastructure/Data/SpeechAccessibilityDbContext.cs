@@ -48,6 +48,8 @@ namespace SpeechAccessibility.Infrastructure.Data
         public DbSet<ContributorAssignedList> ContributorAssignedList {get; set; }
         public DbSet<EtiologyContactEmailAddress> EtiologyContactEmailAddress { get; set; }
         public DbSet<NumberOfRecordingByEtiology> NumberOfRecordingByEtiology { get; set; }
+        public DbSet<HelperNotPaidGiftCards> HelperNotPaidGiftCards { get; set; }
+        public DbSet<ContributorsPaidByCheck> ContributorsPaidByCheck { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -86,10 +88,10 @@ namespace SpeechAccessibility.Infrastructure.Data
             builder.Entity<ContributorAssignedList>(ConfigureContributorAssignedList);
             builder.Entity<EtiologyContactEmailAddress>(ConfigureEtiologyContactEmailAddress);
             builder.Entity<NumberOfRecordingByEtiology>(ConfigureNumberOfRecordingByEtiology);
+            builder.Entity<HelperNotPaidGiftCards>(ConfigureHelperNotPaidGiftCards);
+            builder.Entity<ContributorsPaidByCheck>(ConfigureContributorsPaidByCheck);
 
         }
-
-       
 
         private void ConfigureBlockMasterOfPrompts(EntityTypeBuilder<BlockMasterOfPrompts> entity)
         {
@@ -790,6 +792,16 @@ namespace SpeechAccessibility.Infrastructure.Data
             entity.HasNoKey();
             entity.ToView("v_NumberOfRecordingByEtiology");
             
+        }
+
+        private void ConfigureContributorsPaidByCheck(EntityTypeBuilder<ContributorsPaidByCheck> entity)
+        {
+            entity.HasKey(e => e.Id);
+        }
+
+        private void ConfigureHelperNotPaidGiftCards(EntityTypeBuilder<HelperNotPaidGiftCards> entity)
+        {
+            entity.HasKey(e => e.Id);
         }
 
     }

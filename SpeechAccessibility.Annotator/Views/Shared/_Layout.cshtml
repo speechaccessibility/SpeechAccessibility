@@ -73,9 +73,10 @@
 
                                     <a class="dropdown-item" href="@Url.Action("Index", "SpeechFile")">Original Speech Files</a>
                                     <a class="dropdown-item" href="@Url.Action("ModifiedSpeechFiles", "SpeechFile")">WIP Speech Files</a>
-                                    <a class="dropdown-item" href="@Url.Action("ToDiscussSpeechFiles", "SpeechFile")">To-Discuss Speech Files</a>
+                                    <a class="dropdown-item" href="@Url.Action("HoldOrDiscussSpeechFiles", "SpeechFile",new{recordingStatusId=5})">To-Discuss Speech Files</a>
                                     <a class="dropdown-item" href="@Url.Action("PublishedSpeechFiles", "SpeechFile")">Published Speech Files</a>
                                     <a class="dropdown-item" href="@Url.Action("ExcludedSpeechFiles", "SpeechFile")">Excluded Speech Files</a>
+                                    <a class="dropdown-item" href="@Url.Action("HoldOrDiscussSpeechFiles", "SpeechFile",new{recordingStatusId=6})">On-Hold Speech Files</a>
                                 </div>
                             </li>
                         }
@@ -162,9 +163,11 @@
                                         <a class="dropdown-item" href="@Url.Action("ViewDailyContributorSpeechFiles", "Report")">View Daily Contributor Speech Files</a>
                                         <a class="dropdown-item" href="@Url.Action("ViewContributorAssignedList", "Report")">View Contributor Assigned List</a>
                                         <a class="dropdown-item" href="@Url.Action("PublishedRecordingsByEtiology", "Report")">View Published Recordings By Etiology</a>
+                                        <a class="dropdown-item" href="@Url.Action("RecruitingRecordingProgress", "Report")">Recruiting & Recording Progress</a>
                                         
                                     }
-                                    <a class="dropdown-item" href="@Url.Action("ViewContributorsCompensation", "Report")">View Contributors Compensation</a>
+                                    <a class="dropdown-item" href="@Url.Action("ViewContributorsCompensation", "Report")">View Contributors Compensation-ECodes</a>
+                                    <a class="dropdown-item" href="@Url.Action("ViewContributorsCompensationByCheck", "Report")">View Contributors Compensation-Checks</a>
                                     <a class="dropdown-item" href="@Url.Action("ViewContributorsCompensationHistory", "Report")">View Contributors Compensation History</a>
                                 </div>
                             </li>
@@ -178,7 +181,7 @@
                                     <a class="dropdown-item" href="@Url.Action("ContributorsSearch", "Admin")">Contributors Search</a>
                                     <a class="dropdown-item" href="@Url.Action("ManageUsers", "Admin")">Manage Users</a>
                                     <a class="dropdown-item" href="@Url.Action("UpdateGiftCardAmount", "Admin")">Update Gift Cards Amount</a>
-
+                                    <a class="dropdown-item" href="@Url.Action("ContributorsPaidByCheckAndHelperNotPaid", "Admin")">Contributors Not Get Ecodes/Helper Not Get Payment</a>
                                 </div>
                             </li>
 

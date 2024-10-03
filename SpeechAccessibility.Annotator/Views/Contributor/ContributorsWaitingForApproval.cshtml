@@ -68,17 +68,17 @@
 </div>
 
 <div id="editInfo-dialog" style="display: none">
-    <label id="lblEditInfoMessage">Contributor:</label>
-    <input type="hidden" id="hidEditInfoContributorId" />
-    <br /><b>First Name:</b><label id="lblEditInfoFirstName" name="lblEditInfoFirstName"></label>
-    <br /><b>Last Name:</b><label id="lblEditInfoLastName" name="lblEditInfoLastName"></label>
-    <br /><b>Year of Birth:</b><input type="text" id="txtEditInfoBirthYear" name="txtEditInfoBirthYear" />
-    <br/><br /><b>Contributor Email:</b><input type="text" id="txtEditContributorEmail" name="txtEditContributorEmail" />
-    <br /><br /><b>Has Helper:</b> <input type="checkbox" id="chkHasHelper" name="chkHasHelper" />
-    <br/><br/><b>Helper Email:</b><input type="text" id="txtEditHelperEmail" name="txtEditHelperEmail" />
-    &nbsp;&nbsp;&nbsp;<b>Helper Phone:</b><input type="text" id="txtEditHelperPhone" name="txtEditHelperPhone" />
-    <br />Comment:<br /><textarea id="txtEditInfoComment" name="txtEditInfoComment" rows="4" cols="50"></textarea>
 </div>
+
+<div id="changePassword-dialog" style="display: none">
+    <span class="alert alert-warning">The contributor is required to change password on first login.</span>
+    <div>
+        <label id="lblChangePasswordMessage"></label>
+        <br/><b>ContributorID:</b><label id="lblChangePasswordContributorId" name="lblChangePasswordContributorId"></label>
+        <br /><b>New Password: </b><input id="txtNewPassword" name="txtNewPassword" type="text" value="" />
+    </div>
+</div>
+
 
 <div class="spinner" style="display:none">
     <div class="center-div">
@@ -241,7 +241,55 @@
                             "visible": false,
                             "name": "OtherEtiologyText"
                         },
-                        
+                        {
+                            "title": "LegalGuardian FirstName",
+                            "data": "legalGuardianFirstName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "LegalGuardianFirstName"
+                        },
+                        {
+                            "title": "legalGuardian LastName",
+                            "data": "legalGuardianLastName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "LegalGuardianLastName"
+                        },
+
+                        {
+                            "title": "LegalGuardian Email",
+                            "data": "legalGuardianEmail",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "LegalGuardianEmail"
+                        },
+                        {
+                            "title": "LegalGuardian Phone",
+                            "data": "legalGuardianPhoneNumber",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "LegalGuardianPhoneNumber"
+                        },
+                        {
+                            "title": "LegalGuardianId",
+                            "data": "legalGuardianId",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "LegalGuardianId"
+                        },
+                         {
+                            "title": "IdentityUserId",
+                            "data": "identityUserId",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "IdentityUserId"
+                        },
                         {
                             "title": "Actions",
                             "data": "id",
@@ -257,23 +305,7 @@
                                     var link = '<a href="#" class="deny">Deny</a> | <a href="#" class="NonResponsive">Non-Responsive</a>'
                                         + '<br>| <a href="#" class="ChangeEti">Change Eti</a> | <a href="#" class="sendFollowUp">Send Follow-up</a>'
                                         + '| <a href="#" class="editInfo">Edit Info</a> | <a href="#" class="viewRating">View Rating</a>';
-
-                                    ////if DS and Contributor is not register, should not have the Approve button
-                                    // if ($("#SubRole").val() == 2) 
-                                    // { //this is DS, add Registration link
-                                    //    if (row.registerRequired == "Yes") {
-                                    //        var contributorLink = $("#RegisterLink").val() + "?contributorId=" + row.id;
-                                    //        link = '<a href="' + contributorLink + '" target="_blank">Register</a> | ' + link;
-                                    //    }
-                                    //    else
-                                    //    {
-                                    //        link = '<a href="#" class="approve" >Approve</a>  | ' + link;
-                                    //    }
-                                    //}
-                                    //else
-                                    //{
-                                    //    link = '<a href="#" class="approve" >Approve</a>  | ' + link;
-                                    //}
+                                 
                                     //if the Etiology requires register, add the register link
                                     if (row.registerRequired == "Yes" &&  row.statusId == 5) {
                                         var contributorLink = $("#ContributorLink").val() +  $("#RegisterLink").val() + "?contributorId=" + row.id;
@@ -282,6 +314,10 @@
                                     else
                                     {
                                         link = '<a href="#" class="approve" >Approve</a>  | ' + link;
+                                    }
+                                    if(row.identityUserId != '')
+                                    {
+                                        link = link + ' | <a href="#" class="changePassword" >Change Password</a>';
                                     }
                                     return link;
                                 }
@@ -494,51 +530,32 @@
                 'a.editInfo',
                 function (e) {
                     e.preventDefault();
-                    var selectedRowData = oContributorsTable.row($(this).closest('tr'));
-                    var row = selectedRowData.data();
-                    $("#lblEdiInfoMessage").text("Update Contributor Information:");
-                    $("#hidEditInfoContributorId").val(row.id);
-                    $("#lblEditInfoFirstName").text(row.firstName);
-                    $("#lblEditInfoLastName").text(row.lastName);
-                    $("#txtEditContributorEmail").val(row.emailAddress);
-                    $("#txtEditHelperEmail").val(row.helperEmail);
-                    $("#txtEditHelperPhone").val(row.helperPhoneNumber);
-                    $("#txtEditInfoBirthYear").val(row.birthYear);
                    
-                    if (row.helperInd=="Yes")
-                    {
-                        $("#chkHasHelper").prop('checked', true);
-                        $("#txtEditHelperEmail").prop("disabled", false);
-                        $("#txtEditHelperPhone").prop("disabled", false);                        
-                    }                        
-                    else
-                    {
-                        $("#chkHasHelper").prop('checked', false);
-                        $("#txtEditHelperEmail").prop("disabled", true);
-                        $("#txtEditHelperPhone").prop("disabled", true);                        
-                    }
-                       
-                    $("#txtEditInfoComment").val(row.comments);
-
-                    editContributorInfo('@Url.Action("EditContributorInfo", "Contributor")', oContributorsTable, "Edit Contributor Info",1);
-                    $("#editInfo-dialog").dialog('open');
-
-            });            
-        
-
-            $('#chkHasHelper').change(function () {
-                if (this.checked) {
-                    $("#txtEditHelperEmail").prop("disabled", false);
-                    $("#txtEditHelperPhone").prop("disabled", false);
-                }
-                else {
-                    $("#txtEditHelperEmail").prop("disabled", true);
-                    $("#txtEditHelperPhone").prop("disabled", true);
-                }
+                var selectedRowData = oContributorsTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                    var getUrl = "@Url.Action("EditContributorInfo", "Contributor")?contributorId=" + row.id + "&etiologyId=" + $("#SubRole").val();
+                var postUrl = '@Url.Action("EditContributorInfo", "Contributor")';
+                    editContributorInfo(getUrl, postUrl, oContributorsTable, 0);
+                $("#editInfo-dialog").dialog('open');
+                return false;
+              
             });
-          
 
-         
+
+            //changePassword           
+             $('#WaitingForApprovalContributorTable').on('click','a.changePassword',function (e) 
+             {
+                e.preventDefault();                   
+                var selectedRowData = oContributorsTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                $("#lblChangePasswordContributorId").text(row.id);
+                var postUrl = '@Url.Action("ChangeContributorPassword", "Contributor")';
+                changePassword(postUrl);
+                $("#changePassword-dialog").dialog('open');
+                return false;
+              
+            });
+
         });//End document ready
 
     </script>

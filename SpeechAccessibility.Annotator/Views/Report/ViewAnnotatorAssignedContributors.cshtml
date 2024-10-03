@@ -16,7 +16,7 @@
 <table id="AssignedConntributorTable" class="table table-sm table-bordered">
     @* <tbody>*@
     <thead>
-    <tr><th>Contributor Id</th><th>Last Name</th><th>First Name</th></tr>
+        <tr><th>Etiology</th><th>Contributor Id</th><th>Last Name</th><th>First Name</th></tr>
     </thead>
     @* </tbody>*@
     <tbody id="tblBody">
@@ -50,7 +50,7 @@
                             //$("#divAssignedContributors").text("The number of assigned Contributors" + response.counter );
                             for (var i = 0; i < response.contributors.length; i++) {
                                 var contributor = response.contributors[i];
-                                var row="<tr><td>" + contributor.id + "</td><td>" + contributor.lastName + "</td><td>" + contributor.firstName + "</td><tr>";
+                                var row = "<tr><td>" + contributor.etiologyName + "</td><td>" + contributor.id + "</td><td>" + contributor.lastName + "</td><td>" + contributor.firstName +  "</td><tr>";
                                 $("#AssignedConntributorTable > tbody:last").append(row);
                             }
                            

@@ -23,14 +23,7 @@
 
 <div id="rating-dialog" style="display: none">
 </div>
-@*<div id="undeny-dialog" style="display: none">
-    <label id="lblUnDenyMessage">Un-Deny below Contributor:</label>
-    <input type="hidden" id="hidUnDenyContributorId" />
-    <br /><b>First Name:</b><label id="lblUnDenyFirstName" name="lblUnDenyFirstName"></label>
-    <br /><b>Last Name:</b><label id="lblUnDenyLastName" name="lblUnDenyLastName"></label>
-    <br /><textarea id="txtUnDenyComment" name="txtUnDenyComment" rows="4" cols="50"></textarea>
 
-</div>*@
 <div id="makeChanges-dialog" style="display: none">
     <label id="lblMakeChangesMessage">Contributor:</label>
     <input type="hidden" id="hidMakeChangesContributorId" />
@@ -53,17 +46,18 @@
     <div id="Etiologies" style="display: none">Change Etiology: @Html.DropDownList("EtiologyId", new SelectList(ViewBag.Etiologies, "Value", "Text"))</div>
 </div>
 <div id="editInfo-dialog" style="display: none">
-    <label id="lblEditInfoMessage">Contributor:</label>
-    <input type="hidden" id="hidEditInfoContributorId" />
-    <br /><b>First Name:</b><label id="lblEditInfoFirstName" name="lblEditInfoFirstName"></label>
-    <br /><b>Last Name:</b><label id="lblEditInfoLastName" name="lblEditInfoLastName"></label>
-    <br /><b>Year of Birth:</b><input type="text" id="txtEditInfoBirthYear" name="txtEditInfoBirthYear" />
-    <br /><br /><b>Contributor Email:</b><input type="text" id="txtEditContributorEmail" name="txtEditContributorEmail" />
-    <br /><br /><b>Has Helper:</b> <input type="checkbox" id="chkHasHelper" name="chkHasHelper" />
-    <br /><br /><b>Helper Email:</b><input type="text" id="txtEditHelperEmail" name="txtEditHelperEmail" />
-    &nbsp;&nbsp;&nbsp;<b>Helper Phone:</b><input type="text" id="txtEditHelperPhone" name="txtEditHelperPhone" />
-    <br />Comment:<br /><textarea id="txtEditInfoComment" name="txtEditInfoComment" rows="4" cols="50"></textarea>
 </div>
+
+<div id="changePassword-dialog" style="display: none">
+    <span class="alert alert-warning">The contributor is required to change password on first login.</span>
+    <div>
+        <label id="lblChangePasswordMessage"></label>
+        <br/><b>ContributorID:</b><label id="lblChangePasswordContributorId" name="lblChangePasswordContributorId"></label>
+        <br /><b>New Password: </b><input id="txtNewPassword" name="txtNewPassword" type="text" value="" />
+    </div>
+</div>
+
+
 
 <div class="spinner" style="display:none">
     <div class="center-div">
@@ -187,7 +181,55 @@
                             "visible": true,
                             "name": "Comments"
                         },
-                       
+                        {
+                            "title": "LegalGuardian FirstName",
+                            "data": "legalGuardianFirstName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "LegalGuardianFirstName"
+                        },
+                        {
+                            "title": "legalGuardian LastName",
+                            "data": "legalGuardianLastName",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "LegalGuardianLastName"
+                        },
+
+                        {
+                            "title": "LegalGuardian Email",
+                            "data": "legalGuardianEmail",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "LegalGuardianEmail"
+                        },
+                        {
+                            "title": "LegalGuardian Phone",
+                            "data": "legalGuardianPhoneNumber",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "LegalGuardianPhoneNumber"
+                        },
+                        {
+                            "title": "LegalGuardianId",
+                            "data": "legalGuardianId",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "LegalGuardianId"
+                        },
+                        {
+                            "title": "IdentityUserId",
+                            "data": "identityUserId",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "IdentityUserId"
+                        },
                         {
                             "title": "Actions",
                             "data": "id",
@@ -203,6 +245,9 @@
                                 if ($("#UserRole").val() === "SLPAnnotator" || $("#UserRole").val() === "SLPAnnotatorAdmin" || $("#UserRole").val() === "ExternalSLPAnnotator" || $("#UserRole").val() === "SystemAdmin") {
                                     var link = '<a href="#" class="viewRating" >View SIT Rating</a>  | <a href="#" class="undeny">Un-Deny</a>'
                                      + '<br>| <a href="#" class="editInfo">Edit Info</a> ';
+                                    if (row.identityUserId != '') {
+                                        link = link + ' | <a href="#" class="changePassword" >Change Password</a>';
+                                    }
                                     return link;
                                 }
                                 else
@@ -260,32 +305,15 @@
                 'a.editInfo',
                 function (e) {
                     e.preventDefault();
+                    
                     var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
-                    $("#lblEdiInfoMessage").text("Update Contributor Information:");
-                    $("#hidEditInfoContributorId").val(row.id);
-                    $("#lblEditInfoFirstName").text(row.firstName);
-                    $("#lblEditInfoLastName").text(row.lastName);
-                    $("#txtEditContributorEmail").val(row.emailAddress);
-                    $("#txtEditHelperEmail").val(row.helperEmail);
-                    $("#txtEditInfoBirthYear").val(row.birthYear);
-                    if (row.helperInd == "Yes")
-                    {
-                        $("#chkHasHelper").prop('checked', true);
-                        $("#txtEditHelperEmail").prop("disabled", false);
-                        $("#txtEditHelperPhone").prop("disabled", false);
-                    }                        
-                    else
-                    {
-                        $("#chkHasHelper").prop('checked', false);
-                        $("#txtEditHelperEmail").prop("disabled", true);
-                        $("#txtEditHelperPhone").prop("disabled", true);
-                    }
-                    $("#txtEditInfoComment").val(row.comments);   
-
-                    $("#txtEditInfoComment").val(row.comments);
-                    editContributorInfo('@Url.Action("EditContributorInfo", "Contributor")', oContributorsTable, "Edit Contributor Information", 4);
+                    var getUrl = "@Url.Action("EditContributorInfo", "Contributor")?contributorId=" + row.id + "&etiologyId=" + $("#SubRole").val();
+                    var postUrl = '@Url.Action("EditContributorInfo", "Contributor")';
+                    editContributorInfo(getUrl, postUrl, oContributorsTable, 4);
                     $("#editInfo-dialog").dialog('open');
+                    return false;
+
 
                 });
            
@@ -299,6 +327,35 @@
                         $("#txtEditHelperPhone").prop("disabled", true);
                     }
                 });
+
+            $('#chkHasLegalGuardian').change(function () {
+                if (this.checked) {
+                    $("#txtEditLegalGuardianFirstName").prop("disabled", false);
+                    $("#txtEditLegalGuardianLastName").prop("disabled", false);
+                    $("#txtEditLegalGuardianEmail").prop("disabled", false);
+                    $("#txtEditLegalGuardianPhone").prop("disabled", false);
+                }
+                else {
+                    $("#txtEditLegalGuardianFirstName").prop("disabled", true);
+                    $("#txtEditLegalGuardianLastName").prop("disabled", true);
+                    $("#txtEditLegalGuardianEmail").prop("disabled", true);
+                    $("#txtEditLegalGuardianPhone").prop("disabled", true);
+                }
+            });
+            
+              //changePassword
+            $('#ContributorTable').on('click', 'a.changePassword', function (e) {
+                e.preventDefault();
+                var selectedRowData = oContributorsTable.row($(this).closest('tr'));
+                var row = selectedRowData.data();
+                $("#lblChangePasswordContributorId").text(row.id);
+                var postUrl = '@Url.Action("ChangeContributorPassword", "Contributor")';
+                changePassword(postUrl);
+                $("#changePassword-dialog").dialog('open');
+                return false;
+              
+            });
+
 
         });//End document ready
 

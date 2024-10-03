@@ -1,0 +1,401 @@
+﻿@{
+    ViewData["Title"] = "Contributors Paid By Check";
+}
+
+@{
+    ViewBag.Title = "Contributors Paid By Check";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.6/css/responsive.dataTables.min.css" />
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<br/>
+<div style="width: 700px">
+    <h3>Contributors with below domains are paid by check.</h3>
+    <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
+    <table class="table table-striped table-bordered table-hover" id="ContributorsPaidByCheckTable" cellspacing="0" align="center"></table>
+    @*<br/>
+    <p><button id="addDomainRow">Add New Domain</button></p>*@
+</div>
+<hr/>
+<div style="width: 1200px">
+    <h3>Helpers below should not get payment.</h3>
+    <label id="lblHelperMessage" name="lblHelperMessage" class="errorMessage"></label>
+    <table class="table table-striped table-bordered table-hover" id="HelperShouldNotPaidTable" cellspacing="0" align="center"></table>
+  @*  <br/>
+    <p><button id="addHelperRow">Add Helper</button></p>*@
+</div>
+
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/rowgroup/1.3.0/js/dataTables.rowGroup.min.js"></script>
+
+    <script src="https://cdn.datatables.net/responsive/2.2.6/js/dataTables.responsive.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {            
+
+            var oContributorsPaidByCheckTable = $("#ContributorsPaidByCheckTable").on('error.dt',
+                function (e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                    "serverSide": true,
+                    "processing": true,
+                    "responsive": true,
+                     "info": false,
+                    "ordering": false,
+                    "paging": false,
+                    "iDisplayLength": 100,
+                    "dom": "<'row'<'col-sm-4'><'col-sm-4'><'col-sm-4'>>" +
+                        "<'row'<'col-sm-12'tr>>", //'<"top"l>rift<"bottom"p><"clear">',
+                    "ajax": ({
+                        "url": '@Url.Action("LoadContributorsPaidByCheck", "Admin")',
+                        "type": "POST",
+                        "datatype": "json"
+                    }),
+                    "bAutoWidth": false,
+                    "aaSorting": [[0, 'asc']],
+                    "columns": [
+                        {
+                            "title": "Id",
+                            "data": "id",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": false,
+                            "name": "Id"
+                        },
+                        {
+                            "title": "EmailDomain",
+                            "data": "emailDomain",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "EmailDomain",
+                            'render': function (data) {
+                                return '<input id="emailDomain" name="emailDomain" type="text" size="40"  value = ' + data + '>'
+                            }
+                        },                       
+                        {
+                            "title": "Actions",
+                            "data": "id",                         
+                            "searchable": false,
+                            "orderable": false,
+                            "width": '100px',
+                            "classDescription": 'dt-body-center',
+                            "visible": true,
+                            "name": "Id",
+                            "render": function (data, type, row) {                               
+                                var link = '<a href="#" class="saveEmailDomain" >Save</a> | <a href="#" class="deleteEmailDomain" >Delete</a>';
+                                return link;                            
+                            }
+                        }                      
+                    ],
+                    "ordering": true,
+                    "paging": true,
+                    "pageLength": 100,
+                    "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]],
+                     "drawCallback": function (settings) {
+                        AddNewPaidByCheckRow();
+                    }
+                });
+                
+                 var oHelperShouldNotPaidTable = $("#HelperShouldNotPaidTable").on('error.dt',
+                function (e, settings, techNote, message) {
+                    alert('Error loading the data. It could be the timeout issue. Please try to reload your browser. ', message);
+                }).DataTable({
+                    "serverSide": true,
+                    "processing": true,
+                    "responsive": true,
+                     "info": false,
+                    "ordering": false,
+                    "paging": false,
+                    "iDisplayLength": 100,
+                    "dom": "<'row'<'col-sm-4'><'col-sm-4'><'col-sm-4'>>" +
+                        "<'row'<'col-sm-12'tr>>", //'<"top"l>rift<"bottom"p><"clear">',
+                    "ajax": ({
+                        "url": '@Url.Action("LoadHelpersShouldNotPaid", "Admin")',
+                        "type": "POST",
+                        "datatype": "json"
+                    }),
+                    "bAutoWidth": false,
+                    "aaSorting": [[0, 'asc']],
+                    "columns": [
+                        {
+                            "title": "Id",
+                            "data": "id",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": false,
+                            "name": "Id"
+                        },
+                        {
+                            "title": "FirstName",
+                            "data": "firstName",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "FirstName",
+                            'render': function (data) {
+                                return '<input id="firstName" name="firstName" type="text" size="20"  value = ' + data + '>'
+                            }
+                        },
+                        {
+                            "title": "LastName",
+                            "data": "lastName",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "LastName",
+                            'render': function (data) {
+                                return '<input id="lastName" name="lastName" type="text" size="20"  value = ' + data + '>'
+                            }
+                        },
+                        {
+                            "title": "HelperEmailAddress",
+                            "data": "helperEmailAddress",
+                            "searchable": true,
+                            "orderable": false,
+                            "visible": true,
+                            "name": "HelperEmailAddress",
+                            'render': function (data) {
+                                return '<input id="helperEmailAddress" name="helperEmailAddress" type="text" size="50"  value = ' + data + '>'
+                            }
+                        },
+                      
+                        {
+                            "title": "Actions",
+                            "data": "id",                         
+                            "searchable": false,
+                            "orderable": false,
+                            "width": '100px',
+                            "classDescription": 'dt-body-center',
+                            "visible": true,
+                            "name": "Id",
+                            "render": function (data, type, row) {
+                                var link = '<a href="#" class="saveHelperInfo" >Save</a> | <a href="#" class="deleteHelperInfo" >Delete</a>';
+                                return link;                            
+                            }
+                        }                      
+                    ],
+                    "ordering": true,
+                    "paging": true,
+                    "pageLength": 100,
+                    "lengthMenu": [[25, 50, 100, 3000], [25, 50, 100, 3000]],
+                    "drawCallback": function (settings) {
+                        AddNewHelperShouldNotPaidRow();
+                    }
+                            
+                });
+                
+
+            //save the email domain
+            $('#ContributorsPaidByCheckTable').on('click',
+                'a.saveEmailDomain',
+                function (e) {
+                    e.preventDefault();                   
+                    var selectedRowData = oContributorsPaidByCheckTable.row($(this).closest('tr'));
+
+                    var domain = $(this).closest("tr").find("input[name='emailDomain']").val();
+                    if(domain==="")
+                    {
+                        alert("Email Domain cannot be empty.");
+                        return false;
+                    }
+                    SaveDomain(selectedRowData.data().id, domain);
+                   
+                   
+            });
+             //delete the email domain
+            $('#ContributorsPaidByCheckTable').on('click',
+                'a.deleteEmailDomain',
+                function (e) {
+                    e.preventDefault();                   
+                    var selectedRowData = oContributorsPaidByCheckTable.row($(this).closest('tr'));
+                    $.ajax({
+                        url: '@Url.Action("DeleteContributorPaidByCheckDomain", "Admin")',
+                        type: "POST",
+                        data: { "id": selectedRowData.data().id },
+                        success: function (response) {
+                            if (response.success === true) {
+                                $("#lblMessage").text(response.message);
+                                $("#lblMessage").removeClass("alert-warning");
+                                $("#lblMessage").addClass("alert-success");
+                                oContributorsPaidByCheckTable.draw();
+
+                            } else {
+                                alert(response.message);
+                                $("#lblMessage").text(response.message);
+                                $("#lblMessage").addClass("alert-warning");
+                                $("#lblMessage").removeClass("alert-success");
+                            }
+                        },
+                        error: function () {
+                            alert("Error: Delete Contributor Paid By Check Domain");
+                        }
+                    });
+                    
+            });
+            
+
+            function AddNewPaidByCheckRow() {
+                $('#ContributorsPaidByCheckTable tbody').append('<tr role="row"><td class="dtr-control"><input id="emailDomain" name="emailDomain" type="text" size="40" placeholder="domain"></td><td><a href="#" class="addNewEmailDomain">Add New</a></td></tr>');
+               
+            }
+            
+            function AddNewHelperShouldNotPaidRow()
+            {
+                $('#HelperShouldNotPaidTable tbody').append('<tr role="row"><td class="dtr-control"><input id="firstName" name="firstName" type="text" size="20" placeholder="FirstName"></td><td><input id="lastName" name="lastName" type="text" size="20" placeholder="LastName"></td><td><input id="helperEmailAddress" name="helperEmailAddress" type="text" size="50" placeholder="Email"></td><td><a href="#" class="addHelperInfo">Add New</a></td></tr>');
+
+            }
+
+            //add new the email domain
+            $('#ContributorsPaidByCheckTable').on('click',
+                'a.addNewEmailDomain',
+                function (e) {
+                    e.preventDefault();                   
+                    var selectedRowData = oContributorsPaidByCheckTable.row($(this).closest('tr'));
+
+                    var domain = $(this).closest("tr").find("input[name='emailDomain']").val();
+                    var button = $(this).closest("tr").find(".addNewEmailDomain");
+                    if(domain==="")
+                    {
+                        alert("Email Domain cannot be empty.");
+                        return false;
+                    }
+                    SaveDomain(0, domain);
+                   
+            });
+
+            function SaveDomain(id, domain)
+            {
+                $.ajax({
+                    url: '@Url.Action("UpdateContributorPaidByCheckDomain", "Admin")',
+                    type: "POST",
+                    data: { "id": id, "domain": domain },
+                    success: function (response) {
+                        if (response.success === true) {
+                            $("#lblMessage").text(response.message);
+                            $("#lblMessage").removeClass("alert-warning");
+                            $("#lblMessage").addClass("alert-success");
+                            oContributorsPaidByCheckTable.draw();
+                            
+
+                        } else {
+                            alert(response.message);
+                            $("#lblMessage").text(response.message);
+                            $("#lblMessage").addClass("alert-warning");
+                            $("#lblMessage").removeClass("alert-success");
+                        }
+                    },
+                    error: function () {
+                        alert("Error: Update Contributor Paid By Check Domain");
+                    }
+                });
+            }
+                
+          
+          
+              //save helper
+            $('#HelperShouldNotPaidTable').on('click',
+                'a.saveHelperInfo',
+                function (e) {
+                    e.preventDefault();
+                    var selectedRowData = oHelperShouldNotPaidTable.row($(this).closest('tr'));
+
+                    var firstName = $(this).closest("tr").find("input[name='firstName']").val();
+                    var lastName = $(this).closest("tr").find("input[name='lastName']").val();
+                    var email = $(this).closest("tr").find("input[name='helperEmailAddress']").val();
+                    if (firstName === "" || lastName=="" || email=="") {
+                        alert("FirstName, LastName and Email Address cannot be empty.");
+                        return false;
+                    }
+                    SaveHelperInfo(selectedRowData.data().id, firstName, lastName, email);
+                   
+            });
+            
+            //add new helper
+            $('#HelperShouldNotPaidTable').on('click',
+                'a.addHelperInfo',
+                function (e) {
+                    e.preventDefault();
+                    var selectedRowData = oHelperShouldNotPaidTable.row($(this).closest('tr'));
+
+                    var firstName = $(this).closest("tr").find("input[name='firstName']").val();
+                    var lastName = $(this).closest("tr").find("input[name='lastName']").val();
+                    var email = $(this).closest("tr").find("input[name='helperEmailAddress']").val();
+                    if (firstName === "" || lastName == "" || email == "") {
+                        alert("FirstName, LastName and Email Address cannot be empty.");
+                        return false;
+                    }
+                    SaveHelperInfo(0, firstName, lastName, email);
+            });
+
+           
+            function SaveHelperInfo(id, firstName, lastName, email)
+            {
+                $.ajax({
+                    url: '@Url.Action("UpdateHelperInformation", "Admin")',
+                    type: "POST",
+                    data: { "id": id, "firstName": firstName, "lastName": lastName, "email": email },
+                    success: function (response) {
+                        if (response.success === true) {
+                            $("#lblHelperMessage").text(response.message);
+                            $("#lblHelperMessage").removeClass("alert-warning");
+                            $("#lblHelperMessage").addClass("alert-success");
+                            oHelperShouldNotPaidTable.draw();
+
+                        } else {
+                            alert(response.message);
+                            $("#lblHelperMessage").text(response.message);
+                            $("#lblHelperMessage").addClass("alert-warning");
+                            $("#lblHelperMessage").removeClass("alert-success");
+                        }
+                    },
+                    error: function () {
+                        alert("Error: Helper should not get payment.");
+                    }
+                });
+            }
+            
+                //delete helper
+            $('#HelperShouldNotPaidTable').on('click',
+                'a.deleteHelperInfo',
+                function (e) {
+                    e.preventDefault();
+                    var selectedRowData = oHelperShouldNotPaidTable.row($(this).closest('tr'));
+                    $.ajax({
+                        url: '@Url.Action("DeleteHelperInformation", "Admin")',
+                        type: "POST",
+                        data: { "id": selectedRowData.data().id },
+                        success: function (response) {
+                            if (response.success === true) {
+                                $("#lblHelperMessage").text(response.message);
+                                $("#lblHelperMessage").removeClass("alert-warning");
+                                $("#lblHelperMessage").addClass("alert-success");
+                                oHelperShouldNotPaidTable.draw();
+
+                            } else {
+                                alert(response.message);
+                                $("#lblHelperMessage").text(response.message);
+                                $("#lblHelperMessage").addClass("alert-warning");
+                                $("#lblHelperMessage").removeClass("alert-success");
+                            }
+                        },
+                        error: function () {
+                            alert("Error: Delete Helper Information");
+                        }
+                    });                   
+                   
+            });
+
+       
+            
+
+        });//End document ready
+
+    </script>
+}

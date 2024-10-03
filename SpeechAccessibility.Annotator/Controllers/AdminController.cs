@@ -28,8 +28,10 @@ namespace SpeechAccessibility.Annotator.Controllers
         private readonly ICategoryRepository _categoryRepository;
         private readonly IContributorViewRepository _contributorViewRepository;
         private readonly IContributorRepository _contributorRepository;
+        private readonly IContributorsPaidByCheckRepository _contributorsPaidByCheckRepository;
+        private readonly IHelperNotPaidGiftCardsRepository _helperNotPaidGiftCardsRepository;
 
-        public AdminController(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration,  IUserSubRoleRepository userSubRoleRepository, IEtiologyViewRepository etiologyRepository, ISubRoleRepository subRoleRepository, IEtiologyRepository etiologyRepository1, IGiftCardAmountRepository giftCardAmountRepository, ICategoryRepository categoryRepository, IContributorViewRepository contributorViewRepository, IContributorRepository contributorRepository)
+        public AdminController(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration,  IUserSubRoleRepository userSubRoleRepository, IEtiologyViewRepository etiologyRepository, ISubRoleRepository subRoleRepository, IEtiologyRepository etiologyRepository1, IGiftCardAmountRepository giftCardAmountRepository, ICategoryRepository categoryRepository, IContributorViewRepository contributorViewRepository, IContributorRepository contributorRepository, IContributorsPaidByCheckRepository contributorsPaidByCheckRepository, IHelperNotPaidGiftCardsRepository helperNotPaidGiftCardsRepository)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
@@ -42,6 +44,8 @@ namespace SpeechAccessibility.Annotator.Controllers
             _categoryRepository = categoryRepository;
             _contributorViewRepository = contributorViewRepository;
             _contributorRepository = contributorRepository;
+            _contributorsPaidByCheckRepository = contributorsPaidByCheckRepository;
+            _helperNotPaidGiftCardsRepository = helperNotPaidGiftCardsRepository;
         }
 
         public IActionResult Index()
@@ -316,6 +320,131 @@ namespace SpeechAccessibility.Annotator.Controllers
 
         }
 
+        public IActionResult ContributorsPaidByCheckAndHelperNotPaid()
+        {
+
+            return View();
+        }
+
+        public ActionResult LoadContributorsPaidByCheck()
+        {
+
+            var draw = Request.Form["draw"].FirstOrDefault();
+            var start = Request.Form["start"].FirstOrDefault();
+            var length = Request.Form["length"].FirstOrDefault();
+
+            var contributors = _contributorsPaidByCheckRepository.GetAll().OrderBy(c=>c.EmailDomain);
+            var recordsTotal = contributors.Count();
+            
+            return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = contributors });
+        }
+
+        public ActionResult LoadHelpersShouldNotPaid()
+        {
+
+            var draw = Request.Form["draw"].FirstOrDefault();
+            var start = Request.Form["start"].FirstOrDefault();
+            var length = Request.Form["length"].FirstOrDefault();
+          
+
+            var helpers = _helperNotPaidGiftCardsRepository.GetAll().OrderBy(c => c.LastName);
+            var recordsTotal = helpers.Count();
+            
+            return Json(new { draw = draw, recordsFiltered = recordsTotal, recordsTotal = recordsTotal, data = helpers });
+
+        }
+
+
+        [HttpPost]
+        public ActionResult UpdateContributorPaidByCheckDomain(int id, string domain)
+        {
+            if (id < 0)
+                return Json(new { Success = false, Message = "No record is selected." });
+            if (id == 0) //this is a new domain
+            {
+                if(domain=="")
+                    return Json(new { Success = false, Message = "Domain cannot be empty." });
+
+                var newDomain = new ContributorsPaidByCheck
+                {
+                    EmailDomain = domain
+                };
+                _contributorsPaidByCheckRepository.Insert(newDomain);
+                return Json(new { Success = true, Message = "New domain is added." });
+            }
+
+            var emailDomain = _contributorsPaidByCheckRepository.Find(e => e.Id == id).FirstOrDefault();
+
+            if (emailDomain == null || domain==null )
+            {
+                return Json(new { Success = false, Message = "Domain cannot be empty." });
+            }
+
+            emailDomain.EmailDomain = domain;
+            _contributorsPaidByCheckRepository.Update(emailDomain);
+            return Json(new { Success = true, Message = "Email Domain is updated." });
+
+        }
+
+        [HttpPost]
+        public ActionResult UpdateHelperInformation(int id, string firstName, string lastName, string email)
+        {
+            if (id < 0)
+                return Json(new { Success = false, Message = "No record is selected." });
+            if (id == 0) //this is a new domain
+            {
+                if (firstName == "" || lastName=="" || email=="")
+                    return Json(new { Success = false, Message = "FirstName, LastName and Email Address cannot be empty." });
+
+                var newHelper = new HelperNotPaidGiftCards()
+                {
+                    FirstName = firstName,
+                    LastName = lastName,
+                    HelperEmailAddress = email
+                };
+                _helperNotPaidGiftCardsRepository.Insert(newHelper);
+                return Json(new { Success = true, Message = "New helper is added." });
+            }
+
+            var helper = _helperNotPaidGiftCardsRepository.Find(e => e.Id == id).FirstOrDefault();
+
+            if (helper == null || firstName == "" || lastName == "" || email == "")
+            {
+                return Json(new { Success = false, Message = "FirstName, LastName and Email Address cannot be empty." });
+            }
+
+            helper.FirstName = firstName;
+            helper.LastName = lastName;
+            helper.HelperEmailAddress = email;
+            _helperNotPaidGiftCardsRepository.Update(helper);
+            return Json(new { Success = true, Message = "Helper information is updated." });
+
+        }
+
+
+        [HttpPost]
+        public ActionResult DeleteContributorPaidByCheckDomain(int id)
+        {
+            if (id < 0)
+                return Json(new { Success = false, Message = "No record is selected." });
+            
+            var emailDomain = _contributorsPaidByCheckRepository.Find(e => e.Id == id).FirstOrDefault();
+            _contributorsPaidByCheckRepository.Delete(emailDomain);
+            return Json(new { Success = true, Message = "Email Domain is deleted." });
+        }
+
+
+        [HttpPost]
+        public ActionResult DeleteHelperInformation(int id)
+        {
+            if (id < 0)
+                return Json(new { Success = false, Message = "No record is selected." });
+
+            var helper = _helperNotPaidGiftCardsRepository.Find(e => e.Id == id).FirstOrDefault();
+            _helperNotPaidGiftCardsRepository.Delete(helper);
+            return Json(new { Success = true, Message = "Helper is deleted." });
+        }
+
         [HttpPost]
         public ActionResult UpdateGiftCardAmounts(int id, int firstGiftCard, int secondGiftCard, int thirdGiftCard)
         {
@@ -335,7 +464,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             giftCard.SecondGiftCard= secondGiftCard;
             giftCard.ThirdGiftCard=thirdGiftCard;
             _giftCardAmountRepository.Update(giftCard);
-            return Json(new { Success = true, Message = "Amounts are updated." });
+            return Json(new { Success = true, Message = "Amount is updated." });
 
         }
 

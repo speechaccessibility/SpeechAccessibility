@@ -1,0 +1,180 @@
+﻿@model SpeechAccessibility.Core.Models.ContributorView
+@{
+    Layout = null;
+}
+<div id="editInfo">
+    @{
+        if (Model is null)
+        {
+            <p>Contributor is not found.</p>
+        }
+        else
+        {
+            <label id="lblEditInfoMessage"></label>
+            <input type="hidden" id="hidEditInfoContributorId" value="@Model.Id"/>
+            <input type="hidden" id="hidEditLegalGuardianId" value="@Model.LegalGuardianId" />
+            <input type="hidden" id="hidEditStatus" value="@Model.StatusId" />
+            <input type="hidden" id="hidSubStatusId" value="@Model.SubStatusId" />
+            <br /><b>First Name:</b><label id="lblEditInfoFirstName" name="lblEditInfoFirstName">@Model.FirstName</label>
+            <br /><b>Last Name:</b><label id="lblEditInfoLastName" name="lblEditInfoLastName">@Model.LastName</label>
+            <br /><b>Year of Birth:</b><input type="text" id="txtEditInfoBirthYear" name="txtEditInfoBirthYear" value="@Model.BirthYear" />
+            <br/><br /><b>Contributor Email:</b><input type="text" id="txtEditContributorEmail" name="txtEditContributorEmail" value="@Model.EmailAddress"/>
+            <br /><br /><b>Has Helper:</b>
+            if (Model.HelperInd == "Yes")
+            {
+                <input type="checkbox" id="chkHasHelper" name="chkHasHelper" checked="checked"/>
+            }
+            else
+            {
+                <input type="checkbox" id="chkHasHelper" name="chkHasHelper" />
+            }
+            <br />
+            <b>Should the helper receive payment?</b>
+            if (Model.HelperNotPaid == "No")
+            {
+                <input type="radio" id="radHelperPaidYes" name="radHelperPaid" value="Yes">
+                <label for="radHelperPaidYes">Yes</label>
+                <input type="radio" id="radHelperPaidNo" name="radHelperPaid" value="No" checked="checked">
+                <label for="radHelperPaidNo">No</label>                
+            }
+            else
+            {
+                <input type="radio" id="radHelperPaidYes" name="radHelperPaid" value="Yes" checked="checked">
+                <label for="radHelperPaidYes">Yes</label>
+                <input type="radio" id="radHelperPaidNo" name="radHelperPaid" value="No">
+                <label for="radHelperPaidNo">No</label>
+            }
+            
+            
+            <br /><b>Helper First Name:</b><input type="text" id="txtEditHelperFirstName" name="txtEditHelperFirstName" value="@Model.HelperFirstName" />
+            <b>Helper Last Name:</b><input type="text" id="txtEditHelperLastName" name="txtEditHelperLastName" value="@Model.HelperLastName"/>
+            <br/><br/><b>Helper Email:</b><input type="text" id="txtEditHelperEmail" name="txtEditHelperEmail" value="@Model.HelperEmail"/>
+            <b>Helper Phone:</b><input type="text" id="txtEditHelperPhone" name="txtEditHelperPhone"  value="@Model.HelperPhoneNumber"/>
+            <br /><br /><b>Has Legal Guardian:</b>
+            if (Model.LegalGuardianId is null)
+            {
+                <input type="checkbox" id="chkHasLegalGuardian" name="chkHasLegalGuardian" />
+            }
+            else
+            {
+                <input type="checkbox" id="chkHasLegalGuardian" name="chkHasLegalGuardian" checked="checked" />
+            }
+
+             
+            <br /><br /><b>Legal Guardian First Name:</b><input type="text" id="txtEditLegalGuardianFirstName" name="txtEditLegalGuardianFirstName" value="@Model.LegalGuardianFirstName" />
+            <b>Legal Guardian Last Name:</b><input type="text" id="txtEditLegalGuardianLastName" name="txtEditLegalGuardianLastName" value="@Model.LegalGuardianLastName"/>
+            <br /><br /><b>Legal Guardian Email:</b><input type="text" id="txtEditLegalGuardianEmail" name="txtEditLegalGuardianEmail" value="@Model.LegalGuardianEmail" />
+            <b>Legal Guardian Phone:</b><input type="text" id="txtEditLegalGuardianPhone" name="txtEditLegalGuardianPhone" value="@Model.LegalGuardianPhoneNumber" />
+             <br /><b>Comments:</b>
+            <br /><textarea id="txtEditInfoComment" name="txtEditInfoComment" rows="4" cols="50">@Model.Comments</textarea>
+           
+            <div id="divStatus">
+                <br /><b>Status:</b>
+                <select id="dlSubStatus" asp-items="@ViewBag.SubStatus"></select>
+            </div>
+            
+            }
+    }
+   
+</div>
+
+<script language="javascript" type="text/javascript">
+
+    $(document).ready(function () {
+        if ($("#hidEditStatus").val() == 2){
+            $("#dlSubStatus").val($("#hidSubStatusId").val()).attr("selected", "selected");
+            $("#divStatus").show();
+        }
+        else {
+            $("#divStatus").hide();
+        }
+        if ($('#chkHasHelper').prop('checked')) {  
+            $("#txtEditHelperFirstName").prop("disabled", false);
+            $("#txtEditHelperLastName").prop("disabled", false);
+            $("#txtEditHelperEmail").prop("disabled", false);
+            $("#txtEditHelperPhone").prop("disabled", false); 
+            $('input[name=radHelperPaid]').prop('disabled', false);
+
+        }
+        else
+        {
+            $("#txtEditHelperFirstName").prop("disabled", true);
+            $("#txtEditHelperLastName").prop("disabled", true);
+            $("#txtEditHelperEmail").prop("disabled", true);
+            $("#txtEditHelperPhone").prop("disabled", true); 
+            $('input[name=radHelperPaid]').prop('disabled', true);
+        }
+
+        if ($('#chkHasLegalGuardian').prop('checked')) {
+            $("#txtEditLegalGuardianFirstName").prop("disabled", false);
+            $("#txtEditLegalGuardianLastName").prop("disabled", false);
+            $("#txtEditLegalGuardianEmail").prop("disabled", false);
+            $("#txtEditLegalGuardianPhone").prop("disabled", false);
+        }
+        else
+        {          
+            $("#txtEditLegalGuardianFirstName").prop("disabled", true);
+            $("#txtEditLegalGuardianLastName").prop("disabled", true);
+            $("#txtEditLegalGuardianEmail").prop("disabled", true);
+            $("#txtEditLegalGuardianPhone").prop("disabled", true);
+        }
+
+        $('#chkHasHelper').change(function () {
+            if (this.checked) {
+                $("#txtEditHelperFirstName").prop("disabled", false);
+                $("#txtEditHelperLastName").prop("disabled", false);
+                $("#txtEditHelperEmail").prop("disabled", false);
+                $("#txtEditHelperPhone").prop("disabled", false);
+                $('input[name=radHelperPaid]').prop('disabled', false);
+            }
+            else {
+                $("#txtEditHelperFirstName").prop("disabled", true);
+                $("#txtEditHelperLastName").prop("disabled", true);
+                $("#txtEditHelperEmail").prop("disabled", true);
+                $("#txtEditHelperPhone").prop("disabled", true);
+                $('input[name=radHelperPaid]').prop('disabled', true);
+            }
+        });
+
+        $('#chkHasLegalGuardian').change(function () {
+            if (this.checked) {
+                $("#txtEditLegalGuardianFirstName").prop("disabled", false);
+                $("#txtEditLegalGuardianLastName").prop("disabled", false);
+                $("#txtEditLegalGuardianEmail").prop("disabled", false);
+                $("#txtEditLegalGuardianPhone").prop("disabled", false);
+            }
+            else {
+                $("#txtEditLegalGuardianFirstName").prop("disabled", true);
+                $("#txtEditLegalGuardianLastName").prop("disabled", true);
+                $("#txtEditLegalGuardianEmail").prop("disabled", true);
+                $("#txtEditLegalGuardianPhone").prop("disabled", true);
+            }
+        });
+        
+        ////check to see if this helper email address is in the NotPaid list
+        //$("#txtEditHelperEmail").blur(function () {
+        //    $.ajax({
+        //        url: '@Url.Action("CheckIfHelperNotPaid", "Contributor")',
+        //        type: 'POST',
+        //        data: {
+        //            'email': $("#txtEditHelperEmail").val()
+        //        },
+        //        success: function (response) {
+        //            if (response.exist === true) {
+        //                if ($('input[name="radHelperPaid"]:checked').val()==="Yes"){                           
+        //                    $("#radHelperPaidYes").prop("checked", false);
+        //                    $("#radHelperPaidNo").prop("checked", true);
+        //                    alert("This email address is in the 'helpers not getting payment' list. Pleaase select Yes again if you would like to remove this email address from the list.");
+        //                }
+                       
+        //            } 
+        //        },
+        //        error: function () {
+        //            alert("Error loading Contributor Assigned Blocks");
+        //        }
+        //    });
+        //});
+
+    });//End document ready
+
+</script>

@@ -2,11 +2,11 @@
 
 namespace SpeechAccessibility.Annotator.Models
 {
-    public class GiftCardViewModel
+    public class GiftCardByCheckViewModel
     {
         public double Amount { get; set; }
-        public int Delay { get; set; }
         public string EmailAddress { get; set; }
-       
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
     }
 }

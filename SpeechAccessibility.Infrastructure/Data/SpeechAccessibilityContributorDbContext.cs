@@ -21,6 +21,8 @@ namespace SpeechAccessibility.Infrastructure.Data
         public DbSet<Etiology> Etiology { get; set; }
         public  DbSet<RacialGroup> RacialGroup { get; set; }
         public DbSet<AspNetUsers> AspNetUsers { get; set; }
+        public DbSet<LegalGuardian> LegalGuardian { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
 
@@ -34,10 +36,12 @@ namespace SpeechAccessibility.Infrastructure.Data
             builder.Entity<Etiology>(ConfigureEtiology);
             builder.Entity<RacialGroup>(ConfigureRacialGroup);
             builder.Entity<AspNetUsers>(ConfigureAspNetUsers);
+            builder.Entity<LegalGuardian>(ConfigureLegalGuardian);
 
 
         }
 
+        
 
         //private void ConfigureConsentVersion(EntityTypeBuilder<ConsentVersion> entity)
         //{
@@ -277,5 +281,39 @@ namespace SpeechAccessibility.Infrastructure.Data
         {
 
         }
+
+        private void ConfigureLegalGuardian(EntityTypeBuilder<LegalGuardian> entity)
+        {
+            entity.Property(e => e.CreateTs)
+                .HasColumnName("CreateTS")
+                .HasDefaultValueSql("(getdate())");
+
+            entity.Property(e => e.Email)
+                .IsRequired()
+                .HasMaxLength(256);
+
+            entity.Property(e => e.FirstName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.LastName)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.PhoneNumber)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.UpdateTs)
+                .HasColumnName("UpdateTS")
+                .HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Contributor)
+                .WithMany(p => p.LegalGuardian)
+                .HasForeignKey(d => d.ContributorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_LegalGuardian_ToContributor");
+        }
+
     }
 }

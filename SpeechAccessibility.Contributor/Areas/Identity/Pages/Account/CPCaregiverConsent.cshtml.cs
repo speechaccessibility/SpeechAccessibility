@@ -166,6 +166,13 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                     _identityContext.SaveChanges();
                 }
 
+                int legalGuardianCount = _identityContext.LegalGuardian.Where(c => c.ContributorId == contributor.Id).Count();
+
+                if (legalGuardianCount > 0)
+                {
+                    return RedirectToPage("CPAssent");
+                }
+
                 return RedirectToAction("RecordPrompt");
             }
             else

@@ -65,7 +65,6 @@ namespace SpeechAccessibility.Models
         public string HelperPhoneNumber { get; set; }
 
         [MaxLength(4)]
-        [Required]
         public string StateResidence { get; set; }
 
         public IdentityUser IdentityUser { get; set; }
@@ -92,5 +91,13 @@ namespace SpeechAccessibility.Models
         public string LengthOfDiagnosis { get; set; }
 
         public int PromptCategoryId { get; set; }
+
+        public string TimeZone { get; set; }
+
+        public string Country { get; set; }
+
+        [MaxLength (150)]
+        public string ReferenceSource { get; set; }
+
     }
 }

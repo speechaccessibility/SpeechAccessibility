@@ -175,7 +175,7 @@ function uploadNewRecording(postUrl, dialog, returnMessageElem) {
                     recordingVM.append("ContributorId", contributorId);
                     recordingVM.append('file', $('#recordingFile')[0].files[0]);
 
-
+                    $('.spinner').css('display', 'block');
                     $.ajax({
                         url: postUrl,
                         type: "POST",
@@ -189,8 +189,7 @@ function uploadNewRecording(postUrl, dialog, returnMessageElem) {
                                 returnMessageElem.text(response.message);
                             }
                             if (response.success === true) {
-
-                              /*  $("#lblMessage").text(response.message);*/
+                                $('.spinner').css('display', 'none');
                                 dialog.dialog('close');
                             }
                             else {
@@ -198,7 +197,10 @@ function uploadNewRecording(postUrl, dialog, returnMessageElem) {
                             }
 
                         },
-                        error: function () { alert('Error Uploading Recording! It could be the timeout issue. Please try to reload your browser.'); }
+                        error: function () {
+                            $('.spinner').css('display', 'none');
+                            alert('Error Uploading Recording! It could be the timeout issue. Please try to reload your browser.');
+                        }
                     });
 
                 }

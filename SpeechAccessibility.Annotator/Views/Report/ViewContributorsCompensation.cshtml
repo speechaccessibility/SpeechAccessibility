@@ -4,13 +4,13 @@
     ViewBag.Title = "View Contributors Compensation";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<div id="giftCard-dialog" style="display: none">
+@*<div id="giftCard-dialog" style="display: none">
     <input type="hidden" id="hidContributorId" name="hidContributorId" />
     <input type="hidden" id="hidGiftCardNum" name="hidGiftCardNum" />
     <br /><b>Contributor Name:</b><label id="lblContributorName" name="lblContributorName"></label>
     <br /><b>ContributorID:</b><label id="lblContributorId" name="lblContributorId"></label>
     <br /><b>Comments:</b><br /><textarea id="txtGiftCardComment" name="txtGiftCardComment" rows="4" cols="50"></textarea>
-</div>
+</div>*@
 
 <table>
     <tr>
@@ -225,7 +225,7 @@
                     url: '@Url.Action("GenerateGiftCard", "Report")',
                     type: "POST",
                     data: {
-                        "contributorIDs": contributorIDs, "cardType": giftCardType
+                        "contributorIDs": contributorIDs, "cardType": giftCardType, "paymentType": "ecode"
                     },
                     success: function (response) {
                         if (response.success === true) {

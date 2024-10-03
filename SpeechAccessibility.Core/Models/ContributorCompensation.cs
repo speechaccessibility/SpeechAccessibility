@@ -12,5 +12,7 @@ namespace SpeechAccessibility.Core.Models
         public string SendSecondCardBy { get; set; }
         public DateTime? SendThirdCard { get; set; }
         public string SendThirdCardBy { get; set; }
+        public string PaymentType { get; set; }
+        public string PaidHelper { get; set; }
     }
 }

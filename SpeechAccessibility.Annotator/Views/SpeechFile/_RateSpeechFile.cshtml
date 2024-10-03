@@ -19,9 +19,13 @@
             <tr>
                 <td>
                     <p><b>@category.Description</b></p>
+
+                    <input type="checkbox" id="chk_@category.Description" value="@category.Id" name="SelectAllDimension" /> Select All
+              
                     <table>
                         @{
                             var dimensions = category.Dimension.Where(d => d.Active == "Yes");
+                            
                         }
                         @foreach (var dimension in dimensions)
                         {
@@ -31,16 +35,17 @@
                             var otherVisibility = selectedDimension != null ? dimension.Description.Trim() == "Other" ? "visible" : "hidden" : "hidden";
                             var dimensionOther = selectedDimension?.Other ?? "";
                             var comment = selectedDimension != null ? selectedDimension.Comment : "";
+                            var checkboxId = category.Id + "_" + dimension.Id;
 
                             <tr>
                                 <td>
                                     @if (selectedDimension != null)
                                     {
-                                        <input id="chkDimension_@dimension.Id" type="checkbox" name="Dimension" value="@dimension.Id" checked="checked" />
+                                        <input id="chkDimension_@checkboxId" type="checkbox" name="Dimension" value="@dimension.Id" checked="checked" />
                                     }
                                     else
                                     {
-                                        <input id="chkDimension_@dimension.Id" type="checkbox" name="Dimension" value="@dimension.Id" />
+                                        <input id="chkDimension_@checkboxId" type="checkbox" name="Dimension" value="@dimension.Id" />
                                     }
 
                                     <label for="@dimension.Id" id="lblDimension_@dimension.Id">@dimension.Description</label>
@@ -133,7 +138,30 @@
             }
         });
 
-        
+        $('input[type=checkbox][name=SelectAllDimension]').change(function () {          
+            if ($(this).is(':checked')) {               
+                var dimensionId = $(this).val();                
+                var dimensions = $('[name="Dimension"]');            
+
+                $.each(dimensions, function () {
+                    //only check the checkbox with the same dimensionId
+                    var elementName = "chkDimension_" + dimensionId + "_" + $(this).val();                    
+                    if ($(this).attr('id')==elementName)
+                    {                        
+                        $(this).prop("checked", true);
+                        var textOther = document.getElementById("txtOther_" + $(this).val());
+                        var label = document.getElementById("lblDimension_" + $(this).val());
+                        if (label.innerHTML.trim() == "Other") {
+                            $(textOther).css("visibility", "visible");
+                        }
+
+                    }
+                   
+                });//end each loop
+            }          
+           
+        });
+
 
         //end document ready         
     });

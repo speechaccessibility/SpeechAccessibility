@@ -50,6 +50,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         [BindProperty]
         public InputModel Input { get; set; }
 
+        [BindProperty]
+        public List<string> ExistingEmailList { get; set; }
+
         public List<String> unqualifiedStates = new List<String>
         {
             "IL",
@@ -58,7 +61,12 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             "None"
         };
 
-        
+        public List<SelectListItem> countryList { get; } = new List<SelectListItem>
+        {
+               new SelectListItem { Value = "United States", Text = "United States" },
+                new SelectListItem { Value = "Canada", Text = "Canada" },
+        };
+
         public List<SelectListItem> stateList { get; } = new List<SelectListItem>
          {
                      new SelectListItem { Value = "AL", Text = "Alabama" },
@@ -146,7 +154,6 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Display(Name ="EighteenOrOlder")]
             public string eighteenOrOlderInd { get; set; }
 
-            [Required]
             [Display(Name = "State")]
             public string state { get; set; }
 
@@ -232,6 +239,18 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Display(Name = "Diagnosis Age")]
             public string DiagnosisAge { get; set; }
 
+            public string DuplicateEmailInd { get; set; }
+
+            [Display(Name = "Time Zone")]
+            public string TimeZone { get; set; }
+
+            [Required]
+            [MaxLength(150)]
+            [Display(Name = "Reference Source")]
+            public string ReferenceSource { get; set; }
+
+            public string Country { get; set; }
+
         }
         public List<SelectListItem> ageList { get; } = getAgeList();
 
@@ -254,6 +273,8 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             Input.etiologyId = etiology;
             Input.otherText = otherEtiologyDescription;
 
+            ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
+
             if (etiology == 0)
             {
                 return RedirectToPage("./DiagnosisRegister");
@@ -271,7 +292,12 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             {
                 ModelState.AddModelError("diagnosisAgeValidation", "Diagnosis age is required.");
             }
-            
+
+            if (Input.etiologyId == 3 && String.IsNullOrEmpty(Input.TimeZone))
+            {
+                ModelState.AddModelError("timeZoneValidation", "Time zone is required.");
+            }
+
             if ("Yes".Equals(Input.HelperInd))
                 {
                 if (String.IsNullOrEmpty(Input.HelperEmail))
@@ -314,9 +340,23 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 }
             }
 
+            if ("Yes".Equals(Input.DuplicateEmailInd))
+            {
+                ModelState.AddModelError("duplicateEmailValidation", "This email is already registered.");
+            }
+
 
             if (ModelState.IsValid)
             {
+                if ("United States".Equals(Input.Country))
+                {
+
+                    if (String.IsNullOrEmpty(Input.state))
+                    {
+                        ModelState.AddModelError("stateError", "State is required.");
+                        return Page();
+                    }
+                }
 
                 if (!Input.Email.Equals(Input.ConfirmEmail, StringComparison.OrdinalIgnoreCase))
                 {
@@ -326,22 +366,22 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 int age = Int32.Parse(Input.CurrentAge);
 
 
-                if (unqualifiedStates.Contains(Input.state) || age<18)
+                if (unqualifiedStates.Contains(Input.state) || age < 18)
                 {
                     return RedirectToPage("./Unqualified");
                 }
                 IdentityUser user = new IdentityUser();
                 user.UserName = Input.Email;
                 user.Email = Input.Email;
-                var result = await _userManager.CreateAsync(user, Input.Password);               
+                var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
                 {
                     string isActive = _context.Etiology.Where(e => e.Id == Input.etiologyId).Select(e => e.Active).First();
 
-                    Contributor contributor = PopulateContributor(user,isActive);
+                    Contributor contributor = PopulateContributor(user, isActive);
                     _context.Contributor.Add(contributor);
-         
+
                     _context.Etiology.Remove(contributor.Etiology);
                     _context.SaveChanges();
 
@@ -358,40 +398,53 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                         _context.SaveChanges();
                     }
 
-                    _logger.LogInformation("User created a new account with password.");                    
+                    _logger.LogInformation("User created a new account with password.");
 
                     SendEnrollmentEmail(user.Email);
 
                     await _signInManager.SignInAsync(user, isPersistent: false);
 
 
-                            string message = "<div>Hello,</div><br/><div>A potential Speech Accessibility Project participant, " + Input.firstName + ", has requested an assessment. You may contact them at " + Input.Email + " or " + Input.phoneNumber + "</div>";
+                    string message = "<div>Hello,</div><br/><div>A potential Speech Accessibility Project participant, " + Input.firstName + ", has requested an assessment. You may contact them at " + Input.Email + " or " + Input.phoneNumber + ".";
 
-                            if (Input.etiologyId == 5)
-                             {
-                                message += "<div><br/>Their etiology is Other: " + Input.otherText + ".";
-                             }
-                            message += "<div><br/> The Speech Accessibility Project Team<br/> University of Illinois Urbana - Champaign</div>";
-                            string to = _config["CPEmail"];
+                    if ("Someone else is my legal guardian".Equals(Input.LegalGuardianInd) || "Someone else is their legal guardian".Equals(Input.LegalGuardianInd))
+                    {
+                        message += " Their legal guardian is " + Input.LegalGuardianFirstName + " and their email is " + Input.LegalGuardianEmail + ".";
+                    }
 
-                            string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+                    message += "</div>";
 
-                            if (_config["DeveloperMode"].Equals("Yes") || !"Production".Equals(environment))
-                            {
-                                to = _config["TestEmail"];
-                                string testMessage = "<p><strong>This email was sent in testing mode.</strong></p>";
-                                message = testMessage + message;
-                            }
+                    if (Input.etiologyId == 5)
+                    {
+                        message += "<div><br/>Their etiology is Other: " + Input.otherText + ".";
+                    }
 
-                            await _emailSender.SendEmailAsync(to, "Assessment Request", message);
+                    if (Input.etiologyId == 3)
+                    {
+                        message += "<div><br/>Their time zone is: " + Input.TimeZone + ".";
+                    }
+                    message += "<div><br/> The Speech Accessibility Project Team<br/> University of Illinois Urbana - Champaign</div>";
+                    string to = _config["CPEmail"];
+
+                    string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+                    if (_config["DeveloperMode"].Equals("Yes") || !"Production".Equals(environment))
+                    {
+                        to = _config["TestEmail"];
+                        string testMessage = "<p><strong>This email was sent in testing mode.</strong></p>";
+                        message = testMessage + message;
+                    }
+
+                    await _emailSender.SendEmailAsync(to, "Assessment Request", message);
 
 
-                            return RedirectToAction("RecordPrompt");
-                                  
+                    return RedirectToAction("RecordPrompt");
+
 
                 }
                 foreach (var error in result.Errors)
-                {   if ( error.Code== "DuplicateUserName")
+                {
+                    if (error.Code == "DuplicateUserName")
                     {
                         error.Description += " Please click the Login link above to log in to an existing account. If you’ve forgotten your password, you can click the 'Forgot your password' link on the Login page to reset it.";
                     }
@@ -399,6 +452,10 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                     resultErrorList.Add(error.Description);
 
                 }
+            }
+            else {
+                ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
+
             }
 
             // If we got this far, something failed, redisplay form
@@ -447,6 +504,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             contributor.BirthYear = Input.BirthYear;
             contributor.CurrentAge= Input.CurrentAge;
             contributor.DiagnosisAge = Input.DiagnosisAge;
+            contributor.TimeZone = Input.TimeZone;
+            contributor.ReferenceSource = Input.ReferenceSource;
+            contributor.Country = Input.Country;
 
             return contributor;
         }

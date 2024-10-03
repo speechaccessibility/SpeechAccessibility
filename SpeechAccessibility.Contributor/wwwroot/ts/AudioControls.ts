@@ -829,6 +829,10 @@ export class AudioControls {
 			// incoming data.
 			//
 			// We only care about the first channel for the display.
+			if (audioBuffer.numberOfChannels < 1) {
+				throw new Error("AudioBuffer has no channels.")
+			}
+
 			let rawAudioData = audioBuffer.getChannelData(0)
 
 			//

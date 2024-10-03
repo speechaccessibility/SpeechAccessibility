@@ -7,12 +7,36 @@
 
 <h1>@ViewData["Title"]</h1>
 
+@{
+    if ("Yes".Equals(Model.DownSyndromeInd))
+    {
+
+        <p>On this page, please only enter information about the person with Down syndrome:</p>
+
+    }
+}
+
+<dialog id="existingEmailError">
+    <p>
+        Thank you for registering for the Speech Accessibility Project! It appears you already have an account for this project. Please select the option below closest to your case and follow those instructions. If you are unsure which one to select, please follow the instructions for Option 3.
+        <br />Option 1: Recent Registration. If you have recently registered, please await for further instructions. A mentor will contact you via email to let you know if you are eligible for the study.
+        <br />Option 2: Study Completed. If you have recently completed the study, thank you! You cannot re-enroll. But please tell your friends that meet eligibility requirements and encourage them to participate in this study.
+        <br /> Option 3: New Participant. If you believe you have not previously completed speech recordings for the Speech Accessibility Project, please email DSspeechaccess@illinois.edu, with the subject line, ‘Duplicate Registration Error.’ In the body of the email, briefly describe why you believe you are eligible to participate.
+    </p>
+    <form method="dialog">
+        <button>OK</button>
+    </form>
+</dialog>
+
+
+
 <body onload="dsRegisterLoad()">
-    <form method="post" id="dsRegisterForm">
+    <form id="dsRegisterForm" method="post">
     <hr/>
       <div asp-validation-summary="All" class="text-danger">
                     <h2>Register Errors:</h2>
                 </div>
+
         @{
             if (Model.Input != null && "Yes".Equals(Model.DownSyndromeInd))
             {
@@ -40,18 +64,29 @@
                             <span asp-validation-for="Input.DiagnosisAge" class="text-danger"></span>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <span style="color:red">*</span>
-                        <div class="form-group col-md-6">
-                            <div class="form-group">
-                                <label for="Input_state">What state do you currently live in?<br /> (We are currently recruiting U.S. residents only.)</label>
-                                <select asp-for="Input.State" asp-items="@Model.stateList" data-dropup-auto="false">
-                                    <option value="" selected>Please Select</option>
-                                </select>
-                                <br /><span asp-validation-for="Input.State" class="text-danger"></span>
-                            </div>
-                        </div>
-                    </div>
+                     <div class="form-row">
+            <span style="color:red">*</span>
+            <div class="form-group col-md-6">
+                <div class="form-group">
+                    <label for="Input_state">What country do you currently live in?<br /></label>
+                    <select id="selectCountry" asp-for="Input.Country" asp-items="@Model.countryList" data-dropup-auto="false" onchange="checkCountry()">
+                    </select>
+                    <br /><span asp-validation-for="Input.Country" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-4" id="stateDiv">
+                <div class="form-group">
+                    <label for="Input_state"><span style="color:red">*</span> What state do you live in?<br /></label>
+                    <select id="stateSelect" asp-for="Input.State" asp-items="@Model.stateList" data-dropup-auto="false">
+                        <option value="" selected>Please Select</option>
+                    </select>
+                    <br /><span asp-validation-for="Input.State" class="text-danger"></span>
+                    <span id="stateError" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label asp-for="Input.FirstName"><span style="color:red">*</span>What is your First Name?</label>
@@ -76,15 +111,15 @@
                     <div class="form-row">
                         <div class="form-group col-sm-4">
                             <label asp-for="Input.Email"><span style="color:red">*</span>What is your Email?</label>
-                            <input asp-for="Input.Email" class="form-control" onkeyup="compareEmails()" />
+                            <input id="contributorEmail" asp-for="Input.Email" class="form-control" onkeyup="compareEmails()" />
                             <span asp-validation-for="Input.Email" class="text-danger"></span>
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group col-sm-4">
+                        <div class="form-group col-sm-6">
                             <label asp-for="Input.ConfirmEmail"><span style="color:red">*</span>Please type your Email Address again.</label>
-                            <input asp-for="Input.ConfirmEmail" class="form-control" onkeyup="compareEmails()" />
-                            <span id="confirmEmailValidation" asp-validation-for="Input.ConfirmEmail" class="text-danger"></span>
+                            <input id="compareEmail" asp-for="Input.ConfirmEmail" class="form-control" onkeyup="compareEmails()" />
+                            <span id="confirmEmailValidation" class="text-danger"></span>
                         </div>
                     </div>      
                     <div class="form-row" id="legalGuardianInd">
@@ -168,7 +203,7 @@
                             <div class="form-group col-md-5">
                                 <span style="color:red">*</span>
                                 <label id="helperFirstNameLabel">Your First Name</label>
-                                <input asp-for="Input.HelperFirstName" class="form-control" />
+                                <input id="helperFirstName" asp-for="Input.HelperFirstName" class="form-control" />
                                 <span class="text-danger">@Html.ValidationMessage("helperFirstNameValidation")</span>
                                 </div>
                         </div><br/>
@@ -176,7 +211,7 @@
                             <div class="form-group col-md-5">
                                 <span style="color:red">*</span>
                                 <label id="helperLastNameLabel">Your Last Name</label>
-                                <input asp-for="Input.HelperLastName" class="form-control" />
+                                <input id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
                                 <span class="text-danger">@Html.ValidationMessage("helperLastNameValidation")</span>
                             </div>
                         </div>
@@ -184,7 +219,7 @@
                             <div class="form-group col-sm-5">
                                 <span style="color:red">*</span>
                                 <label id="helperPhoneNumberLabel">Your Phone Number</label>
-                                <input asp-for="Input.HelperPhoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
+                                <input id="helperPhoneNumber" asp-for="Input.HelperPhoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
                                 <span class="text-danger" asp-validation-for="Input.HelperPhoneNumber"></span>
                                 <span class="text-danger">@Html.ValidationMessage("helperPhoneNumberValidation")</span>
                             </div>
@@ -194,7 +229,7 @@
                             <div class="form-group col-md-5">
                             <span style="color:red">*</span>
                                 <label id="helperEmailLabel">Your Email</label>
-                                <input asp-for="Input.HelperEmail" class="form-control" />
+                                <input onchange="duplicateEmailCheck" id="helperEmail" asp-for="Input.HelperEmail" class="form-control" onkeyup="compareHelperEmails()" />
                                 <span class="text-danger" asp-validation-for="Input.HelperEmail"></span>
                                 <span class="text-danger">@Html.ValidationMessage("helperEmailValidation")</span>
                             </div>
@@ -203,8 +238,8 @@
                             <div class="form-group col-md-5">
                             <span style="color:red">*</span>
                                 <label id="helperConfirmEmailLabel">Confirm Your Email Address Again</label>
-                                <input asp-for="Input.ConfirmHelperEmail" class="form-control" />
-                                <span asp-validation-for="Input.ConfirmHelperEmail" class="text-danger"></span>
+                                <input id="confirmHelperEmail" asp-for="Input.ConfirmHelperEmail" class="form-control" onkeyup="compareHelperEmails()" />
+                                <span id="confirmHelperEmailValidation" class="text-danger"></span>
                             </div>
                             </div>
                         </div>
@@ -239,12 +274,22 @@
                             </div>
                         </div>
                     </div>
+   <div class="form-row">
+            <span style="color:red">*</span>
+            <div class="form-group col-md-6">
+                <div class="form-group">
+                    <label for="Input_state">What country does the individual currently live in?<br /></label>
+                    <select id="selectCountry" asp-for="Input.Country" asp-items="@Model.countryList" data-dropup-auto="false" onchange="checkCountry()">
+                    </select>
+                    <br /><span asp-validation-for="Input.Country" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
                     <div class="form-row">
-                        <span style="color:red">*</span>
-                        <div class="form-group col-md-8">
+                        <div class="form-group col-md-8" id="stateDiv">
                             <div class="form-group">
-                                <label for="Input_state">What state does the individual currently live in?<br /> (We are currently recruiting U.S. residents only.)</label>
-                                <select asp-for="Input.State" asp-items="@Model.stateList" data-dropup-auto="false">
+                                <label for="Input_state"><span style="color:red">*</span>What state does the individual currently live in?<br /></label>
+                                <select id="stateSelect" asp-for="Input.State" asp-items="@Model.stateList" data-dropup-auto="false">
                                     <option value="" selected>Please Select</option>
                                 </select>
                                 <br /><span asp-validation-for="Input.State" class="text-danger"></span>
@@ -294,7 +339,7 @@
                         <div id="correspondenceDiv" class="form-row">                        
                         <div class="form-group col-md-8">
                             <div class="form-group">        
-                                <fieldset>
+                                <fieldset id="correspondenceInd">
                                     <legend id="correspondenceLabel"><span style="color:red">*</span>Would you like correspondence about this project to go to you, as the caregiver, or to the individual participating in the study?</legend>
 
                                     <label><input id="correspondenceSelf" asp-for="Input.Correspondence" type="radio" value="Self" onchange="checkCorrespondence()" /> Self</label>
@@ -308,24 +353,23 @@
                    
                         <div id="contributorContactDiv">
                         <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label><span style="color:red">*</span>Individual with Down Syndrome - Email</label>
-                                <input asp-for="Input.Email" class="form-control" />
-                                <span class="text-danger">@Html.ValidationMessage("EmailValidation")</span><br>
+                            <div class="form-group col-md-12">
+                                <label><span style="color:red">*</span>Individual with Down Syndrome - Email <br/>(If the individual with Down syndrome does not have an email, please add the caregiver's email.)</label>
+                                <input id="contributorEmail" asp-for="Input.Email" class="form-control individualEmail" onkeyup="compareEmails()" />
                                 <span class="text-danger" asp-validation-for="Input.Email"></span>
                                 </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6">
                                 <label><span style="color:red">*</span>Confirm The Email Address Again.</label>
-                                <input asp-for="Input.ConfirmEmail" class="form-control" />
-                                <span asp-validation-for="Input.ConfirmEmail" class="text-danger"></span>
+                                <input id="compareEmail" asp-for="Input.ConfirmEmail" class="form-control" onkeyup="compareEmails()" />
+                                <span id="confirmEmailValidation" class="text-danger"></span> 
                             </div>
                         </div>
                          <div class="form-row">
                             <div class="form-group col-md-6">
                                 <label><span style="color:red">*</span>Individual with Down syndrome - Phone Number</label>
-                                <input asp-for="Input.PhoneNumber" class="form-control" />
+                                <input id="individualPhoneNumber" asp-for="Input.PhoneNumber" class="form-control" />
                                 <span class="text-danger" asp-validation-for="Input.PhoneNumber"></span><br>
                                 <span class="text-danger">@Html.ValidationMessage("PhoneValidation")</span>
                             </div>
@@ -350,36 +394,105 @@
                 </div>
             
             }
-        }    
+        }
+        <div class="form-row">
+        <div class="form-group col-md-10">
+            <label asp-for="Input.ReferenceSource"><span style="color:red">*</span>Where did you hear about the Speech Accessibility Project study?</label>
+            <input asp-for="Input.ReferenceSource" class="form-control" />
+            <span asp-validation-for="Input.ReferenceSource" class="text-danger"></span>
+        </div>
+        </div>
         <input hidden asp-for="DownSyndromeInd" id="downSyndromeInd" />
-    <button class="btn btn-primary" id="DSRegisterSubmit">Submit</button>
+        <input asp-for="Input.DuplicateEmailInd" id="duplicateEmailInd" hidden />
+    <button class="btn btn-primary" id="DSRegisterSubmit" onsubmit="validateEmail">Submit</button>
 </form>
 </body>
 
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/js/site.js"></script>
 <script>
 
+     function duplicateEmailCheck()
+    {
+    
+        var myArray = [];
+        var currentEmail= document.getElementById("contributorEmail").value
+    
+        var downSyndromeInd = document.getElementById("downSyndromeInd").value
+
+        var correspondenceIndividual = document.getElementById("correspondenceIndividual")
+
+        if (downSyndromeInd=="No" && (correspondenceIndividual==null || !correspondenceIndividual.checked))
+        {
+            currentEmail = document.getElementById("helperEmail").value
+        }
+
+
+
+    @foreach (var e in Model.ExistingEmailList)
+    {
+        @:myArray.push("@e")
+    }
+       
+    if(myArray.includes(currentEmail))
+    {
+        document.getElementById('duplicateEmailInd').value = "Yes"
+    }
+    else
+    {
+          document.getElementById('duplicateEmailInd').value = "No"
+    }
+         
+        }
+
+ 
     $(document).ready(function () {
 
         $("#dsRegisterForm").submit(function () {
 
+            validateEmail();
             //disable the submit button
             $("#DSRegisterSubmit").attr("disabled", true);
             return true;
         });
+
+        
+
     });
+
 
     function enableSubmit() {
         $("#DSRegisterSubmit").attr("disabled", false);
     }
 
-    const form = document.querySelector('form');
+    const form = document.getElementById('dsRegisterForm');
     form.addEventListener('change', function () {
         enableSubmit();
     });
     form.addEventListener('keyup', function () {
         enableSubmit();
     });
+
+   
+   
+     const contributorEmail = document.getElementById('contributorEmail');
+
+       contributorEmail.addEventListener('change', function () {
+        duplicateEmailCheck();
+    })
+     
+       
+
+    const helperEmail = document.getElementById('helperEmail');
+    helperEmail.addEventListener('change', function () {
+        duplicateEmailCheck();
+    })
+
+    const correspondenceInd = document.getElementById('correspondenceInd');
+
+    correspondenceInd.addEventListener('change', function() {
+    duplicateEmailCheck()
+    })
 
 </script>
 
