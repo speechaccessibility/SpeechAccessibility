@@ -235,14 +235,29 @@
       @if(Model.etiologyId==2 || Model.etiologyId==4)
         {
 
-           <p>To record your speech, please follow these 3 steps:</p>
+            if (Model.etiologyId == 2)
+            {
+                <audio id="audioInstructions" src="~/recordings/Read the Text.wav"></audio>
+                <audio id="answerInstructions" src="~/recordings/Answer the Question.wav"></audio>
+                <button class="btn btn-primary" onclick="speakInstructions()">
+                    <i title="Click here to speak instructions aloud." id="instructionsSpeakerIcon" class="fa-solid fa-volume-high"></i>
+                </button>
+            }
+            <span>To record your speech, please follow these 3 steps:</span>
             if (Model.prompt.Category.Id == 2 || Model.prompt.Category.Id==3 || Model.prompt.Category.Id==5)
             {
+            //Use phonectic spelling of record to pronounce correctly
+                <span hidden id="instructions">To record your speech, please follow these 3 steps.  Press the rekoerd button.  Read the text.  Press Stop Recording. </span>
+                
+                
                 <p>1. Press the record button.<br /><strong>2. Read the text.</strong><br/> 3. Press Stop Recording.</p>
                <strong>Text</strong>
         }
             else if (Model.prompt.Category.Id == 4)
             {
+                    //Use phonectic spelling of record to pronounce correctly
+                <span hidden id="instructions">To record your speech, please follow these 3 steps. Press the rekoerd button. Answer the question. Press Stop Recording. </span>
+
                 <p>1. Press the record button.<br /><span style="font-size:28px;background-color:yellow"><strong>2.Answer the question.</strong></span><br />3. Press Stop Recording.</p>
                 <strong>Question</strong>
             }
@@ -333,6 +348,8 @@
     {
         <p>After you press Stop Recording, you can press Next or Rerecord.</p>
     }
+
+    <form id="postRecording"></form>
   
 </div>
 

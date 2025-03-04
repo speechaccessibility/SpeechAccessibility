@@ -39,6 +39,7 @@ namespace SpeechAccessibility.Core.Models
         public string BirthYear { get; set; }
         public string HelperPhoneNumber { get; set; }
         public int? PromptCategoryId { get; set; }
+        public string PaymentType {get; set; }
 
         public Etiology Etiology { get; set; }
         public AspNetUsers IdentityUser { get; set; }

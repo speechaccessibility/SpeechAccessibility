@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using SpeechAccessibility.Core.Interfaces;
 using SpeechAccessibility.Infrastructure.Data;
 using SpeechAccessibility.Annotator.Extensions;
+using Microsoft.AspNetCore.Identity;
 
 namespace SpeechAccessibility.Annotator
 {
@@ -130,7 +131,7 @@ namespace SpeechAccessibility.Annotator
             services.AddScoped<ILegalGuardianRepository, LegalGuardianRepository>();
             services.AddScoped<IHelperNotPaidGiftCardsRepository, HelperNotPaidGiftCardsRepository>();
             services.AddScoped<IContributorsPaidByCheckRepository, ContributorsPaidByCheckRepository>();
-
+            
             services.AddScoped<DeleteFileAttribute>();
 
             services.AddControllersWithViews()

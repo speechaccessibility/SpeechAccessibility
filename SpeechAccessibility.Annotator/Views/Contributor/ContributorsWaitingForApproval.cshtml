@@ -20,7 +20,16 @@
 <input type="hidden" id="RegisterLink" value="@ViewBag.RegisterLink"/>
 
 <label id="lblMessage" name="lblMessage" class="errorMessage"></label>
-<div style="width: 1700px">
+<div>
+    <b>Toggle column: </b>
+   
+    - <a class="toggle-vis" data-column="8" style="color: #0366d6 !important; cursor: pointer;">Helper Email</a>
+    - <a class="toggle-vis" data-column="9" style="color: #0366d6 !important; cursor: pointer;">Helper Phone</a>
+    - <a class="toggle-vis" data-column="11" style="color: #0366d6 !important; cursor: pointer;">HeardAboutStudy</a>
+  
+</div>
+
+<div style="width: 1800px">
     <table class="table table-striped table-bordered table-hover" id="WaitingForApprovalContributorTable" cellspacing="0" align="center"></table>
 </div>
 <div id="rating-dialog" style="display: none"></div>
@@ -121,7 +130,7 @@
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[7, 'desc']],
+                    "aaSorting": [[8, 'desc']],
                     "columns": [
                         {
                             "className": 'details-control',
@@ -179,6 +188,7 @@
                             "searchable": true,
                             "orderable": true,
                             "visible": true,
+                            "width": '100px',
                             "name": "PhoneNumber"
                         },
                         {
@@ -203,7 +213,7 @@
                             "data": "helperEmail",
                             "searchable": true,
                             "orderable": true,
-                            "visible": true,
+                            "visible": false,
                             "name": "HelperEmail",
                             'render': function (data,type, row) {                               
                                 if (row.helperInd=="Yes")
@@ -217,13 +227,30 @@
                             "data": "helperPhoneNumber",
                             "searchable": true,
                             "orderable": true,
-                            "visible": true,
+                            "visible": false,
                             "name": "HelperPhoneNumber",
                             'render': function (data, type, row) {
                                 if (row.helperInd == "Yes")
                                     return row.helperPhoneNumber
                                 return '';
                             }
+                        },
+                        {
+                            "title": "Country",
+                            "data": "country",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Country"
+                        },
+                        {
+                            "title": "HeardAboutStudy",
+                            "data": "referenceSource",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "width": '50px',
+                            "name": "ReferenceSource"
                         },
                         {
                             "title": "Comments",
@@ -296,7 +323,7 @@
                             //"targets": 0,
                             "searchable": false,
                             "orderable": false,
-                            "width": '270px',
+                            "width": '220px',
                             "classDescription": 'dt-body-center',
                             "visible": true,
                             "name": "Id",
@@ -342,6 +369,18 @@
 
                 });
             
+                document.querySelectorAll('a.toggle-vis').forEach((el) => {
+                el.addEventListener('click', function (e) {
+                    e.preventDefault();
+ 
+                    let columnIdx = e.target.getAttribute('data-column');
+                    let column = oContributorsTable.column(columnIdx);
+ 
+                    // Toggle the visibility
+                    column.visible(!column.visible());
+                });
+            });
+
                 //view the contributor's recordings
             $('#WaitingForApprovalContributorTable tbody').on('click', 'td.details-control',function() {
                 var tr = $(this).closest('tr');

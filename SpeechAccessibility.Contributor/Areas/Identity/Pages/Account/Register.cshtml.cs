@@ -251,11 +251,8 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             Input = new InputModel();
             Input.etiologyId = etiology;
 
-            if (etiology == 0)
-            {
-                return RedirectToPage("./DiagnosisRegister");
-            }
-            return Page();
+                return RedirectToPage("./DiagnosisRegister");        
+         
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)

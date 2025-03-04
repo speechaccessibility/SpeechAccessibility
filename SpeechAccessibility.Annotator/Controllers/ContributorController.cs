@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
+using Irony.Parsing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -371,10 +372,19 @@ namespace SpeechAccessibility.Annotator.Controllers
                 //}
 
                 contributor.StatusId = string.IsNullOrEmpty(contributor.IdentityUserId) ? 5 : action; //un-deny and contributor is not registered if contributor.IdentityUserId is null
+
+                //if this contributor was Denied from Approved page and already has recordings, move those back to new
+                var recordings = _recordingRepository.Find(c => c.ContributorId == contributor.Id);
+                foreach (var recording in recordings)
+                {
+                    recording.StatusId = 1;
+                    _recordingRepository.Update(recording);
+                }
             }
             else
             {
-                contributor.StatusId = action;
+                //for Rebuke, scammer, set status to denied
+                contributor.StatusId = action == 6 ? 3 : action;
             }
 
             contributor.Comments = comment;
@@ -490,20 +500,30 @@ namespace SpeechAccessibility.Annotator.Controllers
 
                 error = await SendEmailToContributor(contributor, emailSubject, message, _configuration["AppSettings:EmailServer"]);
             }
-            else if (action == 3)//deny
+            else if (action is 3 or 6)//deny or rebuke
             {
-                message.Append("Dear " + contributor.FirstName);
-                message.Append("<br>Thank you so much for your interest in participating in the Speech Accessibility Project.");
-                message.Append("<br>Unfortunately, you do not meet the current criteria for the project. If you have specific questions about this,");
-                message.Append("please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] + ".");
-                message.Append("<br><br>Sincerely,");
-                message.Append("<br>The Speech Accessibility Project Team");
-                message.Append("<br>University of Illinois Urbana - Champaign");
+                //move all associated recordings to excluded. This only applies to Contributors that are arealdy approved. 
+                var recordings = _recordingRepository.Find(c => c.ContributorId == contributor.Id);
+                foreach (var recording in recordings)
+                {
+                    recording.StatusId = 4;
+                    _recordingRepository.Update(recording);
+                }
 
-                emailSubject = "Your registration has been denied.";
+                if (action == 3)
+                {
+                    message.Append("Dear " + contributor.FirstName);
+                    message.Append("<br>Thank you so much for your interest in participating in the Speech Accessibility Project.");
+                    message.Append("<br>Unfortunately, you do not meet the current criteria for the project. If you have specific questions about this,");
+                    message.Append("please contact " + _configuration["AppSettings:SpeechAccessibilityTeamEmail"] + ".");
+                    message.Append("<br><br>Sincerely,");
+                    message.Append("<br>The Speech Accessibility Project Team");
+                    message.Append("<br>University of Illinois Urbana - Champaign");
 
-                error = await SendEmailToContributor(contributor, emailSubject, message, _configuration["AppSettings:EmailServer"]);
+                    emailSubject = "Your registration has been denied.";
 
+                    error = await SendEmailToContributor(contributor, emailSubject, message, _configuration["AppSettings:EmailServer"]);
+                }
             }
 
             //logging the email
@@ -686,6 +706,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                     return Json(new { Success = false, Message = "You do not have permission for this contributor." });
 
             }
+            
 
             var contributor = _contributorRepository.Find(c => c.Id == contributorView.Id).Include(c=>c.IdentityUser)
                 .Include(c=>c.LegalGuardian).FirstOrDefault();
@@ -696,6 +717,15 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             if (contributor.EmailAddress!= null && !contributor.EmailAddress.Equals(contributorView.EmailAddress))
             {
+                //check to make sure the email address not exists.
+                var duplicate = _contributorRepository
+                    .Find(c => c.EmailAddress.Trim().Equals(contributorView.EmailAddress.Trim()) && c.Id != contributorView.Id)
+                    .FirstOrDefault();
+                if (duplicate != null)
+                {
+                    return Json(new { Success = false, Message = "Email Address is already used in the system." });
+                }
+
                 contributor.EmailAddress = contributorView.EmailAddress;
                 if (contributor.IdentityUser != null)
                 {
@@ -724,6 +754,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             }
 
             contributor.BirthYear = contributorView.BirthYear;
+            contributor.PaymentType=contributorView.PaymentType;
             if(contributorView.SubStatusId> 0)
                 contributor.SubStatusId= contributorView.SubStatusId;
             if (!string.IsNullOrEmpty(contributorView.Comments))
@@ -764,6 +795,7 @@ namespace SpeechAccessibility.Annotator.Controllers
                    _legalGuardianRepository.Delete(existingLegalGuardian);
                 }
             }
+
             _contributorRepository.Update(contributor);
 
             //If HelperNotPaid is Yes, add to the HelperNotPaidGiftCards table
