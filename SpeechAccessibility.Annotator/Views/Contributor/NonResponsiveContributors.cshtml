@@ -32,6 +32,7 @@
 <div id="makeChanges-dialog" style="display: none">
     <label id="lblMakeChangesMessage">Contributor:</label>
     <input type="hidden" id="hidMakeChangesContributorId" />
+    <input type="hidden" id="EtiologyId" value="@ViewBag.SubRole" />
     <br /><b>First Name:</b><label id="lblMakeChangesFirstName" name="lblMakeChangesFirstName"></label>
     <br /><b>Last Name:</b><label id="lblMakeChangesLastName" name="lblMakeChangesLastName"></label>
     <br />Comment:<br/><textarea id="txtMakeChangesComment" name="txtMakeChangesComment" rows="4" cols="50"></textarea>
@@ -46,6 +47,9 @@
             </td>
         </tr>
     </table>
+    <br/>
+    <div id="PromptCategory">Approve with Prompt Category: @Html.DropDownList("PromptCategoryId", new SelectList(ViewBag.PromptCategories, "Value", "Text"))</div>
+
 </div>
 <div id="editInfo-dialog" style="display: none">
 </div>
@@ -77,6 +81,7 @@
     <script src="~/js/Contributor.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
+             $("#PromptCategory").removeAttr('hidden');
 
             //bind datatable for Prompts
             var oContributorsTable = $("#NonResponsiveContributorTable").on('error.dt',
@@ -96,7 +101,7 @@
                         "datatype": "json"
                     }),
                     "bAutoWidth": false,
-                    "aaSorting": [[5, 'desc']],
+                    "aaSorting": [[6, 'desc']],
                     "columns": [
                         {
                             "title": "ID",
@@ -140,6 +145,14 @@
                             "orderable": true,
                             "visible": true,
                             "name": "BirthYear"
+                        },
+                        {
+                            "title": "Country",
+                            "data": "country",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": true,
+                            "name": "Country"
                         },
                         {
                             "title": "Register Date",
@@ -309,7 +322,17 @@
 
             $('#NonResponsiveContributorTable').on('click', 'a.approve', function (e) {
                 e.preventDefault();              
-                $("#tableChangePassword").removeAttr('hidden');               
+                $("#tableChangePassword").removeAttr('hidden'); 
+                 if ($("#SubRole").val() == 3 || $("#SubRole").val() == 4 || $("#SubRole").val() == 6) //the Prompt Category option is now only available for Cerebral Palsy
+                {
+                    $("#PromptCategory").removeAttr('hidden');
+                    //$("#PromptCategoryId").val(4).change();                    
+                }   
+                else
+                {
+                    $("#PromptCategory").attr('hidden', 'hidden');
+                }
+
                 var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                 var row = selectedRowData.data();
                 $("#lblMakeChangesMessage").text("Approve Contributor:");
@@ -357,6 +380,7 @@
                 function (e) {
                     e.preventDefault();
                     $("#tableChangePassword").attr('hidden', 'hidden');
+                    $("#PromptCategory").attr('hidden', 'hidden');
                     var selectedRowData = oContributorsTable.row($(this).closest('tr'));
                     var row = selectedRowData.data();
                     $("#lblMakeChangesMessage").text("Deny Contributor:");

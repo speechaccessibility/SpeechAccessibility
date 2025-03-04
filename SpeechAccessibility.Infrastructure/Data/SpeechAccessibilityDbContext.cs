@@ -607,7 +607,7 @@ namespace SpeechAccessibility.Infrastructure.Data
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
 
             entity.Property(e => e.StateResidence)
-                .IsRequired()
+                //.IsRequired()
                 .HasMaxLength(4);
 
             entity.Property(e => e.StatusName).HasMaxLength(50);
@@ -729,7 +729,7 @@ namespace SpeechAccessibility.Infrastructure.Data
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
 
             entity.Property(e => e.StateResidence)
-                .IsRequired()
+                //.IsRequired()
                 .HasMaxLength(4);
 
             entity.Property(e => e.StatusName).HasMaxLength(50);

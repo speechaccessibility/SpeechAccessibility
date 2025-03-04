@@ -22,10 +22,11 @@
     <a class="toggle-vis" data-column="4" style="color: #0366d6 !important; cursor: pointer;">Phone Number</a>
     - <a class="toggle-vis" data-column="5" style="color: #0366d6 !important; cursor: pointer;">Birth Year</a>
     - <a class="toggle-vis" data-column="6" style="color: #0366d6 !important; cursor: pointer;">Gender</a>
-    - <a class="toggle-vis" data-column="7" style="color: #0366d6 !important; cursor: pointer;">Helper Email</a>
-    - <a class="toggle-vis" data-column="8" style="color: #0366d6 !important; cursor: pointer;">Helper Phone</a>
-    - <a class="toggle-vis" data-column="13" style="color: #0366d6 !important; cursor: pointer;">SentFollowUpDate</a>
-    - <a class="toggle-vis" data-column="15" style="color: #0366d6 !important; cursor: pointer;">Comments</a>
+    - <a class="toggle-vis" data-column="7" style="color: #0366d6 !important; cursor: pointer;">Country</a>
+    - <a class="toggle-vis" data-column="8" style="color: #0366d6 !important; cursor: pointer;">Helper Email</a>
+    - <a class="toggle-vis" data-column="9" style="color: #0366d6 !important; cursor: pointer;">Helper Phone</a>
+    - <a class="toggle-vis" data-column="14" style="color: #0366d6 !important; cursor: pointer;">SentFollowUpDate</a>
+    - <a class="toggle-vis" data-column="16" style="color: #0366d6 !important; cursor: pointer;">Comments</a>
 </div>
 <div style="width: 1800px">
     <table class="table table-striped table-bordered table-hover" id="ContributorTable" cellspacing="0" align="center"></table>
@@ -62,6 +63,16 @@
         <br /><b>New Password: </b><input id="txtNewPassword" name="txtNewPassword" type="text" value="" />
     </div>
 </div>
+
+<div id="deny-dialog" style="display: none">
+    <label id="lblDenyMessage">Contributor:</label>
+    <input type="hidden" id="hidDenyContributorId" />
+    <br /><b>First Name:</b><label id="lblDenyFirstName" name="lblDenyFirstName"></label>
+    <br /><b>Last Name:</b><label id="lblDenyLastName" name="lblDenyLastName"></label>
+    <br />Comment:<br /><textarea id="txtDenyComment" name="txtDenyComment" rows="4" cols="50"></textarea>
+    
+</div>
+
 
 
 <div class="spinner" style="display:none">
@@ -160,6 +171,14 @@
                             "orderable": false,
                             "visible": false,
                             "name": "Gender",                         
+                        },
+                        {
+                            "title": "Country",
+                            "data": "country",
+                            "searchable": true,
+                            "orderable": true,
+                            "visible": false,
+                            "name": "Country"
                         },
                         {
                             "title": "HelperEmail",
@@ -309,14 +328,14 @@
                             //"targets": 0,
                             "searchable": false,
                             "orderable": false,
-                            "width": '200px',
+                            "width": '220px',
                             "classDescription": 'dt-body-center',
                             "visible": true,
                             "name": "Id",
                             "render": function (data, type, row) {
                                 var link="";
                                 if ($("#UserRole").val() === "TextAnnotatorAdmin" || $("#UserRole").val() === "SystemAdmin") {
-                                    link = '<a href="#" class="assignAnnotator" >Assign Annotators</a>'
+                                    link = '<a href="#" class="assignAnnotator" >Assign Annotators</a>'                                        
                                         + ' | <a href="#" class="editInfo">Edit Info</a> '
                                         + '<br><a href="#" class="viewSITRating" >View SIT Rating</a>'
                                         + ' | <a href="#" class="sendFollowUp">Send Follow-up </a>'
@@ -324,6 +343,7 @@
                                     if (row.identityUserId != '') {
                                         link = link + ' | <a href="#" class="changePassword" >Change Password</a>';
                                     }
+                                    link = link + ' | <a href="#" class="rebuke">Rebuke</a> ';
                                     return link;
                                 }
                                 link = '<a href="#" class="viewSITRating" >View SIT Rating</a> '
@@ -355,6 +375,7 @@
                     column.visible(!column.visible());
                 });
             });
+            
 
             $('#ContributorTable tbody').on('click',
                 'td.details-control',
@@ -539,6 +560,28 @@
                 return false;
               
             });
+            
+            //on Approved page, if contributor is Deny, move to Delete contributor and remove all associated recordings to Excluded
+              //deny the contributor
+            $('#ContributorTable').on('click',
+                'a.rebuke',
+                function (e) {
+                    e.preventDefault();
+
+                    var selectedRowData = oContributorTable.row($(this).closest('tr'));
+                    var row = selectedRowData.data();
+                    $("#lblDenyMessage").text("Deny Contributor:");
+                    $("#hidDenyContributorId").val(row.id);
+                    $("#lblDenyFirstName").text(row.firstName);
+                    $("#lblDenyLastName").text(row.lastName);
+                    $("#txtDenyComment").val(row.comments);
+                    var postUrl = '@Url.Action("UpdateContributor", "Contributor")';
+                    denyContributor(postUrl, oContributorTable, 6, 'Rebuke Contributor'); //for Rebuke, scammer
+                    $("#deny-dialog").dialog('open');
+
+                });
+
+
 
         });//End document ready
 

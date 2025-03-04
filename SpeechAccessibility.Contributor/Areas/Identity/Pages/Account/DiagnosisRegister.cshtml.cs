@@ -33,11 +33,11 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {              
-                if ("1".Equals(Input.etiologyId))
-                {
-                    return RedirectToPage("Register", new { etiology = Input.etiologyId });
-                }
-                else if ("2".Equals(Input.etiologyId))
+                //if ("1".Equals(Input.etiologyId))
+                //{
+                //    return RedirectToPage("Register", new { etiology = Input.etiologyId });
+                //}
+                if ("2".Equals(Input.etiologyId))
                 {
                     return RedirectToPage("DSPreRegister", new { etiology = Input.etiologyId});
                 }

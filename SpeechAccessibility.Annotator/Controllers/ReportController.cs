@@ -199,8 +199,7 @@ namespace SpeechAccessibility.Annotator.Controllers
         {
             var contributorsPayByCheck = _contributorsPaidByCheckRepository.GetAll().Select(c => c.EmailDomain).ToList();
             var helperNotGetPay = _helperNotPaidGiftCardsRepository.GetAll().Select(h => h.HelperEmailAddress).ToList();
-            //List<string> contributorsPayByCheck = new List<string>() { "@aol.com", "@att", "@icloud.com" };
-            //List<string> helperNotGetPay = new List<string>() { "facamer2@gmail.com", "charr68@gmail.com" };
+            
 
             var contributorCompensation = new ContributorCompensationViewModel
             {
@@ -211,7 +210,7 @@ namespace SpeechAccessibility.Annotator.Controllers
             };
 
             var allGiftCards = _contributorCompensationViewRepository
-                .Find(g=>g.FirstCard=="Yes" || g.SecondCard=="Yes" || g.ThirdCard=="Yes");
+                .Find(g=>g.PaymentType=="ecode" && (g.FirstCard=="Yes" || g.SecondCard=="Yes" || g.ThirdCard=="Yes"));
 
             var firstCardList =  allGiftCards.Where(g => g.FirstCard == "Yes").OrderBy(g => g.LastName).ThenBy(g => g.FirstName).ToList();
             int i;
@@ -300,7 +299,6 @@ namespace SpeechAccessibility.Annotator.Controllers
             var helperNotGetPay = _helperNotPaidGiftCardsRepository.GetAll().Select(h => h.HelperEmailAddress).ToList();
             var contributorCompensation = new ContributorCompensationViewModel
             {
-
                 ContributorsQualifyForFirstCard = new List<ContributorCompensationView>(),
                 ContributorsQualifyForSecondCard = new List<ContributorCompensationView>(),
                 ContributorsQualifyForThirdCard = new List<ContributorCompensationView>()
@@ -316,22 +314,39 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             foreach (var card in firstCardList)
             {
-                //only keep contributors paid by check 
-                foreach (var contributor in contributorsPayByCheck)
+                //if contributor is paid by check, add to the list
+                if (card.PaymentType == "check")
+                {
+                    contributorsPaidByCheckFirstCard.Add(card);
+                    //remove helpers should not get paid
+                    foreach (var helper in helperNotGetPay)
+                    {
+                        if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                        {
+                            card.HelperInd = "No";
+                        }
+                    }
+                }
+                else
                 {
                     //only keep contributors paid by check 
-                    if (card.EmailAddress.Contains(contributor))
+                    foreach (var contributor in contributorsPayByCheck)
                     {
-                        //remove helpers should not get paid
-                        foreach (var helper in helperNotGetPay)
+                        //only keep contributors paid by check 
+                        if (card.EmailAddress.Contains(contributor))
                         {
-                            if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                            //remove helpers should not get paid
+                            foreach (var helper in helperNotGetPay)
                             {
-                                card.HelperInd = "No";
+                                if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                                {
+                                    card.HelperInd = "No";
+                                }
                             }
+
+                            contributorsPaidByCheckFirstCard.Add(card);
+                            break;
                         }
-                        contributorsPaidByCheckFirstCard.Add(card);
-                        break;
                     }
                 }
             }
@@ -346,22 +361,39 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             foreach (var card in secondCardList)
             {
-                //only keep contributors paid by check 
-                foreach (var contributor in contributorsPayByCheck)
+                //if contributor is paid by check, add to the list
+                if (card.PaymentType == "check")
+                {
+                    contributorsPaidByCheckSecondCard.Add(card);
+                    //remove helpers should not get paid
+                    foreach (var helper in helperNotGetPay)
+                    {
+                        if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                        {
+                            card.HelperInd = "No";
+                        }
+                    }
+                }
+                else
                 {
                     //only keep contributors paid by check 
-                    if (card.EmailAddress.Contains(contributor))
+                    foreach (var contributor in contributorsPayByCheck)
                     {
-                        //remove helpers should not get paid
-                        foreach (var helper in helperNotGetPay)
+                        //only keep contributors paid by check 
+                        if (card.EmailAddress.Contains(contributor))
                         {
-                            if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                            //remove helpers should not get paid
+                            foreach (var helper in helperNotGetPay)
                             {
-                                card.HelperInd = "No";
+                                if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                                {
+                                    card.HelperInd = "No";
+                                }
                             }
+
+                            contributorsPaidByCheckSecondCard.Add(card);
+                            break;
                         }
-                        contributorsPaidByCheckSecondCard.Add(card);
-                        break;
                     }
                 }
             }
@@ -373,22 +405,48 @@ namespace SpeechAccessibility.Annotator.Controllers
 
             foreach (var card in thirdCardList)
             {
-                //only keep contributors paid by check 
-                foreach (var contributor in contributorsPayByCheck)
+                //if contributor is paid by check, add to the list
+                if (card.PaymentType == "check")
+                {
+                    contributorsPaidByCheckThirdCard.Add(card);
+                    //remove helpers should not get paid
+                    foreach (var helper in helperNotGetPay)
+                    {
+                        if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                        {
+                            card.HelperInd = "No";
+                        }
+                    }
+
+                }
+                else
                 {
                     //only keep contributors paid by check 
-                    if (card.EmailAddress.Contains(contributor))
+                    foreach (var contributor in contributorsPayByCheck)
                     {
-                        //remove helpers should not get paid
-                        foreach (var helper in helperNotGetPay)
+                        //only keep contributors paid by check 
+                        if (card.EmailAddress.Contains(contributor))
                         {
-                            if (!string.IsNullOrEmpty(card.HelperEmail) &&  card.HelperEmail.Contains(helper))
+                            //remove helpers should not get paid
+                            foreach (var helper in helperNotGetPay)
                             {
-                                card.HelperInd = "No";
+                                if (!string.IsNullOrEmpty(card.HelperEmail) && card.HelperEmail.Contains(helper))
+                                {
+                                    card.HelperInd = "No";
+                                }
                             }
+
+                            //need to add first recording date and last recording date for payment by check
+                            var recordingList = _recordingRepository.Find(r => r.ContributorId == card.ContributorId);
+
+                            var firstRecordingDate = recordingList.Min(r => r.CreateTS);
+                            var lastRecordingDate = recordingList.Max(r => r.CreateTS);
+                            card.FirstRecordingDate = firstRecordingDate;
+                            card.LastRecordingDate = lastRecordingDate;
+
+                            contributorsPaidByCheckThirdCard.Add(card);
+                            break;
                         }
-                        contributorsPaidByCheckThirdCard.Add(card);
-                        break;
                     }
                 }
             }
@@ -542,11 +600,18 @@ namespace SpeechAccessibility.Annotator.Controllers
                 {
                     if (paymentType == "check") //we write one check for all 3 gift cards, contributor gets $180, helper gets $90
                     {
-                        giftCardsByCheck.Add(new GiftCardByCheckViewModel() { Amount = 180.00, EmailAddress = contributor.EmailAddress, FirstName = contributor.FirstName, LastName = contributor.LastName });
+                        //need to add first recording date and last recording date for payment by check
+                        var recordingList = _recordingRepository.Find(r => r.ContributorId == contributor.Id);
+
+                        var firstRecordingDate = recordingList.Min(r => r.CreateTS);
+                        var lastRecordingDate = recordingList.Max(r => r.CreateTS);
+                      
+                        giftCardsByCheck.Add(new GiftCardByCheckViewModel() 
+                            { Amount = 180.00, EmailAddress = contributor.EmailAddress, FirstName = contributor.FirstName, LastName = contributor.LastName,FirstRecordingDate = firstRecordingDate, LastRecordingDate = lastRecordingDate});
 
                         if (includeHelper)
                         {
-                            giftCardsByCheck.Add(new GiftCardByCheckViewModel { Amount = 90.00,  EmailAddress = contributor.HelperEmail, FirstName = contributor.HelperFirstName, LastName = contributor.HelperLastName });
+                            giftCardsByCheck.Add(new GiftCardByCheckViewModel { Amount = 90.00,  EmailAddress = contributor.HelperEmail, FirstName = contributor.HelperFirstName, LastName = contributor.HelperLastName, FirstRecordingDate = firstRecordingDate, LastRecordingDate = lastRecordingDate });
                         }
                     }
                     else
@@ -617,7 +682,21 @@ namespace SpeechAccessibility.Annotator.Controllers
             int pageSize = length != null ? Convert.ToInt32(length) : 0;
             int skip = start != null ? Convert.ToInt32(start) : 0;
 
-            var compensationHistory = _contributorCompensationHistoryRepository.GetAll();
+            IQueryable<ContributorCompensationHistory> compensationHistory;
+
+            if (!string.IsNullOrEmpty(searchValue))
+            {
+                 compensationHistory = _contributorCompensationHistoryRepository.GetAll()
+                    .Where(c => c.ContributorId.ToString().Contains(searchValue) || c.LastName.Contains(searchValue) || c.FirstName.Contains(searchValue)
+                                || c.EmailAddress.Contains(searchValue) || c.HelperFirstName.Contains(searchValue) || c.HelperLastName.Contains(searchValue) || c.HelperEmail.Contains(searchValue));
+            }
+            else
+            {
+                 compensationHistory = _contributorCompensationHistoryRepository.GetAll();
+
+            }
+
+           
             var recordsTotal = compensationHistory.Count();
             compensationHistory = DynamicSortingExtensions<ContributorCompensationHistory>.SetOrderByDynamic(compensationHistory, Request.Form);
             compensationHistory = compensationHistory.Skip(skip).Take(pageSize);

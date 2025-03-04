@@ -46,6 +46,7 @@ namespace SpeechAccessibility.Core.Models
         public string LegalGuardianEmail { get; set; }
         public string LegalGuardianPhoneNumber { get; set; }
         public int? LegalGuardianId { get; set; }
+        public string Country { get; set; }
         //[NotMapped]
         //public string LegalGuardianInd { get; set; }
 

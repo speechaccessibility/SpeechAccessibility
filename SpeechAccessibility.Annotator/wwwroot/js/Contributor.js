@@ -194,9 +194,11 @@ function editContributorInfo(getUrl, postUrl, table, status) {
                     }
                 }
                 $('.spinner').css('display', 'block');
+               
                 var jsonObject = {
                     "Id": $("#hidEditInfoContributorId").val(),
                     "EmailAddress": $("#txtEditContributorEmail").val(),
+                    "PaymentType": $("#PaymentType").val(),
                     "HelperInd": helperInd,
                     "HelperFirstName": $("#txtEditHelperFirstName").val(),
                     "HelperLastName": $("#txtEditHelperLastName").val(),
@@ -367,7 +369,59 @@ function changePassword(postUrl ) {
 
     });
 }
+//for Deny action on Approved page
+function denyContributor(postUrl, table, action, title) {
+    $("#deny-dialog").dialog({
+        title: title,
+        autoOpen: false,
+        resizable: false,
+        width: 700,
+        show: { effect: 'drop', direction: "up" },
+        modal: true,
+        draggable: true,
+        closeOnEscape: true,
+        position: { my: "left top", at: "left+50 top+100", of: window },
+        open: function () {
+            $('#deny-dialog').css('overflow', 'hidden'); //hide the vertial bar on the dialog
+        },
+        close: function () {
+            clearDenyDialog();
+        },
+        buttons: {
+            "Submit": function () {
+                $('.spinner').css('display', 'block');
+                var contributorId = $("#hidDenyContributorId").val();
+                var comment = $("#txtDenyComment").val();               
+                $.ajax({
+                    url: postUrl,
+                    type: "POST",
+                    data: {
+                        "contributorId": contributorId, "comment": comment, "passwordChange": "No", "subRole": 0, "action": action, "promptCategory": "", "etiologyId": 0 //4 for non-responsive, 3 for deny, 2 for approve
+                    },
+                    success: function (response) {
+                        $('.spinner').css('display', 'none');
+                        if (response.success === true) {
+                            clearDenyDialog();
+                            $('#deny-dialog').dialog('close');
+                            $("#lblMessage").text("Contributor is denied.");                           
+                            table.draw(false);
+                        } else {
+                            $("#lblDenyMessage").text(response.message);
+                            $("#lblDenyMessage").addClass("errorMessage");
+                        }
+                    },
+                    error: function () { alert('Error Deny Contributor! It could be the timeout issue. Please try to reload your browser.'); }
+                });
 
+            },
+            close: function () {
+                clearDenyDialog();
+                $(this).dialog('close');
+            }
+        }
+
+    });
+}
 
 //function editContributorInfo(postUrl, table,  title, status) {
 //    $("#editInfo-dialog").dialog({
@@ -535,6 +589,15 @@ function clearMakeChangesDialog() {
     $("#txtMakeChangesComment").val("");
     $("#lblMakeChangesMessage").text("Contributor");
     $("#lblMakeChangesMessage").removeClass("errorMessage");
+}
+
+function clearDenyDialog() {
+    $("#hidDenyContributorId").val("");
+    $("#lblDenyFirstName").text("");
+    $("#lblDenyLastName").text("");
+    $("#txtDenyComment").val("");
+    $("#lblDenyMessage").text("Contributor");
+    $("#lblDenyMessage").removeClass("errorMessage");
 }
 
 function clearEditInfoDialog() {

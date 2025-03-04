@@ -29,6 +29,7 @@
             <th>Helper</th>
             <th>#Recordings</th>
             <th>Etiology</th>
+            
 
         </tr>
         @{
@@ -141,11 +142,13 @@
         <tr>
             <th style="width: 10px;">&nbsp;</th>
             <th style="width: 350px;">ContributorID</th>
-            <th style="width: 250px;">Name</th>
+            <th style="width: 200px;">Name</th>
             <th style="width: 250px;">Contributor Email</th>
             <th>Helper</th>
             <th>#Recordings</th>
             <th>Etiology</th>
+            <th style="width: 100px;">First Date</th>
+            <th style="width: 100px;">Last Date</th>
         </tr>
         @{
 
@@ -168,12 +171,13 @@
                         @{
                             if (!string.IsNullOrEmpty(contributor.PromptCategory))
                             {
-                                <text>-</text> @contributor.PromptCategory
-                                ;
+                                <text>-</text> @contributor.PromptCategory;
                             }
 
                         }
                     </td>
+                    <td>@contributor.FirstRecordingDate</td>
+                    <td>@contributor.LastRecordingDate</td>
                 </tr>
             }
         }

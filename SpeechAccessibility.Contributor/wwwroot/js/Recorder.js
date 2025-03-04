@@ -103,75 +103,129 @@ function recording_interface() {
         recordButton.addEventListener(
             'AudioControls.RecordingStopped',
             (event) => {
-                //console.log('entering AudioControls.RecordingStopped')
-                let button = $('#recordButton')
-                let nextButton = $('#nextButton');
-                let recordingStatus = document.getElementById('recordingStatus')
-                let text = button.text()
-                if (button.text() === 'Record' || button.text==='Rerecord') {
-                    return false
-                }           
-                recordingStatus.innerHTML = "Recording Stopped"
-                event.stopPropagation()
-                event.preventDefault()  
 
-                let clientStartDate = document.getElementById("clientStartTS").value;
-                let clientEndDate = new Date(Date.now()).toLocaleString()
-                //send the recording to the controller to be saved
-                var contributorId = document.getElementById('contributorId').value;
-                var promptId = document.getElementById('promptId').value;
-                var categoryId = document.getElementById('categoryId').value;
-                var blockId = document.getElementById('blockId').value;
-                let rerecordMessage = document.getElementById('rerecordMessage')
-                var subCategoryId = document.getElementById('subCategoryId').value;
+                try {
+                   
+                    
+                    //console.log('entering AudioControls.RecordingStopped')
+                    let button = $('#recordButton')
+                    let nextButton = $('#nextButton');
+                    let recordingStatus = document.getElementById('recordingStatus')
+                    let text = button.text()
+                    if (button.text() === 'Record' || button.text === 'Rerecord') {
+                        return false
+                    }
+                    recordingStatus.innerHTML = "Recording Stopped"
+                    event.stopPropagation()
+                    event.preventDefault()
+               
 
-                if (subCategoryId == 5)
-                {
-                    promptId = document.querySelector('input[name="selectedPromptId"]:checked').value;
+                    let clientStartDate = document.getElementById("clientStartTS").value;
+                    let clientEndDate = new Date(Date.now()).toLocaleString()
+                    //send the recording to the controller to be saved
+                    var contributorId = document.getElementById('contributorId').value;
+                    var promptId = document.getElementById('promptId').value;
+                    var categoryId = document.getElementById('categoryId').value;
+                    var blockId = document.getElementById('blockId').value;
+                    let rerecordMessage = document.getElementById('rerecordMessage')
+                    var subCategoryId = document.getElementById('subCategoryId').value;
+
+                    if (subCategoryId == 5) {
+                        promptId = document.querySelector('input[name="selectedPromptId"]:checked').value;
+                    }
+
+                    retryCount++;
+
+                    let filename = contributorId + "_" + promptId + "_" + blockId;
+
+                    ////
+                    //// codec is the string returned from isBrowserSupported().
+                    //// It probably should return "webm" for now but I don't 
+                    //// really know what other browsers might need.
+                    ////
+
+                    filename += `.wav`
+
+                    ////
+                    //// create the file upload element
+                    ////
+
+                    let form = document.querySelector('#postRecording');
+                    let myData = new FormData(form);
+
+                    myData.set(
+                        'file',
+                        event.detail.wavData,
+                        filename
+                    )
+
+                    myData.set('filename', filename)
+
+                    myData.set('contributorId', contributorId);
+                    myData.set('promptId', promptId);
+                    myData.set('categoryId', categoryId);
+                    myData.set('retryCount', retryCount);
+                    myData.set('blockId', blockId);
+                    myData.set('clientStartDate', clientStartDate);
+                    myData.set('clientEndDate', clientEndDate);
+                    let my_url = Cookies.get('url')
+
+                    ////
+                    //// send the recorded audio
+                    ////
+                    //// note the 'cache', 'contentType', and 'processData' jQuery values.
+                    //// these appear to be necessary when sending binary data.
+                    ////
+         
+                    processRecording(my_url, myData, retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton);
+
+                    var etiologyId = document.getElementById("etiologyId").value;
+
+                    if (etiologyId == '2') {
+
+                        var snd = new Audio("..//recordings/Recording Stopped.wav");
+                        snd.play();
+                                             
+                    }
+
+                   
                 }
 
-                retryCount++;
-            
-                let filename = contributorId + "_" + promptId + "_" + blockId;
+                catch (e) {
+                    console.log(e)
+                    let myData = new FormData()
+                    
+                    var errorMessage = 'RecordingStopped error: ' + e
+
+                    if (event.detail !== null && event.detail.wavData !== null) {
+                        errorMessage += ".Wav file size: " + event.detail.wavData.size
+                    }
+                    else {
+
+                            errorMessage += ". wav file is null."
+                    }
+                    myData.set(
+                        'error',  errorMessage
+                    )
+                    $.ajax({
+                        url: '/Home/LogError',
+                        type: 'POST',
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        data: myData,
+                    })
+                    var categoryId = document.getElementById('categoryId').value;
+
+                    showErrorMessage(retryCount, categoryId);
+                    let button = $('#recordButton');
+                    button.text('Record')
+                    button.removeAttr('hidden')                    
+                    saveDiv.style.display = "none";
+
+                }
+
                
-                ////
-                //// codec is the string returned from isBrowserSupported().
-                //// It probably should return "webm" for now but I don't 
-                //// really know what other browsers might need.
-                ////
-                
-                filename += `.wav`
-
-                ////
-                //// create the file upload element
-                ////
-                let myData = new FormData()
-
-                myData.set(
-                    'file',
-                    event.detail.wavData,
-                    filename
-                )
-
-                myData.set('filename', filename)
-
-                myData.set('contributorId', contributorId);
-                myData.set('promptId', promptId);
-                myData.set('categoryId', categoryId);
-                myData.set('retryCount', retryCount);
-                myData.set('blockId', blockId);
-                myData.set('clientStartDate', clientStartDate);
-                myData.set('clientEndDate', clientEndDate);
-                let my_url = Cookies.get('url')
-
-                ////
-                //// send the recorded audio
-                ////
-                //// note the 'cache', 'contentType', and 'processData' jQuery values.
-                //// these appear to be necessary when sending binary data.
-                ////
-                processRecording(my_url, myData, retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton);
-
 
                 myAudioControls = new AudioControls(codec,
                     'recordButton',
@@ -253,6 +307,8 @@ function recording_interface() {
     }
 }
 
+
+
 function delay(time) {
     return new Promise(resolve => setTimeout(resolve, time));
 }
@@ -271,16 +327,19 @@ async function processRecording(my_url, myData, retryCount, categoryId, subCateg
         let myData = new FormData()
 
         myData.set(
-            'error', e.stack
+            'error', "processRecording error: " + e.stack
         )
         $.ajax({
             url: '/Home/LogError',
             type: 'POST',
             cache: false,
-            contentType: false,
-            processData: false,
             data: myData,
         })
+
+        let button = $('#recordButton');
+        button.text('Record')
+        button.removeAttr('hidden')
+        saveDiv.style.display = "none";
 
     }
     }
@@ -296,20 +355,83 @@ async function processRecording(my_url, myData, retryCount, categoryId, subCateg
             processData: false,
             data: myData,
         }).fail(function () {
-            var dialog = document.getElementById("saveRecordingError");
-            var errorText = document.getElementById("saveRecordingText")
-            if (retryCount < 3 && categoryId != 1) {
-                errorText.innerHTML="Please try to rerecord. If this error persists, please contact speechaccessibility@beckman.illinois.edu."
-            }
-            else {
-                errorText.innerHTML= "If this error persists, please contact speechaccessibility@beckman.illinois.edu."
-            }
-            dialog.showModal()
+            showErrorMessage(retryCount, categoryId);
 
         }).done(function () { return result; })
 
         return result;
     
+}
+
+function setVoice(synth, prompt, secondaryOption, selectedOption) {
+    var voiceSelect = document.getElementById('voiceSelect');
+    var foundSelectedOption = false;
+
+    for (var i = 0; i < voiceSelect.length; i++) {
+        if (voiceSelect.options[i].getAttribute("data-name") == selectedOption) {
+            var preferredVoice = synth.getVoices().filter(voice => voice.name === selectedOption);
+            console.log("preferredVoice: " + preferredVoice[0].name);
+            prompt.voice = preferredVoice[0];
+            foundSelectedOption = true;
+            break;
+        }
+    }
+
+    if (!foundSelectedOption && secondaryOption != "") {
+
+        for (var i = 0; i < voiceSelect.length; i++) {
+            if (voiceSelect.options[i].getAttribute("data-name") == secondaryOption) {
+                var preferredVoice = synth.getVoices().filter(voice => voice.name === secondaryOption);
+                console.log("preferredVoice: " + preferredVoice[0].name);
+                prompt.voice = preferredVoice[0];
+                break;
+            }
+        }
+
+    }
+}
+
+function selectVoice() {
+
+    var selectedOption = "";
+
+    var os = getOS();
+    // Get the user-agent string
+    var browser = getBrowser();
+
+    if (os == "Windows") {
+        if (browser == "Edge") {
+                selectedOption = "Microsoft Ava Online (Natural) - English (United States)";
+
+        }
+        else if (browser == "Firefox") {
+
+            selectedOption = "Microsoft Zira Desktop - English (United States)";
+
+        }
+        else {
+                selectedOption = "Google US English"
+            }
+
+    }
+    else if (os == "Mac OS" || os == "iOS") {
+        selectedOption = "Samantha";
+    }
+    return selectedOption;
+}
+
+
+
+function showErrorMessage(retryCount, categoryId) {
+    var dialog = document.getElementById("saveRecordingError");
+    var errorText = document.getElementById("saveRecordingText");
+    if (retryCount < 3 && categoryId != 1) {
+        errorText.innerHTML = "Please try to rerecord. If this error persists, please contact speechaccessibility@beckman.illinois.edu.";
+    }
+    else {
+        errorText.innerHTML = "If this error persists, please contact speechaccessibility@beckman.illinois.edu.";
+    }
+    dialog.showModal();
 }
 
 function updateButtons(retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton,saveDiv) {

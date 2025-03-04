@@ -18,6 +18,7 @@ namespace SpeechAccessibility.Core.Models
         public DateTime UpdateTS { get; set; }
         public string RegisterRequired { get; set; }
         public string Acronym { get; set; }
+        public int? DisplayOrderForReports { get; set; }
         public ICollection<Contributor> Contributor { get; set; }
     }
 }

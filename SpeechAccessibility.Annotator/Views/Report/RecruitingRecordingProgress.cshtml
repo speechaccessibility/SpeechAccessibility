@@ -1,0 +1,85 @@
+﻿@model SpeechAccessibility.Annotator.Models.RecruitingRecordingProgressViewModel
+@{
+    ViewBag.Title = "Recruiting & Recording Progress";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<h1>Recruiting & Recording Progress</h1>
+@{
+    var total = 0;
+    var allTotal = 0;
+
+}
+
+<table class="table table-bordered" id="RecruitingRecordingProgressTable">
+    <thead>
+    <tr>
+        <th></th>
+        @foreach (var etiology in Model.Etiologies)
+        {
+            <th><b>@etiology.Name</b></th>
+        }
+        <th><b>Total</b></th>
+    </tr>
+    </thead>
+    <tr>
+        <td>sum (# of contacts)</td>
+        @foreach (var etiology in Model.Etiologies)
+        {
+            @*we don't count in-completed contributors *@
+            var totalForEtiogoly = Model.Contributors.Count(c => c.EtiologyId == etiology.Id && c.StatusId!=5); 
+            allTotal = allTotal + totalForEtiogoly;
+            <td>@totalForEtiogoly</td>
+        }
+        <td>@allTotal</td>
+    </tr>
+
+    @foreach (var status in Model.ContributorStatus)
+    {
+        <tr>
+            <td>
+                @if (status.Id == 1)
+                {
+                    <text>Waiting For Approval</text>
+                }
+                else
+                {
+                    @status.Name
+                }
+            </td>
+
+            @foreach (var etiology in Model.Etiologies)
+            {
+                var count = Model.Contributors.Count(c => c.EtiologyId == etiology.Id && c.StatusId == status.Id);
+                total += count;
+                <td>@count</td>
+            }
+            <td>@total</td>
+            @{ total = 0; }
+        </tr>
+
+        @if (status.ContributorSubStatus.Count > 0)
+        {
+            var subTotal = 0;
+            foreach (var subStatus in status.ContributorSubStatus)
+            {
+                <tr>
+                    <td align="right">@subStatus.Name</td>
+                    @foreach (var etiology in Model.Etiologies)
+                    {
+                        var subCount = Model.Contributors.Count(c => c.EtiologyId == etiology.Id && c.StatusId == status.Id && c.SubStatusId == subStatus.Id);
+                        subTotal += subCount;
+                        <td>@subCount</td>
+                    }
+                    <td>@subTotal</td>
+                    @{ subTotal = 0;}
+                </tr>
+            }
+        }
+
+    }
+
+
+
+
+
+</table>

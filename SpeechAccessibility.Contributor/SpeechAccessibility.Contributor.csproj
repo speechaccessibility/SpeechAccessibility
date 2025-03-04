@@ -62,4 +62,7 @@
   <ItemGroup>
     <UpToDateCheckInput Remove="Areas\Identity\Pages\Account\ALSIntroductory.cshtml" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="wwwroot\recordings\" />
+  </ItemGroup>
 </Project>

@@ -760,8 +760,8 @@ namespace SpeechAccessibility.Controllers
 
                     //If we run out of unique 5k sentences, then we will have to reuse some
                     if (fivekPromptList.Count < fivekPromptMax)
-                    {
-                        fivekPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 5 && p.SubCategory.Id == 24 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(fivekPromptMax).ToList();
+                    {                    
+                        fivekPromptList = _recordingContext.Prompt.FromSqlRaw("select p.Id,p.Transcript,p.CategoryId,p.SubCategoryId,p.QuestionType,p.SeverityLevels,p.CreateTS,p.Active,p.UpdateBy,p.UpdateTS from Prompt as p join PromptEtiology as e on p.Id = e.PromptId where e.EtiologyId =" + etiologyId + " and p.Active = 'Yes' and p.SubCategoryId=24 and p.Id not in (select r.OriginalPromptId from Recording as r where r.ContributorId = '" + contributorId + "')").OrderBy(r => Guid.NewGuid()).Take(fivekPromptMax).ToList();
                     }
                 }
             }

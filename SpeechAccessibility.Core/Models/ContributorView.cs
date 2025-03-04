@@ -43,6 +43,9 @@ namespace SpeechAccessibility.Core.Models
         public string LegalGuardianLastName { get; set; }
         public string LegalGuardianEmail { get; set; }
         public string LegalGuardianPhoneNumber { get; set; }
+        public string Country { get; set; }
+        public string PaymentType { get; set; }
+        public string ReferenceSource { get; set; }
 
         [NotMapped]
         public int SubRole { get; set; }
