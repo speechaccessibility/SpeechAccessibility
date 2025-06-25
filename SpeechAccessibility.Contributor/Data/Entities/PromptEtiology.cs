@@ -13,5 +13,7 @@ namespace SpeechAccessibility.Data.Entities
         public DateTime CreateTS { get; set; }
 
         public DateTime UpdateTS { get; set; }
+
+        public int Phase { get; set; }
     } 
 } 

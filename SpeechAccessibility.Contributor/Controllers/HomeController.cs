@@ -120,7 +120,15 @@ namespace SpeechAccessibility.Controllers
             {
                 string date = DateTime.Now.ToString("yyyy-MM-dd");
                 string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
-                Guid contributorId = new Guid(form["contributorId"]);
+                Guid contributorId = new Guid();
+
+                String contributorIdString =  form["contributorId"];
+
+                if (!String.IsNullOrEmpty(contributorIdString))
+                {
+                    contributorId = new Guid(form["contributorId"]);
+                }
+                             
 
                 Directory.CreateDirectory(Path.GetDirectoryName(fileLocation));
                 using (StreamWriter writer = new StreamWriter(fileLocation, true))
@@ -609,7 +617,7 @@ namespace SpeechAccessibility.Controllers
             List<Prompt> uaPromptList = new List<Prompt>();
             List<Prompt> fivekPromptList = new List<Prompt>();
 
-            int blockMasterId = setBlockMasterId(etiologyId, promptCategoryId);
+            int blockMasterId = setBlockMasterId(etiologyId, promptCategoryId,contributorId);
 
             //The first and last block should contain the same prompts in a random order
             if (assignedBlockCount == (blocksToComplete - 1) || assignedBlockCount == 0)
@@ -722,8 +730,28 @@ namespace SpeechAccessibility.Controllers
 
             List<int> currentEtiologyPromptList = new List<int>();
 
-            currentEtiologyPromptList = _recordingContext.PromptEtiology.Where(e => e.EtiologyId == etiologyId).Select(e => e.PromptId).ToList();       
-         
+
+            if (etiologyId == 4 && promptCategoryId!=5)
+            {
+                int phase = 1;
+
+                bool usePhase2Prompts = determinePromptPhase(contributorId);
+
+                //Stroke has two phases of prompts. Filter by phase for this etiology
+                if (usePhase2Prompts)
+                {
+                    phase = 2;
+                }
+
+                currentEtiologyPromptList = _recordingContext.PromptEtiology.Where(e => e.EtiologyId == etiologyId && e.Phase==phase).Select(e => e.PromptId).ToList();
+
+            }
+            else {
+                currentEtiologyPromptList = _recordingContext.PromptEtiology.Where(e => e.EtiologyId == etiologyId).Select(e => e.PromptId).ToList();
+
+            }
+
+
             digitalCommandList = _recordingContext.BlockOfDigitalCommandPrompts.Where(b => b.BlockOfDigitalCommand.Id == blockOfDigitalCommandId).Select(b => b.Prompt).Take(digitalCommandMax).OrderBy(r => Guid.NewGuid()).ToList();
 
             if (promptCategoryId !=5)
@@ -848,7 +876,7 @@ namespace SpeechAccessibility.Controllers
 
         }
 
-        private static int setBlockMasterId(int etiologyId, int promptCategoryId)
+        private int setBlockMasterId(int etiologyId, int promptCategoryId,Guid contributorId)
         {
             int blockMasterId = 1;
 
@@ -891,8 +919,15 @@ namespace SpeechAccessibility.Controllers
                     blockMasterId = 4;
                 }
                 else 
-                {
-                    blockMasterId = 5;
+                {              
+                    bool usePhase2Prompts = determinePromptPhase(contributorId);
+                    if (usePhase2Prompts)
+                    {
+                        blockMasterId = 7;
+                    }
+                    else {
+                        blockMasterId = 5;
+                    }
                 }
                 
             }
@@ -972,20 +1007,39 @@ namespace SpeechAccessibility.Controllers
             int numberOfPairPrompts;
             int numberOfSinglePrompts;
 
+            bool usePhase2Prompts = determinePromptPhase(contributorId);
+
             if (etiologyId == 4)
-            {
-                if (blockDescription > 8)
+            {             
+                if (usePhase2Prompts)
                 {
-                    numberOfPairPrompts = 3;
-                    numberOfSinglePrompts = 1;
+                    if (blockDescription > 6)
+                    {
+                        numberOfPairPrompts = 2;
+                        numberOfSinglePrompts = 3;
+                    }
+                    else
+                    {
+                        numberOfPairPrompts = 1;
+                        numberOfSinglePrompts = 5;
+
+                    }
                 }
-                else
-                {
-                    numberOfPairPrompts = 2;
-                    numberOfSinglePrompts = 3;
+                else {
+                    if (blockDescription > 8)
+                    {
+                        numberOfPairPrompts = 3;
+                        numberOfSinglePrompts = 1;
+                    }
+                    else
+                    {
+                        numberOfPairPrompts = 2;
+                        numberOfSinglePrompts = 3;
+
+                    }
 
                 }
-            }
+                  }
             else {
                 if (blockDescription > 6)
                 {
@@ -999,8 +1053,8 @@ namespace SpeechAccessibility.Controllers
 
                 }
             }
-            
 
+        
             List<Prompt> pairPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 17 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(numberOfPairPrompts).ToList();
 
             foreach (Prompt currentPrompt in pairPromptList)
@@ -1025,6 +1079,7 @@ namespace SpeechAccessibility.Controllers
 
             int lastAssignedDigitalCommandBlockId = 0;
             int numberOfAssignedDigitalCommandBlocks = 0;
+            bool usePhase2Prompts = determinePromptPhase(contributorId);
 
             if (etiologyId == 2 || etiologyId == 3)
             {
@@ -1037,14 +1092,24 @@ namespace SpeechAccessibility.Controllers
                 }
             }
             else if (etiologyId == 4)
-            {
+            {               
+
                 if (promptCategoryId != 5)
                 {
-                    lastAssignedDigitalCommandBlockId = 20;
-                    numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 20).Count();
+                    
+                    int minListId = 20;
+                    int maxListId = 30;
+
+                    if (usePhase2Prompts)
+                    {
+                        minListId = 30;
+                        maxListId = 40;
+                    }
+                    lastAssignedDigitalCommandBlockId = minListId;
+                    numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > minListId && a.List.Id <= maxListId).Count();
                     if (numberOfAssignedDigitalCommandBlocks > 0)
                     {
-                        lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 20).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                        lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > minListId && a.List.Id <= maxListId).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
                     }
                 }
                 //Use the same DAC list as CP for non-spontaneous path
@@ -1104,7 +1169,13 @@ namespace SpeechAccessibility.Controllers
             {
                 if (promptCategoryId != 5)
                 {
-                    lastDigitalCommandBlock = 30;
+                    if (usePhase2Prompts)
+                    {
+                        lastDigitalCommandBlock = 40;
+                    }
+                    else {
+                        lastDigitalCommandBlock = 30;
+                    }                
                 }
                 else
                 {
@@ -1138,7 +1209,14 @@ namespace SpeechAccessibility.Controllers
                     }
                     else
                     {
-                        newCommandBlockId = 21;
+                        if (usePhase2Prompts)
+                        {
+                            newCommandBlockId = 31;
+                        }
+                        else {
+                            newCommandBlockId = 21;
+                        }
+                        
                     }
                 }
                 else if (etiologyId == 6 && promptCategoryId==5)
@@ -1169,6 +1247,22 @@ namespace SpeechAccessibility.Controllers
             _recordingContext.SaveChanges();
 
             return newCommandBlockId;
+        }
+
+        private bool determinePromptPhase(Guid contributorId)
+        {
+            DateTime strokePhase2Date = DateTime.Parse(_config["StrokePhase2Timestamp"]);
+            DateTime createTS = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.CreateTS).First();
+
+            bool usePhase2Prompts = false;
+            int dateTimeCompare = DateTime.Compare(createTS, strokePhase2Date);
+
+            if (dateTimeCompare > 0)
+            {
+                usePhase2Prompts = true;
+            }
+
+            return usePhase2Prompts;
         }
 
         private void addBlockOfPrompts(Block block, Prompt prompt, int categoryId)
