@@ -452,29 +452,52 @@ function setSpeech() {
     )
 }
 
+function speakInstructions() {
+
+    try {
+
+        var category = document.getElementById('categoryId').value;
+        var snd = document.getElementById("audioInstructions") 
+
+        if (category == 4) {
+            snd = document.getElementById("answerInstructions")
+        }
+        var element = document.getElementById("instructionsSpeakerIcon");
+
+        if (!snd.paused) {
+            snd.pause();
+            element.classList.remove("fa-beat");
+        }
+        else {
+            const synth = window.speechSynthesis;
+            synth.cancel();
+
+            var speakerIcon = document.getElementById("speakerIcon");
+
+            speakerIcon.classList.remove("fa-beat")
+
+            element.classList.add("fa-beat");
+
+            snd.load();
+            snd.play();
+        }
+
+        snd.addEventListener("ended", (event) => {
+                document.getElementById("instructionsSpeakerIcon").classList.remove("fa-beat");
+           });
+
+    }
+    catch (error) {
+        console.log(error);
+        alert("Unable to play the instructions. Please try on a different device or browser.")
+    }
+}
+
 function speakPrompt() {
 
     try {
-        if (!navigator.mediaDevices?.enumerateDevices) {
-            console.log("enumerateDevices() not supported.");
-        } else {
 
-            var browser = getBrowser();
-
-            //Safari/Firefox currently don't detect audiooutput
-            if (browser!="Safari" && browser!="Firefox") {
-                navigator.mediaDevices
-                    .enumerateDevices()
-                    .then((devices) => {                      
-                        const availableOutputDevices = devices.filter((d) => d.kind === 'audiooutput');
-                        if (!availableOutputDevices.length) {
-                            alert("No audio output device found. Enable an output device to hear prompt spoken aloud.");
-                            return;
-                        }
-                    });
-            }
-
-        }
+        checkAudioSupport();
 
         const synth = window.speechSynthesis;
 
@@ -488,36 +511,29 @@ function speakPrompt() {
 
             var etiologyId = document.getElementById("etiologyId").value;
 
+            if (etiologyId == 2) {
+                var category = document.getElementById('categoryId').value;
+                var snd = document.getElementById("audioInstructions")
+
+                if (category == 4) {
+                    snd = document.getElementById("answerInstructions")
+                }
+                var instructionsSpeaker = document.getElementById("instructionsSpeakerIcon");
+
+                instructionsSpeaker.classList.remove("fa-beat")
+
+                snd.pause()     
+            }                 
+
             element.classList.add("fa-beat");
             var prompt = new SpeechSynthesisUtterance(document.getElementById("transcript").value);
             prompt.lang = 'en-US';
             prompt.text = document.getElementById("transcript").innerHTML
             prompt.rate = '.2';
-
-
-            var os = getOS();
-            // Get the user-agent string
-            var browser = getBrowser();
-
-            var selectedOption = "";
+        
             var secondaryOption = "";
 
-            if (os == "Windows") {
-                if (browser == "Edge") {
-                    selectedOption = "Microsoft Jenny Online (Natural) - English (United States)"
-
-                }
-                else if (browser == "Firefox") {
-                    selectedOption = "Microsoft Zira Desktop - English (United States)"
-                }
-                else {
-                    selectedOption = "Microsoft Zira - English (United States)"
-
-                }
-            }
-            else if (os == "Mac OS" || os == "iOS") {
-                selectedOption = "Samantha";
-            }
+            var selectedOption = selectVoice();
 
             if (etiologyId == "1") {
                 selectedOption = "Google US English";
@@ -535,31 +551,7 @@ function speakPrompt() {
             }
            
 
-            var voiceSelect = document.getElementById('voiceSelect');
-            var foundSelectedOption = false;
-
-            for (var i = 0; i < voiceSelect.length; i++) {      
-                if (voiceSelect.options[i].getAttribute("data-name") == selectedOption) {
-                    var preferredVoice = synth.getVoices().filter(voice=>voice.name===selectedOption)
-                    console.log("preferredVoice: " + preferredVoice[0].name);
-                    prompt.voice = preferredVoice[0];
-                    foundSelectedOption = true;
-                    break;
-                }
-            }
-
-            if (!foundSelectedOption && secondaryOption!="") {
-
-                for (var i = 0; i < voiceSelect.length; i++) {
-                    if (voiceSelect.options[i].getAttribute("data-name") == secondaryOption) {
-                        var preferredVoice = synth.getVoices().filter(voice => voice.name === secondaryOption)
-                        console.log("preferredVoice: " + preferredVoice[0].name);
-                        prompt.voice = preferredVoice[0];
-                        break;
-                    }
-                }
-
-            }
+            setVoice(synth, prompt, secondaryOption,selectedOption);
 
                console.log("rate: " + prompt.rate)
                 synth.speak(prompt);
@@ -572,10 +564,93 @@ function speakPrompt() {
 
     }
     catch (error) {
+        
         alert("Unable to play the prompt. Please try on a different device or browser.")
 
     }
 
+}
+
+function setVoice(synth, prompt, secondaryOption,selectedOption) {
+    var voiceSelect = document.getElementById('voiceSelect');
+    var foundSelectedOption = false;
+
+    for (var i = 0; i < voiceSelect.length; i++) {
+        if (voiceSelect.options[i].getAttribute("data-name") == selectedOption) {
+            var preferredVoice = synth.getVoices().filter(voice => voice.name === selectedOption);
+            console.log("preferredVoice: " + preferredVoice[0].name);
+            prompt.voice = preferredVoice[0];
+            foundSelectedOption = true;
+            break;
+        }
+    }
+
+    if (!foundSelectedOption && secondaryOption != "") {
+
+        for (var i = 0; i < voiceSelect.length; i++) {
+            if (voiceSelect.options[i].getAttribute("data-name") == secondaryOption) {
+                var preferredVoice = synth.getVoices().filter(voice => voice.name === secondaryOption);
+                console.log("preferredVoice: " + preferredVoice[0].name);
+                prompt.voice = preferredVoice[0];
+                break;
+            }
+        }
+
+    }
+}
+
+function selectVoice() {
+
+    var selectedOption = "";
+
+    var os = getOS();
+    // Get the user-agent string
+    var browser = getBrowser();
+    
+    if (os == "Windows") {
+        if (browser == "Edge") {
+
+            selectedOption = "Microsoft Ava Online (Natural) - English (United States)";
+
+        }
+        else if (browser == "Firefox") {
+
+                selectedOption = "Microsoft Zira Desktop - English (United States)";           
+            
+        }
+        else {
+                selectedOption = "Google US English"
+            
+        }
+    }
+    else if (os == "Mac OS" || os == "iOS") {
+        selectedOption = "Samantha";
+    }
+    return selectedOption;
+}
+
+function checkAudioSupport() {
+    if (!navigator.mediaDevices?.enumerateDevices) {
+        console.log("enumerateDevices() not supported.");
+    } else {
+
+        var browser = getBrowser();
+
+        //Safari/Firefox currently don't detect audiooutput
+        if (browser != "Safari" && browser != "Firefox") {
+            navigator.mediaDevices
+                .enumerateDevices()
+                .then((devices) => {
+                    const availableOutputDevices = devices.filter((d) => d.kind === 'audiooutput');
+                    if (!availableOutputDevices.length) {
+                        alert("No audio output device found. Enable an output device to hear prompt spoken aloud.");
+                        return;
+                    }
+                });
+        }
+
+    }
+    return browser;
 }
 
 function getBrowser() {

@@ -431,10 +431,10 @@
 
     @foreach (var e in Model.ExistingEmailList)
     {
-        @:myArray.push("@e")
+        @:myArray.push("@e".toLowerCase())
     }
        
-    if(myArray.includes(currentEmail))
+    if(myArray.includes(currentEmail.toLowerCase()))
     {
         document.getElementById('duplicateEmailInd').value = "Yes"
     }
