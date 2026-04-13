@@ -140,22 +140,28 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                         int consentCount = _identityContext.Consent.Where(c => c.Contributor.Id == contributorId).Count();
                         int helperConsentCount = _identityContext.Consent.Where(c => c.Contributor.Id == contributorId).Where(c=>c.ConsentType=="Caregiver").Count();
                         string helperInd = _identityContext.Contributor.Where(c => c.Id == contributorId).Select(c => c.HelperInd).FirstOrDefault();
-                        if (etiologyId == 6 && consentCount>0 )
+                        if (etiologyId == 6 && consentCount > 0)
                         {
                             if (helperInd == "No")
                             {
-                                return RedirectToPage("./ALSIntroductory");
+                               
+
                             }
-                            else {
-                            
-                                if(helperConsentCount> 0)
+                            else
+                            {
+
+                                if (helperConsentCount > 0)
                                 {
                                     return RedirectToPage("./ALSIntroductory");
                                 }
                             }
-                             
+
                         }
-                        return RedirectToAction("RecordPrompt");
+                        else if (etiologyId == 8 && consentCount > 0)
+                        {
+                            return RedirectToPage("./DeafInstructions");
+                        }
+                            return RedirectToAction("RecordPrompt");
                     }
                     if (result.RequiresTwoFactor)
                     {

@@ -322,7 +322,11 @@ async function processRecording(my_url, myData, retryCount, categoryId, subCateg
     nextButton.attr('hidden', true)
     await postRecording(my_url, myData,retryCount,categoryId);
 
-    updateButtons(retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton,saveDiv);
+        setTimeout(() => {
+            updateButtons(retryCount, categoryId, subCategoryId, button, rerecordMessage, nextButton, saveDiv);
+            // Code to run after the wait goes here
+        }, 3000);
+  
     } catch (e) {
         let myData = new FormData()
 

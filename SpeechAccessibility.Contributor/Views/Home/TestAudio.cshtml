@@ -1,0 +1,45 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["Title"] = "Test Audio";
+}
+
+<div id="errorDiv" class="text-danger"></div>
+<div class="container" id="container">
+    <h1>Audio Quality Control</h1>
+<div>
+        <p>
+            The most helpful speech samples some from recording in a quiet environment. If there is a lot of background noise in your recordings ( e.g. music, TV), your mentor may reach out to help with the recording process. Here are some tips for recording!
+            Please follow this checklist:
+            <ul>
+                <li>Are you in a quiet room, without other people?</li>
+                <li>Are the windows and door closed?</li>
+                <li>Is your phone on silent mode?</li>
+                <li>Is anyone nearby listening to music or watching TV?</li>
+                <li>Are there any apps on your computer that might be making noise (e.g. messenger app)?</li>
+            </ul>    
+        </p>
+        <p>Click "Record" to see if there is any background noise. When you are ready, click "Continue" to get started!</p>
+        <canvas id="waveform"></canvas>
+</div>
+<br />
+ <form id="testAudioForm">
+        <button id="recordButton" class="btn btn-primary" type="button">Record</button>
+
+        <button class="btn btn-primary" id="testAudioSubmit" type="submit" asp-controller="Home" asp-action="RecordPrompt" onclick="disableSubmit()" style="margin-right:10px">Continue</button>
+    </form>
+</div>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/js/TestRecorder.js" asp-append-version="true" type="module">></script>
+<script>
+     $(document).ready(function () {
+
+        $("#testAudioForm").submit(function () {
+
+            //disable the submit button
+            $("#testAudioSubmit").attr("disabled", true);
+            return true;
+        });
+    });
+</script>

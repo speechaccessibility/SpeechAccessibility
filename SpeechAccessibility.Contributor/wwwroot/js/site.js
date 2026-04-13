@@ -204,6 +204,11 @@ function loadCPRegisterPage() {
     validateEmail();
 }
 
+function loadStutterRegisterPage() {
+    checkHelperInd();
+    validateEmail();
+}
+
 function checkOtherRaceInd()
 {
     if (document.getElementById("otherRace").checked) {

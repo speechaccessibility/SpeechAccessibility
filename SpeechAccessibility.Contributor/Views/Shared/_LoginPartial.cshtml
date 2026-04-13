@@ -28,6 +28,8 @@
         </a>
         <div class="dropdown-menu" aria-labelledby="dropdownLogoutLink">
                     <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index" style="font-size:x-large">Manage Account</a>
+                       
+ 
                     @{
                         if (@etiologyId == 2)
                         {
@@ -39,7 +41,11 @@
                         }
                         else if (etiologyId == 6)
                         {
-                             <a class="dropdown-item" href="/NOVA H Informed Consent in Plain English_TeamGleason.pdf" download style="font-size:x-large">Download Consent</a>
+                            <a class="dropdown-item" href="/NOVA H Informed Consent in Plain English_TeamGleason.pdf" download style="font-size:x-large">Download Consent</a>
+                        }
+                        else if (etiologyId == 8)
+                        {
+                            <a class="dropdown-item" href="/Parkinsons Consent Form.pdf" download style="font-size:x-large">Download Consent</a>
                         }
                     }
                     <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">

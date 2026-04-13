@@ -14,6 +14,7 @@ using SpeechAccessibility.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -190,7 +191,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Display(Name ="Assistant's First Name")]
             public string HelperFirstName { get; set; }
 
-            [Display(Name = "Assitant's Last Name")]
+            [Display(Name = "Assistant's Last Name")]
             public string HelperLastName { get; set; }
 
              [Display(Name = "Assistant Phone Number")]
@@ -222,18 +223,22 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             public string Country { get; set; }
 
+            [Required]
+            public string OrganizationPartner { get; set; }
+
         }
 
         public IActionResult OnGet(int etiology)
         {
-            Input = new InputModel();
-            Input.etiologyId = etiology;
+            return RedirectToPage("./DiagnosisRegister");
+            //Input = new InputModel();
+            //Input.etiologyId = etiology;
 
-            if (etiology == 0)
-            {
-                return RedirectToPage("./DiagnosisRegister");
-            }
-            return Page();
+            //if (etiology == 0)
+            //{
+            //    return RedirectToPage("./DiagnosisRegister");
+            //}
+            //return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -297,8 +302,19 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                     ModelState.AddModelError("confirmEmailValidation", "The email and confirmation email do not match.");
                     return Page();
                 }
-                
-                if (unqualifiedStates.Contains(Input.state) || "No".Equals(Input.eighteenOrOlderInd))
+                    Boolean allowRegistration = true;
+
+                DateTime currentDate = DateTime.Now;
+                DateTime cutOffDate = new DateTime(2025, 8, 30);
+
+                if (currentDate >= cutOffDate)
+                {
+                    if ("No".Equals(Input.OrganizationPartner)) { 
+                     allowRegistration = false;
+                    }
+                }
+
+                if (unqualifiedStates.Contains(Input.state) || "No".Equals(Input.eighteenOrOlderInd) || allowRegistration==false)
                 {
                     return RedirectToPage("./Unqualified");
                 }
@@ -362,7 +378,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         private void SendEnrollmentEmail(string emailAddress)
         {
 
-            string message = "<p>Thank you for your interest in the Speech Accessibility Project. A speech pathologist will review the information your provided and determine if you are eligible for our study. You will receive another email in about 7-10 days to let you know whether you can contribute speech recordings for this study.</p>" +
+            string message = "<p>Thank you for your interest in the Speech Accessibility Project. A speech pathologist will review the information you provided and determine if you are eligible for our study. You will receive another email in about 7-10 days to let you know whether you can contribute speech recordings for this study.</p>" +
                 "<p>Thank you for your time and we will be in touch soon!</p><p>The Speech Accessibility Project Team</p>";
 
 

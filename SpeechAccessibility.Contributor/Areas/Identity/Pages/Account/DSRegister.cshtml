@@ -401,6 +401,19 @@
             <input asp-for="Input.ReferenceSource" class="form-control" />
             <span asp-validation-for="Input.ReferenceSource" class="text-danger"></span>
         </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <fieldset>
+                        <legend><span style="color:red">*</span>Will you be working with Path Finder Village?</legend>
+
+                        <label><input asp-for="Input.OrganizationPartner" type="radio" value="Yes" /> Yes</label>
+
+                        <label><input asp-for="Input.OrganizationPartner" type="radio" value="No" /> No</label>
+                    </fieldset>
+                    <br /> <span asp-validation-for="Input.OrganizationPartner" class="text-danger"></span>
+                </div>
+            </div>
         </div>
         <input hidden asp-for="DownSyndromeInd" id="downSyndromeInd" />
         <input asp-for="Input.DuplicateEmailInd" id="duplicateEmailInd" hidden />

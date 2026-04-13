@@ -18,11 +18,12 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         }
         public IActionResult OnGet(int etiology)
         {
-            if (etiology == 0)
-            {
-                return RedirectToPage("./DiagnosisRegister");
-            }
-            return Page();  
+            return RedirectToPage("./DiagnosisRegister");
+            //if (etiology == 0)
+            //{
+            //    return RedirectToPage("./DiagnosisRegister");
+            //}
+            //return Page();  
         }
         public async Task<IActionResult> OnPost()
         {

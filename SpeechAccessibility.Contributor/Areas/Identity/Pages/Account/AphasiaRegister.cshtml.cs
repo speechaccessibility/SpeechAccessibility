@@ -207,17 +207,18 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
         public IActionResult OnGet(string aphasiaInd)
         {
-            Input = new InputModel();
-            AphasiaInd = aphasiaInd;
+            return RedirectToPage("./DiagnosisRegister");
+            //Input = new InputModel();
+            //AphasiaInd = aphasiaInd;
 
-            ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
+            //ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
 
-            if (aphasiaInd == null)
-            {
-                return RedirectToPage("./AphasiaPreRegister");
-            }
+            //if (aphasiaInd == null)
+            //{
+            //    return RedirectToPage("./AphasiaPreRegister");
+            //}
 
-            return Page();
+            //return Page();
         }
 
         public async Task<IActionResult> OnPost()

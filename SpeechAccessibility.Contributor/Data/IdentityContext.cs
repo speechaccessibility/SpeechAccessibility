@@ -35,6 +35,14 @@ namespace SpeechAccessibility.Data
         public DbSet<LegalGuardian> LegalGuardian { get; set; }
 
         public DbSet<Assent> Assent { get; set; }
+
+        public DbSet<StutterSituations> StutterSituations { get; set; }
+
+        public DbSet<StutteringScreening> StutteringScreening { get; set; }
+
+        public DbSet<SituationRating> SituationRating { get; set; }
+
+        public DbSet<DeafScreening> DeafScreening { get; set; }
         
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -91,6 +99,16 @@ namespace SpeechAccessibility.Data
             builder.Entity<Assent>()
            .Property(s => s.UpdateTS)
             .HasDefaultValueSql("GETDATE()");
+
+            builder.Entity<SituationRating>()
+           .Property(c => c.CreateTS)
+       .HasDefaultValueSql("GETDATE()");
+            builder.Entity<StutteringScreening>()
+           .Property(c => c.CreateTS)
+       .HasDefaultValueSql("GETDATE()");
+            builder.Entity<DeafScreening>()
+           .Property(c => c.CreateTS)
+       .HasDefaultValueSql("GETDATE()");
 
             base.OnModelCreating(builder);
          
