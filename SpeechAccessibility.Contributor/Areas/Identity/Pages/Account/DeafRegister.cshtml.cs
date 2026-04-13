@@ -15,14 +15,13 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Speech.Recognition;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace SpeechAccessibility.Areas.Identity.Pages.Account
 {
     [AllowAnonymous]
-    public class CPRegisterModel : PageModel
+    public class DeafRegisterModel : PageModel
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
@@ -31,7 +30,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         private readonly IdentityContext _context;
         private readonly IConfiguration _config;
 
-        public CPRegisterModel(
+        public DeafRegisterModel(
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
@@ -50,9 +49,6 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         [BindProperty]
         public InputModel Input { get; set; }
 
-        [BindProperty]
-        public List<string> ExistingEmailList { get; set; }
-
         public List<String> unqualifiedStates = new List<String>
         {
             "IL",
@@ -69,7 +65,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
         public List<SelectListItem> stateList { get; } = new List<SelectListItem>
          {
-                     new SelectListItem { Value = "AL", Text = "Alabama" },
+                    new SelectListItem { Value = "AL", Text = "Alabama" },
                     new SelectListItem { Value = "AK", Text = "Alaska" },
                     new SelectListItem { Value = "AZ", Text = "Arizona" },
                     new SelectListItem { Value = "AR", Text = "Arkansas" },
@@ -137,6 +133,21 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             return yearList;
         }
 
+        public List<SelectListItem> ageList { get; } = getAgeList();
+
+        private static List<SelectListItem> getAgeList()
+        {
+            List<SelectListItem> ageList = new List<SelectListItem>();
+            for (int i = 0; i <= 99; i++)
+            {
+                SelectListItem item = new SelectListItem { Value = i.ToString(), Text = i.ToString() };
+                ageList.Add(item);
+            }
+            SelectListItem lastItem = new SelectListItem { Value = "100", Text = "100+" };
+            ageList.Add(lastItem);
+            return ageList;
+        }
+
         public List<String> resultErrorList = new List<String>();
 
         public string ReturnUrl { get; set; }
@@ -151,8 +162,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
             public string otherText { get; set; }
 
-            [Display(Name ="EighteenOrOlder")]
-            public string eighteenOrOlderInd { get; set; }
+            [Required]
+            [Display(Name = "Current Age")]
+            public string CurrentAge { get; set; }
 
             [Display(Name = "State")]
             public string state { get; set; }
@@ -169,6 +181,9 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             public string lastName { get; set; }
 
             [Required]
+            [MinLength(10, ErrorMessage="Phone number must be 10 digits")]
+            [MaxLength(10)]
+            [RegularExpression("^[0-9]*$", ErrorMessage = "Phone number must be numeric")]
             [Display(Name ="Phone Number")]
             public string phoneNumber { get; set; }
 
@@ -178,23 +193,6 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             public string Email { get; set; }
 
              public string ConfirmEmail { get; set; }
-
-            [Required]
-            [Display(Name = "Helper Indicator")]
-            public string HelperInd { get; set; }
-
-            [EmailAddress]
-            [Display(Name = "Helper's Email")]
-            public string HelperEmail { get; set; }     
-
-            [Display(Name ="Helper's First Name")]
-            public string HelperFirstName { get; set; }
-
-            [Display(Name = "Helper's Last Name")]
-            public string HelperLastName { get; set; }
-
-            [Display(Name = "Helper Phone Number")]
-            public string HelperPhoneNumber { get; set; }
 
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 9)]
@@ -207,76 +205,28 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
 
-            [Required]
-            public bool ContactLSVT { get; set; }
-
-            [Display(Name ="Birth Year")]
-            public string BirthYear { get; set; }
 
             public int etiologyId { get; set; }
-
-            [Required]
-            [Display(Name = "Legal Guardian Indicator")]
-            public string LegalGuardianInd { get; set; }
-
-            [Display(Name = "Legal Guardian First Name")]
-            public string LegalGuardianFirstName { get; set; }
-
-            [Display(Name = "Legal Guardian Last Name")]
-            public string LegalGuardianLastName { get; set; }
-
-            [EmailAddress]
-            [Display(Name = "Legal Guardian Email")]
-            public string LegalGuardianEmail { get; set; }
-
-            [Display(Name = "Legal Guardian Phone Number")]
-            public string LegalGuardianPhoneNumber { get; set; }
-
-            [Required]
-            [Display(Name = "Current Age")]
-            public string CurrentAge { get; set; }
-
-            [Display(Name = "Diagnosis Age")]
-            public string DiagnosisAge { get; set; }
-
-            public string DuplicateEmailInd { get; set; }
-
-            [Display(Name = "Time Zone")]
-            public string TimeZone { get; set; }
 
             [Required]
             [MaxLength(150)]
             [Display(Name = "Reference Source")]
             public string ReferenceSource { get; set; }
 
+            [Required]
             public string Country { get; set; }
 
             [Required]
-            public string OrganizationPartner { get; set; }
+            public DeafScreening DeafScreening { get; set; }
 
-        }
-        public List<SelectListItem> ageList { get; } = getAgeList();
-
-        private static List<SelectListItem> getAgeList()
-        {
-            List<SelectListItem> ageList = new List<SelectListItem>();
-            for (int i = 1; i <= 99; i++)
-            {
-                SelectListItem item = new SelectListItem { Value = i.ToString(), Text = i.ToString() };
-                ageList.Add(item);
-            }
-            SelectListItem lastItem = new SelectListItem { Value = "100", Text = "100+" };
-            ageList.Add(lastItem);
-            return ageList;
+            [Required]
+            public string DiagnosisAge { get; set; }
         }
 
-        public IActionResult OnGet(int etiology, string otherEtiologyDescription)
+        public IActionResult OnGet(int etiology)
         {
             Input = new InputModel();
             Input.etiologyId = etiology;
-            Input.otherText = otherEtiologyDescription;
-
-            ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
 
             if (etiology == 0)
             {
@@ -291,63 +241,6 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             returnUrl = returnUrl ?? Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
-            if (Input.etiologyId == 3 && String.IsNullOrEmpty(Input.DiagnosisAge))
-            {
-                ModelState.AddModelError("diagnosisAgeValidation", "Diagnosis age is required.");
-            }
-
-            if (Input.etiologyId == 3 && String.IsNullOrEmpty(Input.TimeZone))
-            {
-                ModelState.AddModelError("timeZoneValidation", "Time zone is required.");
-            }
-
-            if ("Yes".Equals(Input.HelperInd))
-                {
-                if (String.IsNullOrEmpty(Input.HelperEmail))
-                {
-                    ModelState.AddModelError("helperEmailValidation", "Helper email is required.");
-                }
-
-                if (String.IsNullOrEmpty(Input.HelperFirstName))
-                {
-                    ModelState.AddModelError("helperFirstNameValidation", "Helper first name is required.");
-                }
-                if (String.IsNullOrEmpty(Input.HelperLastName))
-                {
-                    ModelState.AddModelError("helperLastNameValidation", "Helper last name is required.");
-                }
-                if (String.IsNullOrEmpty(Input.HelperPhoneNumber))
-                {
-                    ModelState.AddModelError("helperPhoneNumberValidation", "Helper phone number is required.");
-                }
-                
-            }
-
-            if ("Someone else is my legal guardian".Equals(Input.LegalGuardianInd))
-            {
-                if (String.IsNullOrEmpty(Input.LegalGuardianFirstName))
-                {
-                    ModelState.AddModelError("lgFirstNameValidation", "Legal guardian first name is required.");
-                }
-                if (String.IsNullOrEmpty(Input.LegalGuardianLastName))
-                {
-                    ModelState.AddModelError("lgLastNameValidation", "Legal guardian last name is required.");
-                }
-                if (String.IsNullOrEmpty(Input.LegalGuardianPhoneNumber))
-                {
-                    ModelState.AddModelError("lgPhoneValidation", "Legal guardian phone number is required.");
-                }
-                if (String.IsNullOrEmpty(Input.LegalGuardianEmail))
-                {
-                    ModelState.AddModelError("lgEmailValidation", "Legal guardian email is required.");
-                }
-            }
-
-            if ("Yes".Equals(Input.DuplicateEmailInd))
-            {
-                ModelState.AddModelError("duplicateEmailValidation", "This email is already registered.");
-            }
-
 
             if (ModelState.IsValid)
             {
@@ -361,104 +254,69 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                     }
                 }
 
-                if (!Input.Email.Equals(Input.ConfirmEmail, StringComparison.OrdinalIgnoreCase))
+                    if (!Input.Email.Equals(Input.ConfirmEmail, StringComparison.OrdinalIgnoreCase))
                 {
                     ModelState.AddModelError("confirmEmailValidation", "The email and confirmation email do not match.");
                     return Page();
                 }
                 int age = Int32.Parse(Input.CurrentAge);
 
-                Boolean allowRegistration = true;
-
-                DateTime currentDate = DateTime.Now;
-                DateTime cutOffDate = new DateTime(2025, 8, 30);
-
-                if (currentDate >= cutOffDate)
-                {
-                    if ("No".Equals(Input.OrganizationPartner))
-                    {
-                        allowRegistration = false;
-                    }
-                }
-                if (unqualifiedStates.Contains(Input.state) || age < 18 || allowRegistration==false)
+                if (unqualifiedStates.Contains(Input.state) || age<18)
                 {
                     return RedirectToPage("./Unqualified");
                 }
                 IdentityUser user = new IdentityUser();
                 user.UserName = Input.Email;
                 user.Email = Input.Email;
-                var result = await _userManager.CreateAsync(user, Input.Password);
+                var result = await _userManager.CreateAsync(user, Input.Password);               
 
                 if (result.Succeeded)
                 {
                     string isActive = _context.Etiology.Where(e => e.Id == Input.etiologyId).Select(e => e.Active).First();
 
-                    Contributor contributor = PopulateContributor(user, isActive);
+                    Contributor contributor = PopulateContributor(user,isActive);
                     _context.Contributor.Add(contributor);
 
+                    DeafScreening deafScreening = new DeafScreening();
+                    deafScreening.RightListeningDevice = Input.DeafScreening.RightListeningDevice;
+                    deafScreening.LeftListeningDevice = Input.DeafScreening.LeftListeningDevice;
+                    deafScreening.LanguageUse = Input.DeafScreening.LanguageUse;
+                    deafScreening.ContributorId = contributor.Id;
+
+                    _context.DeafScreening.Add(deafScreening);
+         
                     _context.Etiology.Remove(contributor.Etiology);
                     _context.SaveChanges();
 
-                    if ("Someone else is my legal guardian".Equals(Input.LegalGuardianInd) || "Someone else is their legal guardian".Equals(Input.LegalGuardianInd))
-                    {
-                        LegalGuardian legalGuardian = new LegalGuardian();
-                        legalGuardian.FirstName = Input.LegalGuardianFirstName;
-                        legalGuardian.LastName = Input.LegalGuardianLastName;
-                        legalGuardian.PhoneNumber = Input.LegalGuardianPhoneNumber;
-                        legalGuardian.Email = Input.LegalGuardianEmail;
-                        legalGuardian.ContributorId = contributor.Id;
-                        _context.LegalGuardian.Add(legalGuardian);
-
-                        _context.SaveChanges();
-                    }
-
-                    _logger.LogInformation("User created a new account with password.");
+                    _logger.LogInformation("User created a new account with password.");                    
 
                     SendEnrollmentEmail(user.Email);
 
                     await _signInManager.SignInAsync(user, isPersistent: false);
 
+                            string message = "<div>Hello,</div><br/><div>A potential Speech Accessibility Project participant, " + Input.firstName + ", has requested an assessment. You may contact them at " + Input.Email + " or " + Input.phoneNumber + "</div><div><br/>The Speech Accessibility Project Team<br/>University of Illinois Urbana-Champaign</div>";
 
-                    string message = "<div>Hello,</div><br/><div>A potential Speech Accessibility Project participant, " + Input.firstName + ", has requested an assessment. You may contact them at " + Input.Email + " or " + Input.phoneNumber + ".";
+                            string to = _config["DeafEmail"];
 
-                    if ("Someone else is my legal guardian".Equals(Input.LegalGuardianInd) || "Someone else is their legal guardian".Equals(Input.LegalGuardianInd))
-                    {
-                        message += " Their legal guardian is " + Input.LegalGuardianFirstName + " and their email is " + Input.LegalGuardianEmail + ".";
-                    }
+                            string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
-                    message += "</div>";
+                            if (_config["DeveloperMode"].Equals("Yes") || !"Production".Equals(environment))
+                            {
+                                to = _config["TestEmail"];
+                                string testMessage = "<p><strong>This email was sent in testing mode.</strong></p>";
+                                message = testMessage + message;
+                            }
 
-                    if (Input.etiologyId == 5)
-                    {
-                        message += "<div><br/>Their etiology is Other: " + Input.otherText + ".";
-                    }
-
-                    if (Input.etiologyId == 3)
-                    {
-                        message += "<div><br/>Their time zone is: " + Input.TimeZone + ".";
-                    }
-                    message += "<div><br/> The Speech Accessibility Project Team<br/> University of Illinois Urbana - Champaign</div>";
-                    string to = _config["CPEmail"];
-
-                    string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
-                    if (_config["DeveloperMode"].Equals("Yes") || !"Production".Equals(environment))
-                    {
-                        to = _config["TestEmail"];
-                        string testMessage = "<p><strong>This email was sent in testing mode.</strong></p>";
-                        message = testMessage + message;
-                    }
-
-                    await _emailSender.SendEmailAsync(to, "Assessment Request", message);
+                            await _emailSender.SendEmailAsync(to, "Assessment Request", message);
 
 
-                    return RedirectToAction("RecordPrompt");
-
+                            return RedirectToAction("RecordPrompt");
+    
+                                     
 
                 }
                 foreach (var error in result.Errors)
-                {
-                    if (error.Code == "DuplicateUserName")
+                {   if ( error.Code== "DuplicateUserName")
                     {
                         error.Description += " Please click the Login link above to log in to an existing account. If you’ve forgotten your password, you can click the 'Forgot your password' link on the Login page to reset it.";
                     }
@@ -466,10 +324,6 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                     resultErrorList.Add(error.Description);
 
                 }
-            }
-            else {
-                ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
-
             }
 
             // If we got this far, something failed, redisplay form
@@ -479,7 +333,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         private void SendEnrollmentEmail(string emailAddress)
         {
 
-            string message = "<p>Thank you for your interest in the Speech Accessibility Project. A speech pathologist will review the information you provided and determine if you are eligible for our study. You will receive another email in about 7-10 days to let you know whether you can contribute speech recordings for this study.</p>" +
+            string message = "<p>Thank you for your interest in the Speech Accessibility Project. A member of our team from Gallaudet University will review the information you provided and determine if you are eligible for our study. You will receive another email soon to let you know whether you can contribute speech recordings for this study.</p>" +
                 "<p>Thank you for your time and we will be in touch soon!</p><p>The Speech Accessibility Project Team</p>";
 
 
@@ -498,30 +352,21 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         private Contributor PopulateContributor(IdentityUser user, string isActive)
         {
             Contributor contributor = new Contributor();
-            contributor.HelperInd = Input.HelperInd;
-            contributor.HelperEmail = Input.HelperEmail;
-            contributor.HelperFirstName = Input.HelperFirstName;
-            contributor.HelperLastName = Input.HelperLastName;
-            contributor.HelperPhoneNumber = Input.HelperPhoneNumber;
             contributor.FirstName = Input.firstName;
             contributor.MiddleName = Input.middleName;
             contributor.LastName = Input.lastName;
             contributor.StateResidence = Input.state;
             contributor.Etiology = new Etiology { Id = Input.etiologyId };
             contributor.IdentityUser = user;
+            contributor.CurrentAge = Input.CurrentAge;
             contributor.EighteenOrOlderInd = "Yes";
             contributor.StatusId =  1;
-            contributor.ContactLSVT = Input.ContactLSVT;
             contributor.EmailAddress = Input.Email;
             contributor.PhoneNumber = Input.phoneNumber;
             contributor.OtherEtiologyText = Input.otherText;
-            contributor.BirthYear = Input.BirthYear;
-            contributor.CurrentAge= Input.CurrentAge;
-            contributor.DiagnosisAge = Input.DiagnosisAge;
-            contributor.TimeZone = Input.TimeZone;
             contributor.ReferenceSource = Input.ReferenceSource;
             contributor.Country = Input.Country;
-
+            contributor.DiagnosisAge = Input.DiagnosisAge;
             return contributor;
         }
 

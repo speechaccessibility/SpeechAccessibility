@@ -86,6 +86,7 @@ namespace SpeechAccessibility
             builder.Entity<AssignedDigitalCommandBlock>()
             .Property(c => c.UpdateTS)
         .HasDefaultValueSql("GETDATE()");
+            
 
             base.OnModelCreating(builder);
 

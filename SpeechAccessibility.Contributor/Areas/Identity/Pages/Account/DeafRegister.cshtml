@@ -1,5 +1,5 @@
 ﻿@page
-@model ALSRegisterModel
+@model DeafRegisterModel
 
 @{
     ViewData["Title"] = "Register";
@@ -7,8 +7,6 @@
 
 <body onload="loadRegisterPage()">
 <h1>@ViewData["Title"]</h1>
-
-    <p>On this page, please only enter information about the person with ALS:</p>
 
 <form asp-route-returnUrl="@Model.ReturnUrl" method="post" id="registerForm">
     <hr />
@@ -18,35 +16,26 @@
                     <h2>Register Errors:</h2>
                 </div>
 
-    <input hidden value="6" asp-for="Input.etiologyId" />
+    <input hidden value="8" asp-for="Input.etiologyId" />
   
     <div class="form-row">
-        <span style="color:red">*</span>
-        <div class="form-group col-md-8">
-            <div class="form-group">
-                <fieldset>
-                    <legend>Are you 18 years of age or older?</legend>
-
-                    <label for="eighteenOrOlderYes"><input  id="eighteenOrOlderYes" asp-for="Input.eighteenOrOlderInd" type="radio" value="Yes"  onclick="checkEighteenInd()"/> Yes</label>
-
-                    <label for="eighteenOrOlderNo"><input  id="eighteenOrOlderNo" asp-for="Input.eighteenOrOlderInd" type="radio" value="No" onclick="checkEighteenInd()" /> No</label>
-                </fieldset>
-                <br /><span asp-validation-for="Input.eighteenOrOlderInd" class="text-danger"></span>
-            </div>
-        </div>
+                <div class="form-group col-md-3">
+                    <label asp-for="Input.CurrentAge"><span style="color:red">*</span>How old are you?</label>
+                    <select id="age" asp-for="Input.CurrentAge" asp-items="@Model.ageList">
+                        <option value="" selected>Please Select</option>
+                    </select>
+                    <br>   <span asp-validation-for="Input.CurrentAge" class="text-danger"></span>
+                </div>
     </div>
-        <div class="form-row" id="birthYearDiv">
-            <span style="color:red">*</span>
-        <div class="form-group col-md-8">
-            <div class="form-group">
-                <fieldset>
-                    <legend>What is your year of birth?</legend>
-                    <label for="birthYear"></label> <select id="birthYear" asp-for="Input.BirthYear" asp-items="@Model.yearList"> <option value="" selected>Please Select</option></select>           
-                </fieldset>
-                    <br /> <span class="text-danger">@Html.ValidationMessage("birthYearValidation")</span>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label asp-for="Input.DiagnosisAge"><span style="color:red">*</span>Age of onset of hearing loss</label>
+                <select id="age" asp-for="Input.DiagnosisAge" asp-items="@Model.ageList">
+                    <option value="" selected>Please Select</option>
+                </select><br />
+                <span asp-validation-for="Input.DiagnosisAge" class="text-danger"></span>
             </div>
-        </div>
-        </div>
+        </div><br />
         <div class="form-row">
             <span style="color:red">*</span>
             <div class="form-group col-md-6">
@@ -144,57 +133,55 @@
         </div>
         <br />
 
-    <div class="form-row">
-        <div class="form-group">
-            <fieldset>               
-                <legend><span style="color:red">*</span>Will someone be helping you with this process? (caregiver, family, or friend)</legend>
-                
-                <label for="helperYes"><input  id="helperYes" asp-for="Input.HelperInd" type="radio" value="Yes" onclick="checkHelperInd()" /> Yes</label>
-                
-                <label for="helperNo"><input  id="helperNo" asp-for="Input.HelperInd" type="radio" value="No" onclick="checkHelperInd()" /> No</label>
-            </fieldset>
-            <br /> <span asp-validation-for="Input.HelperInd" class="text-danger"></span>
-        </div>
-    </div>
-        <div class="form-row" id="helperDiv">
-            <div class="form-group col-md-3">
-                <label for="helperEmail"><span style="color:red">*</span>Assistant's Email</label>
-                <input  id="helperEmail" asp-for="Input.HelperEmail" class="form-control" />
-                <span class="text-danger">@Html.ValidationMessage("helperEmailValidation")</span>
-            </div>
-            <div class="form-group col-md-3">
-                <label for="helperFirstName"><span style="color:red">*</span>Assistant's First Name</label>
-                <input  id="helperFirstName" asp-for="Input.HelperFirstName" class="form-control" />
-                <span class="text-danger">@Html.ValidationMessage("helperFirstNameValidation")</span>
-            </div>
-            <div class="form-group col-md-3">
-                <label for="helperLastName"><span style="color:red">*</span>Assistant's Last Name</label>
-                <input  id="helperLastName" asp-for="Input.HelperLastName" class="form-control" />
-                <span class="text-danger">@Html.ValidationMessage("helperLastNameValidation")</span>
-            </div>
-                <div class="form-group col-sm-4">
-                <label asp-for="Input.HelperPhoneNumber"><span style="color:red">*</span>Assistant's Phone Number</label>
-                <input id="helperPhoneNumber" asp-for="Input.HelperPhoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
-                   <span class="text-danger">@Html.ValidationMessage("helperPhoneNumberValidation")</span><br/>
-                         <span asp-validation-for="Input.HelperPhoneNumber" class="text-danger"></span>
-            </div>
-        </div>
         <div class="form-row">
         <div class="form-group col-md-10">
-            <label asp-for="Input.ReferenceSource"><span style="color:red">*</span>Where did you hear about the Speech Accessibility Project study?</label>
+                <label asp-for="Input.ReferenceSource"><span style="color:red">*</span>Where did you hear about the Speech Accessibility Project study?</label>
             <input asp-for="Input.ReferenceSource" class="form-control" />
             <span asp-validation-for="Input.ReferenceSource" class="text-danger"></span>
         </div></div><br/>
         <div class="form-row">
-            <div class="form-group">
+            <div class="form-group col-md-10">
                 <fieldset>
-                    <legend><span style="color:red">*</span>Will you be working with Team Gleason?</legend>
-
-                    <label><input asp-for="Input.OrganizationPartner" type="radio" value="Yes"/> Yes</label>
-
-                    <label><input  asp-for="Input.OrganizationPartner" type="radio" value="No"  /> No</label>
+                    <legend><span style="color:red">*</span>Do you use a listening device in your left ear?</legend>
+                    <label asp-for="Input.DeafScreening.LeftListeningDevice"><input type="radio" asp-for="Input.DeafScreening.LeftListeningDevice" value="Yes, I regularly use a cochlear implant in my left ear" />Yes, I regularly use a cochlear implant in my left ear</label>
+                    <br />
+                    <label asp-for="Input.DeafScreening.LeftListeningDevice"><input type="radio" asp-for="Input.DeafScreening.LeftListeningDevice" value="Yes, I regularly use a hearing aid in my left ear">Yes, I regularly use a hearing aid in my left ear</label>
+                    <br />
+                    <label asp-for="Input.DeafScreening.LeftListeningDevice"><input type="radio" asp-for="Input.DeafScreening.LeftListeningDevice" value="No, I previously used a cochlear implant or hearing aid in my left year but now I normally do not" />No, I previously used a cochlear implant or hearing aid in my left year but now I normally do not</label>
+                    <br ○	No, I previously used a cochlear implant or hearing aid in my left year but now I normally do not
+                    <label asp-for="Input.DeafScreening.LeftListeningDevice"><input type="radio" asp-for="Input.DeafScreening.LeftListeningDevice" value="No, I never used a cochlear implant or hearing aid" />No, I never used a cochlear implant or hearing aid</label>
+                    <br />
+                    <span asp-validation-for="Input.DeafScreening.LeftListeningDevice" class="text-danger"></span>
                 </fieldset>
-                <br /> <span asp-validation-for="Input.OrganizationPartner" class="text-danger"></span>
+                </div></div><br />
+        <div class="form-row">
+            <div class="form-group col-md-10">
+                <fieldset>
+                    <legend><span style="color:red">*</span>Do you use a listening device in your right ear?</legend>
+                    <label asp-for="Input.DeafScreening.RightListeningDevice"><input type="radio" asp-for="Input.DeafScreening.RightListeningDevice" value="Yes, I regularly use a cochlear implant in my right ear" />Yes, I regularly use a cochlear implant in my right ear</label>
+                    <br />
+                    <label asp-for="Input.DeafScreening.RightListeningDevice"><input type="radio" asp-for="Input.DeafScreening.RightListeningDevice" value="Yes, I regularly use a hearing aid in my right ear" />Yes, I regularly use a hearing aid in my right ear</label>
+                    <br />
+                    <label asp-for="Input.DeafScreening.RightListeningDevice"><input type="radio" asp-for="Input.DeafScreening.RightListeningDevice" value="No, I previously used a cochlear implant or hearing aid in my right year but now I normally do not" />No, I previously used a cochlear implant or hearing aid in my right year but now I normally do not</label>
+                   <br />
+                    <label asp-for="Input.DeafScreening.RightListeningDevice"><input type="radio" asp-for="Input.DeafScreening.RightListeningDevice" value="No, I never used a cochlear implant or hearing aid" />No, I never used a cochlear implant or hearing aid</label>
+                    <br /><span asp-validation-for="Input.DeafScreening.RightListeningDevice" class="text-danger"></span>
+                </fieldset>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-10">
+                <fieldset>
+                    <legend><span style="color:red">*</span>Which most closely matches your language use? </legend>
+                    <div class="slidecontainer">
+                        <label>speech</label>
+                        <input type="range" min="0" max="100" value="50" class="slider" id="myRange">
+                   <label>sign</label>
+                    </div>
+                    <span id="rangeOutput">50% speech/50% sign</span>
+                    <input id="rangeValue" hidden asp-for="Input.DeafScreening.LanguageUse" value="50% speech /50% sign" />
+                     <span asp-validation-for="Input.DeafScreening.LanguageUse" class="text-danger"></span>
+                </fieldset>
             </div>
         </div>
 
@@ -221,12 +208,27 @@
             $("#registerSubmit").attr("disabled", false);
     }
 
+    function updateRangeValue()
+    {
+            var slider = document.getElementById("myRange");
+    var output = document.getElementById("rangeOutput");
+    var signPercent = slider.value;
+    var speechPercent = 100 - signPercent;
+    var displayPercent = speechPercent +"% speech/ " + signPercent+"% sign"; 
+    output.innerHTML = displayPercent;
+    var rangeValue = document.getElementById("rangeValue");
+    rangeValue.value=displayPercent;
+    }
+
     const form = document.querySelector('form');
     form.addEventListener('change', function () {
         enableSubmit();
     });
     form.addEventListener('keyup', function () {
         enableSubmit();
+    });
+    form.addEventListener('change',function(){
+        updateRangeValue();
     });
 
 </script>

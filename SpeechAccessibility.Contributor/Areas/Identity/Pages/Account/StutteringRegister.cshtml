@@ -1,0 +1,273 @@
+﻿@page
+@model StutteringRegisterModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+
+<dialog id="existingEmailError">
+    <p>
+        Thank you for registering for the Speech Accessibility Project! It appears you already have an account for this project. Please select the option below closest to your case and follow those instructions. If you are unsure which one to select, please follow the instructions for Option 3.
+        <br />Option 1: Recent Registration. If you have recently registered, please await for further instructions. A mentor will contact you via email to let you know if you are eligible for the study.
+        <br />Option 2: Study Completed. If you have recently completed the study, thank you! You cannot re-enroll. But please tell your friends that meet eligibility requirements and encourage them to participate in this study.
+        <br /> Option 3: New Participant. If you believe you have not previously completed speech recordings for the Speech Accessibility Project, please email DSspeechaccess@illinois.edu, with the subject line, ‘Duplicate Registration Error.’ In the body of the email, briefly describe why you believe you are eligible to participate.
+    </p>
+    <form method="dialog">
+        <button>OK</button>
+    </form>
+</dialog>
+
+<body onload="loadStutterRegisterPage()">
+    <h1>@ViewData["Title"]</h1>
+
+    <form asp-route-returnUrl="@Model.ReturnUrl" method="post" id="stutterForm">
+        <hr />
+
+
+        <div asp-validation-summary="All" class="text-danger">
+            <h2>Register Errors:</h2>
+        </div>
+
+        <input hidden value="7" asp-for="Input.etiologyId" />
+
+        <div class="form-row">
+            <span style="color:red">*</span>
+            <div class="form-group col-md-8">               
+                    <fieldset>
+                        <legend>Are you 18 years of age or older?</legend>
+
+                        <label for="eighteenOrOlderYes"><input id="eighteenOrOlderYes" asp-for="Input.eighteenOrOlderInd" type="radio" value="Yes" onclick="checkEighteenInd()" /> Yes</label>
+
+                        <label for="eighteenOrOlderNo"><input id="eighteenOrOlderNo" asp-for="Input.eighteenOrOlderInd" type="radio" value="No" onclick="checkEighteenInd()" /> No</label>
+                    </fieldset>
+                    <span asp-validation-for="Input.eighteenOrOlderInd" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="form-row">
+            <span style="color:red">*</span>
+            <div class="form-group col-md-6">
+                <div class="form-group">
+                    <label for="Input_state">What country do you currently live in?<br /></label>
+                    <select id="selectCountry" asp-for="Input.Country" asp-items="@Model.countryList" data-dropup-auto="false" onchange="checkCountry()">
+                    </select>
+                    <br /><span asp-validation-for="Input.Country" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-4" id="stateDiv">
+                <div class="form-group">
+                    <label for="Input_state"><span style="color:red">*</span> What state do you live in?<br /></label>
+                    <select id="stateSelect" asp-for="Input.state" asp-items="@Model.stateList" data-dropup-auto="false">
+                        <option value="" selected>Please Select</option>
+                    </select>
+                    <br /><span asp-validation-for="Input.state" class="text-danger"></span>
+                    <span id="stateError" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-3">
+                <label asp-for="Input.firstName"><span style="color:red">*</span>First Name</label>
+                <input asp-for="Input.firstName" class="form-control" />
+                <span asp-validation-for="Input.firstName" class="text-danger"></span>
+            </div>
+            <div class="form-group col-md-3">
+                <label asp-for="Input.middleName">Middle Name</label>
+                <input asp-for="Input.middleName" class="form-control" />
+                <span asp-validation-for="Input.middleName" class="text-danger"></span>
+            </div>
+            <div class="form-group col-md-3">
+                <label asp-for="Input.lastName"><span style="color:red">*</span>Last Name</label>
+                <input asp-for="Input.lastName" class="form-control" />
+                <span asp-validation-for="Input.lastName" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-sm-4">
+                <label asp-for="Input.phoneNumber">Phone Number</label>
+                <input asp-for="Input.phoneNumber" pattern="[0-9]+" placeholder="0123456789" class="form-control" />
+                <span asp-validation-for="Input.phoneNumber" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-sm-4">
+
+                <label asp-for="Input.Email"><span style="color:red">*</span>Email</label>
+                <input id="contributorEmail" asp-for="Input.Email" class="form-control" onkeyup="compareEmails()" onchange="duplicateEmailCheck()" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-sm-4">
+
+                <label asp-for="Input.ConfirmEmail"><span style="color:red">*</span>Confirm Email</label>
+                <input id="compareEmail" asp-for="Input.ConfirmEmail" class="form-control" onkeyup="compareEmails()" />
+                <span id="confirmEmailValidation" asp-validation-for="Input.ConfirmEmail" class="text-danger"></span>
+            </div>
+
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-10">
+                <label asp-for="Input.ReferenceSource">Where did you hear about the Speech Accessibility Project study, and (if applicable) which organization referred you to the recording project?</label>
+                <input asp-for="Input.ReferenceSource" class="form-control" />
+                <span asp-validation-for="Input.ReferenceSource" class="text-danger"></span>
+            </div>
+        </div><br />
+        <div class="form-row">
+            <div class="form-group col-md-14">
+                <fieldset>
+                    <legend><span style="color:red">*</span>How would you describe the severity of your stuttering?</legend>
+                    <label><input asp-for="Input.StutterScreening.Severity" type="radio" value="Covert" /> Covert</label><br />
+                    <label><input asp-for="Input.StutterScreening.Severity" type="radio" value="Mild" /> Mild</label><br />
+                    <label><input asp-for="Input.StutterScreening.Severity" type="radio" value="Moderate" /> Moderate</label><br />
+                    <label><input asp-for="Input.StutterScreening.Severity" type="radio" value="Severe" /> Severe</label>
+                </fieldset>
+                <span asp-validation-for="Input.StutterScreening.Severity" class="text-danger"></span>
+                    </div>
+                    </div>
+        <div class="form-row">
+            <div class="form-group col-md-14">
+                <fieldset>
+                    <legend>
+                        <span style="color:red">*</span>For each of the following situations, how noticeable is your stuttering on a scale of 1-5?
+                        <br /><span style="font-size:medium">(1=not at all noticeable, 2=infrequently noticeable, 3=occasionally noticeable, 4=frequently noticeable, 5=extremely noticable)</span>
+                    </legend>
+                </fieldset>
+                </div>
+                </div>
+
+                @{
+            var index = 0;
+                
+                }
+        @foreach (var situation in Model.stutterSituations)
+            {
+             <div class="row">
+                 <div class="col-md-4">
+                    <label>@situation.Situation</label>
+                     </div>
+                <div class="col-md-2">
+                    <select asp-for="Input.SituationRating[index].Rating" asp-items="@Model.ratingList" data-dropup-auto="false">
+                        <option value="" selected>Please Select</option>
+                    </select>
+                   
+                </div>
+                     </div>
+            <span asp-validation-for="Input.SituationRating[index].Rating" class="text-danger"></span>
+            <input hidden asp-for="Input.SituationRating[index].StutterSituationId" value="@situation.Id" />
+            <br />
+            index++;
+        }
+        <div class="form-row">
+            <div class="form-group col-md-14">
+                <fieldset>
+                    <legend>
+                        <span style="color:red">*</span>How much physical tension do you generally experience?<br />(scale 1 - 5, Not at all - Severe)
+                        </legend>
+                    <select asp-for="Input.StutterScreening.PhysicalTension" asp-items="@Model.ratingList" data-dropup-auto="false">
+                        <option value="" selected>Please Select</option>
+                    </select>
+                       </fieldset>
+                <span asp-validation-for="Input.StutterScreening.PhysicalTension" class="text-danger"></span>
+            </div>
+        </div>
+
+
+        <div class="form-row">
+            <div class="form-group col-md-14">
+                <fieldset>
+                    <legend>
+                        <span style="color:red">*</span>How many negative thoughts or feelings do you generally have about stuttering<br />(scale 1 - 5, Not at all - Severe)
+                    </legend>
+                    <select asp-for="Input.StutterScreening.NegativeThoughts" asp-items="@Model.ratingList" data-dropup-auto="false">
+                        <option value="" selected>Please Select</option>
+                    </select>
+                      </fieldset>
+                <span asp-validation-for="Input.StutterScreening.NegativeThoughts" class="text-danger"></span>
+
+            </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-9">
+                    <fieldset>
+                        <legend>
+                            <span style="color:red">*</span>Most people who stutter have tried to avoid stuttering at some point in their life. How often do you try to avoid stuttering?<br />(scale 1 - 5, Not at all - Severe)
+                        </legend>
+                        <select asp-for="Input.StutterScreening.AvoidStutter" asp-items="@Model.ratingList" data-dropup-auto="false">
+                            <option value="" selected>Please Select</option>
+                        </select>
+                     </fieldset>
+                <span asp-validation-for="Input.StutterScreening.AvoidStutter" class="text-danger"></span>
+
+            </div>
+        </div>
+        <br />
+        <input asp-for="Input.DuplicateEmailInd" id="duplicateEmailInd" hidden />
+            <div class="form-row">
+                <div class="form-group col-md-10">
+        <button class="btn btn-primary" id="registerSubmit" onsubmit="validateEmail">Submit</button>
+        </div></div>
+    </form>
+</body>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/js/site.js"></script>
+<script>
+
+     
+
+    $(document).ready(function () {
+
+        $("#registerForm").submit(function(){
+
+            //disable the submit button
+            $("#registerSubmit").attr("disabled", true);
+            return true;
+    });
+    });
+
+    function enableSubmit()
+    {
+            $("#registerSubmit").attr("disabled", false);
+    }
+
+    const form = document.getElementById('stutterForm');
+    form.addEventListener('change', function () {
+        enableSubmit();
+    });
+    form.addEventListener('keyup', function () {
+        enableSubmit();
+    });
+
+     function duplicateEmailCheck()
+    {
+
+        var myArray = [];
+        var currentEmail= document.getElementById("contributorEmail").value
+
+
+    @foreach (var e in Model.ExistingEmailList)
+    {
+        @:myArray.push("@e".toLowerCase())
+    }
+
+    if(myArray.includes(currentEmail.toLowerCase()))
+    {
+        document.getElementById('duplicateEmailInd').value = "Yes"
+    }
+    else
+    {
+          document.getElementById('duplicateEmailInd').value = "No"
+    }
+
+        }
+
+</script>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

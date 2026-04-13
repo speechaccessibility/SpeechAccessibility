@@ -32,14 +32,14 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             }
 
             if (ModelState.IsValid)
-            {              
+            {
                 //if ("1".Equals(Input.etiologyId))
                 //{
                 //    return RedirectToPage("Register", new { etiology = Input.etiologyId });
                 //}
                 if ("2".Equals(Input.etiologyId))
                 {
-                    return RedirectToPage("DSPreRegister", new { etiology = Input.etiologyId});
+                    return RedirectToPage("DSPreRegister", new { etiology = Input.etiologyId });
                 }
                 else if ("3".Equals(Input.etiologyId) || "5".Equals(Input.etiologyId))
                 {
@@ -47,11 +47,19 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
                 }
                 else if ("4".Equals(Input.etiologyId))
                 {
-                    return RedirectToPage("AphasiaPreRegister", new {etiology = Input.etiologyId});
+                    return RedirectToPage("AphasiaPreRegister", new { etiology = Input.etiologyId });
                 }
                 else if ("6".Equals(Input.etiologyId))
                 {
                     return RedirectToPage("ALSRegister", new { etiology = 6 });
+                }
+                else if ("7".Equals(Input.etiologyId))
+                {
+                    return RedirectToPage("StutteringRegister", new { etiology = 7 });
+                }
+                else if ("8".Equals(Input.etiologyId))
+                {
+                    return RedirectToPage("DeafRegister", new { etiology = 8 });
                 }
 
                 else

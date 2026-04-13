@@ -14,13 +14,17 @@
             <div class="form-group">
                 <fieldset>
                     <legend>Which of the following represents you or your loved one participating in this study? Please only select one option.</legend>                 
-                    <label for="Down Syndrome"><input id="Down Syndrome" asp-for="Input.etiologyId" type="radio" value="2" /> Down syndrome</label>
-                    <br />
-                    <label for="ALS"><input id="ALS" asp-for="Input.etiologyId" type="radio" value="6" /> Amyotrophic Lateral Sclerosis (ALS) or Progressive Lateral Sclerosis (PLS)</label>
-                    <br />
-                    <label for="Stroke"><input id="Stroke" asp-for="Input.etiologyId" type="radio" value="4" /> Stroke or Aphasia</label>
-                    <br />
+                   @*  <label for="Down Syndrome"><input id="Down Syndrome" asp-for="Input.etiologyId" type="radio" value="2" /> Down syndrome</label>
+                    <br /> *@
+                   @*  <label for="ALS"><input id="ALS" asp-for="Input.etiologyId" type="radio" value="6" /> Amyotrophic Lateral Sclerosis (ALS) or Progressive Lateral Sclerosis (PLS)</label>
+                    <br /> *@
+                   @*  <label for="Stroke"><input id="Stroke" asp-for="Input.etiologyId" type="radio" value="4" /> Stroke or Aphasia</label>
+                    <br /> *@
                     <label for="CP"><input id="CP" asp-for="Input.etiologyId" type="radio" value="3" /> Cerebral Palsy</label>
+                    <br />
+                    <label for="Stuttering"><input id="Stuttering" asp-for="Input.etiologyId" type="radio" value="7" /> Stuttering</label>
+                    <br/>
+                    <label for="Deaf"><input id="Deaf" asp-for="Input.etiologyId" type="radio" value="8" />Deaf, hard of hearing or hearing loss</label>
                     <br />
                     <label for="None of the above"><input id="None of the above" asp-for="Input.etiologyId" type="radio" value="5" />Other condition that causes speech disability: </label>&nbsp;<input type="text" size="75" asp-for="Input.otherEtiologyDescription" />
                 </fieldset>

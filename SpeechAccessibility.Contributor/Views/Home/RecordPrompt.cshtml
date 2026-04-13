@@ -145,7 +145,7 @@
 
         }
 
-        if (Model.currentBlockOfPromptsCount == categoryCount && Model.etiologyId!=2 && Model.etiologyId!=3 && Model.etiologyId!=4 && Model.promptCategoryId!=5)
+        if (Model.currentBlockOfPromptsCount == categoryCount && Model.etiologyId!=2 && Model.etiologyId!=3 && Model.etiologyId!=4 && Model.promptCategoryId!=5 && Model.promptCategoryId!=6)
         {
 
             <div class="alert alert-success alert-dismissible" role="alert">
@@ -198,6 +198,13 @@
                 {
                     <p>The next section will contain @Model.digitalCommandMax digital command prompts and @Model.novelSentenceMax novel sentences.<br />
                         Please record yourself speaking the prompts.</p>
+                }
+                else if(Model.etiologyId==8 && Model.promptCategoryId==6)
+                {
+                    <p>
+                        The next section will contain digital command prompts.<br />
+                        <strong>Please record yourself speaking the prompts.</strong>
+                    </p>
                 }
                 else 
                 {

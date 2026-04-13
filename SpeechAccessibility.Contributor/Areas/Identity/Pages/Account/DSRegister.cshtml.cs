@@ -230,21 +230,25 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
             public string ReferenceSource { get; set; }
 
             public string Country { get; set; }
+
+            [Required]
+            public string OrganizationPartner {  get; set; }
         }
 
         public IActionResult OnGet(string downSyndromeInd)
         {
-            Input = new InputModel();
-            DownSyndromeInd = downSyndromeInd;
+            return RedirectToPage("./DiagnosisRegister");
+            //Input = new InputModel();
+            //DownSyndromeInd = downSyndromeInd;
 
-            if (downSyndromeInd == null)
-            {
-                return RedirectToPage("./DSPreRegister");
-            }
+            //if (downSyndromeInd == null)
+            //{
+            //    return RedirectToPage("./DSPreRegister");
+            //}
 
-            ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
+            //ExistingEmailList = _context.Contributor.Select(c => c.EmailAddress).ToList();
 
-            return Page();
+            //return Page();
         }
 
         public async Task<IActionResult> OnPost()
@@ -350,8 +354,19 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
 
                 int age = Int32.Parse(Input.CurrentAge);
 
+                Boolean allowRegistration = true;
 
-                if (unqualifiedStates.Contains(Input.State) || age < 18)
+                DateTime currentDate = DateTime.Now;
+                DateTime cutOffDate = new DateTime(2025, 8, 30);
+
+                if (currentDate >= cutOffDate)
+                {
+                    if ("No".Equals(Input.OrganizationPartner))
+                    {
+                        allowRegistration = false;
+                    }
+                }
+                if (unqualifiedStates.Contains(Input.State) || age < 18 || allowRegistration==false)
                 {
                     return RedirectToPage("./Unqualified");
                 }

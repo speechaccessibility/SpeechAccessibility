@@ -12,6 +12,7 @@ namespace SpeechAccessibility.Models
     {
         public int Id { get; set; }
         public string FileName { get; set; }
+        public string OriginalFileName { get; set; }
         public Prompt OriginalPrompt { get; set; }
         public string ModifiedTranscript { get; set; }
         public Guid ContributorId { get; set; }

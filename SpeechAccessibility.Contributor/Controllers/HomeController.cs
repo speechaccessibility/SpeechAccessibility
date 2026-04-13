@@ -25,12 +25,18 @@
  */
 
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Build.Evaluation;
+using Microsoft.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic;
 using SpeechAccessibility.Data;
 using SpeechAccessibility.Data.Entities;
 using SpeechAccessibility.Models;
@@ -39,22 +45,19 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Xabe.FFmpeg;
-using System.Speech.Synthesis;
-using Prompt = SpeechAccessibility.Models.Prompt;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.Build.Evaluation;
-using Microsoft.CodeAnalysis;
-using Microsoft.VisualBasic;
-using System.Drawing;
 using System.Numerics;
 using System.Security.Policy;
 using System.Speech.Recognition;
-using Microsoft.EntityFrameworkCore;
+using System.Speech.Synthesis;
+using System.Threading;
+using System.Threading.Tasks;
+using UAParser;
+using Xabe.FFmpeg;
+using Xabe.FFmpeg.Exceptions;
+using Prompt = SpeechAccessibility.Models.Prompt;
 
 namespace SpeechAccessibility.Controllers
 {
@@ -67,6 +70,7 @@ namespace SpeechAccessibility.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IConfiguration _config;
+        private static int recordingId;
 
         public HomeController(ILogger<HomeController> logger, IdentityContext identityContext, RecordingContext recordingContext, IMailService emailSender, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration config)
         {
@@ -145,6 +149,7 @@ namespace SpeechAccessibility.Controllers
         {
             try
             {
+                recordingId = 0;
                 IFormFile file = form.Files[0];
                 Guid contributorId = new Guid(form["contributorId"]);
                 int promptId = Int32.Parse(form["promptId"]);
@@ -176,6 +181,7 @@ namespace SpeechAccessibility.Controllers
                 Recording recording = new Recording
                 {
                     FileName = fileName,
+                    OriginalFileName = fileName,
                     OriginalPrompt = prompt,
                     ContributorId = contributorId,
                     Status = new RecordingStatus { Id = 1 },
@@ -189,26 +195,53 @@ namespace SpeechAccessibility.Controllers
 
                 Recording existingRecording = _recordingContext.Recording.Where(r => r.FileName == fileName).FirstOrDefault();
 
-                //If there isn't an existing recording, add it
-                if (existingRecording == null)
-                {
-                    _recordingContext.Recording.Add(recording);
-                    _recordingContext.RecordingStatus.Remove(recording.Status);
-                    _recordingContext.Prompt.Remove(recording.OriginalPrompt);
-                    if (recording.Block != null)
+            
+                    using (var transaction = _recordingContext.Database.BeginTransaction()) // or new TransactionScope()
                     {
-                        _recordingContext.Block.Remove(recording.Block);
+                        try
+                        {
+                        //If there isn't an existing recording, add it
+                        if (existingRecording == null)
+                        {
+                            _recordingContext.Recording.Add(recording);
+                            _recordingContext.RecordingStatus.Remove(recording.Status);
+                            _recordingContext.Prompt.Remove(recording.OriginalPrompt);
+                            if (recording.Block != null)
+                            {
+                                _recordingContext.Block.Remove(recording.Block);
+                            }
+                            _recordingContext.SaveChanges();
+                            transaction.Commit();
+                            recordingId = recording.Id;
+                        }
+                        //Update retry count of existing recording
+                        else
+                        {
+                            existingRecording.RetryCount = retryCount;
+                            _recordingContext.SaveChanges();
+                            transaction.Commit();
+                            recordingId = existingRecording.Id;
+                        }
+                       
                     }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            string date = DateTime.Now.ToString("yyyy-MM-dd");
+                            string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
 
-                    _recordingContext.SaveChanges();
+                            Directory.CreateDirectory(Path.GetDirectoryName(fileLocation));
+                            using (StreamWriter writer = new StreamWriter(fileLocation, true))
+                            {
+                                string error = DateTime.Now.ToString() + ex;
+                                writer.WriteLine(error);
+                                writer.Close();
+                            }
+                        }
+                    }
+                    
 
-                }
-                //Update retry count of existing recording
-                else
-                {
-                    existingRecording.RetryCount = retryCount;
-                    _recordingContext.SaveChanges();
-                }
+          
 
             }
             catch (Exception e)
@@ -253,7 +286,10 @@ namespace SpeechAccessibility.Controllers
                     fileStream.Close();
 
                 }
-                CopyFile(file, blockDirectory, rawFullPath);
+
+                string downsizedFileName = contributorId + "_" + form["promptId"] + "_" + blockId + "_16kHz.wav";
+
+                CopyFileAsync(file, blockDirectory, rawFullPath,downsizedFileName);
 
             }
             catch
@@ -264,7 +300,7 @@ namespace SpeechAccessibility.Controllers
 
         }
 
-        public void CopyFile(IFormFile file, string blockDirectory, string rawFullPath)
+        public async Task CopyFileAsync(IFormFile file, string blockDirectory, string rawFullPath,string downsizedFileName)
         {
             string fileName = Path.ChangeExtension(rawFullPath, ".wav");
 
@@ -277,7 +313,14 @@ namespace SpeechAccessibility.Controllers
                 System.IO.File.Delete(modifiedFileName);
             }
 
-            System.IO.File.Copy(fileName, modifiedFileName);
+            string downsizedFilePath = Path.Combine(modifiedFileLocation, downsizedFileName);
+
+             System.IO.File.Copy(fileName, modifiedFileName);
+
+            //string arguments = "-i " + modifiedFileName + " -acodec pcm_s16le -ac 1 -ar 16000 -af aresample=osf=s16:dither_method=triangular_hp " + downsizedFilePath;
+            
+            //IConversionResult result = await FFmpeg.Conversions.New().Start(arguments);
+
         }
 
         private static void CreateSubdirectories(Guid contributorId, int blockId, string fileLocation, string contributorDirectory, string blockDirectory)
@@ -351,7 +394,7 @@ namespace SpeechAccessibility.Controllers
                     if (contributor.Etiology.Id == 2)
                     {
                         int legalGuardianCount = _identityContext.LegalGuardian.Where(l => l.ContributorId == contributorId).Count();
-                        
+
                         if ("Yes".Equals(helperInd) && caregiverConsentCount == 0)
                         {
                             return RedirectToPage("/Account/DSCaregiverConsent", new { area = "Identity" });
@@ -369,6 +412,7 @@ namespace SpeechAccessibility.Controllers
                             return RedirectToPage("/Account/ALSCaregiverConsent", new { area = "Identity" });
                         }
                     }
+                
                     else if (contributor.Etiology.Id == 3)
                     {
                         int legalGuardianCount = _identityContext.LegalGuardian.Where(l => l.ContributorId == contributorId).Count();
@@ -383,32 +427,32 @@ namespace SpeechAccessibility.Controllers
                         }
                     }
                     else if (contributor.Etiology.Id == 4)
-                    {                      
+                    {
                         if ("Yes".Equals(helperInd) && caregiverConsentCount == 0)
                         {
                             return RedirectToPage("/Account/AphasiaCaregiverConsent", new { area = "Identity" });
                         }
-                       
+
                     }
 
                     int contributorDetailsCount = _identityContext.ContributorDetails.Where(c => c.Contributor.Id == contributorId).Count();
 
                     //Display the last prompt they recorded if the max retry count hasn't been met
-                    if (lastRecording != null && lastRecording.RetryCount < retryMax)
-                    {
-                        blockId = _recordingContext.Recording.Where(r => r.Id == lastRecording.Id).Select(r => r.Block.Id).First();
-                        prompt = _recordingContext.Recording.Where(r => r.Id == lastRecording.Id).Select(r => r.OriginalPrompt).First();
-                        category = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.Category).FirstOrDefault();
-                        retryCount = lastRecording.RetryCount;
-                        SubCategory currentSubCategory = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.SubCategory).FirstOrDefault();
+                    //if (lastRecording != null && lastRecording.RetryCount < retryMax)
+                    //{
+                    //    blockId = _recordingContext.Recording.Where(r => r.Id == lastRecording.Id).Select(r => r.Block.Id).First();
+                    //    prompt = _recordingContext.Recording.Where(r => r.Id == lastRecording.Id).Select(r => r.OriginalPrompt).First();
+                    //    category = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.Category).FirstOrDefault();
+                    //    retryCount = lastRecording.RetryCount;
+                    //    SubCategory currentSubCategory = _recordingContext.Prompt.Where(p => p.Id == prompt.Id).Select(p => p.SubCategory).FirstOrDefault();
 
-                        if (currentSubCategory != null)
-                        {
-                            subCategory = currentSubCategory;
-                        }
-                    }
-                    else
-                    {
+                    //    if (currentSubCategory != null)
+                    //    {
+                    //        subCategory = currentSubCategory;
+                    //    }
+                    //}
+                    //else
+                    //{
                         blockId = setBlock(contributorId);
 
                         //If there are no more blocks, route to complete page
@@ -428,9 +472,9 @@ namespace SpeechAccessibility.Controllers
                             subCategory = currentSubCategory;
                         }
 
-                    }
+                    //}
 
-                    currentBlockOfPromptsCount = _recordingContext.Prompt.Where(p => _recordingContext.Recording.Where(r => r.ContributorId == contributorId && r.RetryCount == retryMax && r.Block.Id == blockId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Count();
+                    currentBlockOfPromptsCount = _recordingContext.Prompt.Where(p => _recordingContext.Recording.Where(r => r.ContributorId == contributorId  && r.Block.Id == blockId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Count();
 
                 }
                 //Route to the consent page if they haven't provided consent
@@ -451,6 +495,10 @@ namespace SpeechAccessibility.Controllers
                     if (contributor.Etiology.Id == 3)
                     {
                         return RedirectToPage("/Account/CPConsent", new { area = "Identity" });
+                    }
+                    if (contributor.Etiology.Id == 8)
+                    {
+                        return RedirectToPage("/Account/DeafConsent", new { area = "Identity" });
                     }
                     if (contributor.Etiology.Id == 4)
                     {
@@ -763,35 +811,49 @@ namespace SpeechAccessibility.Controllers
             if (etiologyId == 2)
             {
                 int blockNumber = Int32.Parse(block.Description);
-                assignOpenEndedPrompts(contributorId, openEndedPromptList, currentEtiologyPromptList, blockNumber,etiologyId);
+                assignOpenEndedPrompts(contributorId, openEndedPromptList, currentEtiologyPromptList, blockNumber, etiologyId);
             }
-            else if (etiologyId == 3 || etiologyId==4 || (etiologyId==6 && promptCategoryId==5))
+            else if (etiologyId == 3 || etiologyId == 4 || ((etiologyId == 6 || etiologyId == 8) && promptCategoryId == 5))
             {
-              
+
                 if (promptCategoryId != 5)
                 {
 
                     int blockNumber = Int32.Parse(block.Description);
-                    assignOpenEndedPrompts(contributorId, openEndedPromptList, currentEtiologyPromptList, blockNumber,etiologyId);
+                    assignOpenEndedPrompts(contributorId, openEndedPromptList, currentEtiologyPromptList, blockNumber, etiologyId);
                 }
                 else
                 {
-                    assignedSingleWordListId = assignedDigitalCommandListId - 10;
+                    int DACDifference = 10;
+                    if (etiologyId == 8)
+                    {
+                        //First DAC list for DHH is 41. First Single word list for DHH is 11. 41-11=30
+                        DACDifference = 30;
+                    }
+                    assignedSingleWordListId = assignedDigitalCommandListId - DACDifference;
                     int blockOfSingleWordId = 0;
-                    blockOfSingleWordId = _recordingContext.BlockOfSingleWords.Where(b => b.List.Id == assignedSingleWordListId && b.Active=="Yes").Select(b => b.Id).Skip(assignedBlockCount - 1).First();
+                    blockOfSingleWordId = _recordingContext.BlockOfSingleWords.Where(b => b.List.Id == assignedSingleWordListId && b.Active == "Yes").Select(b => b.Id).Skip(assignedBlockCount - 1).First();
                     uaPromptList = _recordingContext.BlockOfSingleWordPrompts.Where(b => b.BlockOfSingleWordsId == blockOfSingleWordId).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).Take(uaPromptMax).ToList();
-                    List<int> currentEtiologyFivekList = _recordingContext.Prompt.Where(p => p.Category.Id == 5 && p.SubCategory.Id == 24 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Select(p=>p.Id).ToList();
-                    
-                    List<int> assignedFiveKList = _recordingContext.BlockOfPrompts.Where(b=>currentEtiologyFivekList.Contains(b.Prompt.Id)).Select(b=>b.Prompt.Id).ToList();
-                    
-                    fivekPromptList = _recordingContext.Prompt.Where(p=>currentEtiologyFivekList.Contains(p.Id) && !assignedFiveKList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(fivekPromptMax).ToList();
+                    List<int> currentEtiologyFivekList = _recordingContext.Prompt.Where(p => p.Category.Id == 5 && p.SubCategory.Id == 24 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Select(p => p.Id).ToList();
+
+                    List<int> assignedFiveKList = _recordingContext.BlockOfPrompts.Where(b => currentEtiologyFivekList.Contains(b.Prompt.Id)).Select(b => b.Prompt.Id).ToList();
+
+                    fivekPromptList = _recordingContext.Prompt.Where(p => currentEtiologyFivekList.Contains(p.Id) && !assignedFiveKList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(fivekPromptMax).ToList();
 
                     //If we run out of unique 5k sentences, then we will have to reuse some
                     if (fivekPromptList.Count < fivekPromptMax)
-                    {                    
+                    {
                         fivekPromptList = _recordingContext.Prompt.FromSqlRaw("select p.Id,p.Transcript,p.CategoryId,p.SubCategoryId,p.QuestionType,p.SeverityLevels,p.CreateTS,p.Active,p.UpdateBy,p.UpdateTS from Prompt as p join PromptEtiology as e on p.Id = e.PromptId where e.EtiologyId =" + etiologyId + " and p.Active = 'Yes' and p.SubCategoryId=24 and p.Id not in (select r.OriginalPromptId from Recording as r where r.ContributorId = '" + contributorId + "')").OrderBy(r => Guid.NewGuid()).Take(fivekPromptMax).ToList();
                     }
                 }
+            }
+            else if (etiologyId == 8 && promptCategoryId == 6)
+            {
+                List<int> recordedPromptList = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).ToList();
+                List<int> currentEtiologyOpenEndedList = _recordingContext.Prompt.Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Select(p => p.Id).ToList();
+
+                openEndedPromptList = _recordingContext.Prompt.Where(p => currentEtiologyOpenEndedList.Contains(p.Id) && !recordedPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(openEndedPromptMax).ToList();
+
             }
             else
             {
@@ -799,11 +861,11 @@ namespace SpeechAccessibility.Controllers
                 List<int> recordedPromptList = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).ToList();
                 List<int> currentEtiologyOpenEndedList = _recordingContext.Prompt.Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Select(p => p.Id).ToList();
 
-                openEndedPromptList = _recordingContext.Prompt.Where(p=>currentEtiologyOpenEndedList.Contains(p.Id) && !recordedPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(openEndedPromptMax).ToList();
+                openEndedPromptList = _recordingContext.Prompt.Where(p => currentEtiologyOpenEndedList.Contains(p.Id) && !recordedPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(openEndedPromptMax).ToList();
                 //If we run out of unique novel sentences, then we will have to reuse some
                 if (novelSentenceList.Count < novelSentenceMax)
                 {
-                    novelSentenceList = _recordingContext.Prompt.FromSqlRaw("select p.Id,p.Transcript,p.CategoryId,p.SubCategoryId,p.QuestionType,p.SeverityLevels,p.CreateTS,p.Active,p.UpdateBy,p.UpdateTS from Prompt as p join PromptEtiology as e on p.Id = e.PromptId where e.EtiologyId =" + etiologyId + " and p.Active = 'Yes' and p.CategoryId = 3 and p.Id not in (select r.OriginalPromptId from Recording as r where r.ContributorId = '" + contributorId + "')").OrderBy(r=>Guid.NewGuid()).Take(novelSentenceMax).ToList();
+                    novelSentenceList = _recordingContext.Prompt.FromSqlRaw("select p.Id,p.Transcript,p.CategoryId,p.SubCategoryId,p.QuestionType,p.SeverityLevels,p.CreateTS,p.Active,p.UpdateBy,p.UpdateTS from Prompt as p join PromptEtiology as e on p.Id = e.PromptId where e.EtiologyId =" + etiologyId + " and p.Active = 'Yes' and p.CategoryId = 3 and p.Id not in (select r.OriginalPromptId from Recording as r where r.ContributorId = '" + contributorId + "')").OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
                 }
             }
 
@@ -844,12 +906,16 @@ namespace SpeechAccessibility.Controllers
                     fivekPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 5).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 24).ToList();
                 }
             }
-            else if (etiologyId == 6)
+            else if (etiologyId == 6 || etiologyId==8)
             {
                 //Assign open-ended for spontaneous, single words for non-spontaneous
                 if (promptCategoryId != 5)
                 {
-                    novelSentenceList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 3).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
+                    if (promptCategoryId != 6)
+                    {
+                        novelSentenceList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 3).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).ToList();
+                    }
+                    
                     openEndedPromptList = _recordingContext.BlockMasterOfPrompts.Where(b => b.BlockMaster.Id == blockMasterId && b.Category.Id == 4).Select(b => b.Prompt).Where(p => p.SubCategory.Id == 1).OrderBy(r => Guid.NewGuid()).ToList();
                 }
                 else {
@@ -895,7 +961,7 @@ namespace SpeechAccessibility.Controllers
                 {
                     blockMasterId = 3;
                 }
-                
+
             }
             else if (etiologyId == 3)
             {
@@ -918,21 +984,35 @@ namespace SpeechAccessibility.Controllers
                 {
                     blockMasterId = 4;
                 }
-                else 
-                {              
+                else
+                {
                     bool usePhase2Prompts = determinePromptPhase(contributorId);
                     if (usePhase2Prompts)
                     {
                         blockMasterId = 7;
                     }
-                    else {
+                    else
+                    {
                         blockMasterId = 5;
                     }
                 }
-                
+
+            }
+            else if (etiologyId == 8)
+            {
+                blockMasterId = 8;
+
+                if (promptCategoryId == 5)
+                {
+                    blockMasterId = 9;
+                }
+                else if (promptCategoryId == 6)
+                {
+                    blockMasterId = 10;
+                }
             }
 
-            return blockMasterId;
+                return blockMasterId;
         }
 
         private void setPromptMax(Guid contributorId, int etiologyId, out int promptCategoryId, out int digitalCommandMax, out int novelSentenceMax, out int openEndedPromptMax, out int proceduralPromptMax, out int uaPromptMax, out int fivekPromptMax)
@@ -953,7 +1033,7 @@ namespace SpeechAccessibility.Controllers
                 proceduralPromptMax = Int32.Parse(_config["DSProceduralPromptMax"]);
             }
             else if (etiologyId == 3)
-            {              
+            {
                 digitalCommandMax = Int32.Parse(_config["CPDigitalCommandMax"]);
                 if (promptCategoryId == 5)
                 {
@@ -968,7 +1048,7 @@ namespace SpeechAccessibility.Controllers
             }
             else if (etiologyId == 4)
             {
-            
+
                 if (promptCategoryId == 5)
                 {
                     //Use same set of prompts as CP for non-spontaneous path
@@ -985,13 +1065,19 @@ namespace SpeechAccessibility.Controllers
 
 
             }
-            else if (etiologyId == 6 && promptCategoryId==5)
+            else if ((etiologyId == 6 || etiologyId == 8) && promptCategoryId == 5)
             {
-             //Use same set of prompts as CP for non-spontaneous path
-              digitalCommandMax = Int32.Parse(_config["CPDigitalCommandMax"]);
-             uaPromptMax = Int32.Parse(_config["CPUAPromptMax"]);
-             fivekPromptMax = Int32.Parse(_config["CP5KPromptMax"]);
-                             
+                //Use same set of prompts as CP for non-spontaneous path
+                digitalCommandMax = Int32.Parse(_config["CPDigitalCommandMax"]);
+                uaPromptMax = Int32.Parse(_config["CPUAPromptMax"]);
+                fivekPromptMax = Int32.Parse(_config["CP5KPromptMax"]);
+
+            }
+            else if (etiologyId == 8 && promptCategoryId == 6)
+            {
+                digitalCommandMax = Int32.Parse(_config["DeafSimpleDACMax"]);
+                openEndedPromptMax = Int32.Parse(_config["DeafSimpleOpenEndedMax"]);
+                proceduralPromptMax = Int32.Parse(_config["DeafSimpleProceduralMax"]);
             }
             else
             {
@@ -1092,11 +1178,11 @@ namespace SpeechAccessibility.Controllers
                 }
             }
             else if (etiologyId == 4)
-            {               
+            {
 
                 if (promptCategoryId != 5)
                 {
-                    
+
                     int minListId = 20;
                     int maxListId = 30;
 
@@ -1113,18 +1199,19 @@ namespace SpeechAccessibility.Controllers
                     }
                 }
                 //Use the same DAC list as CP for non-spontaneous path
-                else {
+                else
+                {
                     List<Guid> currentEtiologyContributorList = _identityContext.Contributor.Where(c => c.Etiology.Id == etiologyId).Select(c => c.Id).ToList();
                     lastAssignedDigitalCommandBlockId = 10;
                     numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10 && a.List.Id < 21).Where(a => currentEtiologyContributorList.Contains(a.ContributorId)).Count();
                     if (numberOfAssignedDigitalCommandBlocks > 0)
                     {
-                        lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10 && a.List.Id<21).Where(a => currentEtiologyContributorList.Contains(a.ContributorId)).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                        lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10 && a.List.Id < 21).Where(a => currentEtiologyContributorList.Contains(a.ContributorId)).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
                     }
                 }
 
             }
-            else if (etiologyId==6)
+            else if (etiologyId == 6)
             {
                 if (promptCategoryId != 5)
                 {
@@ -1145,6 +1232,38 @@ namespace SpeechAccessibility.Controllers
                         lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 10).Where(a => currentEtiologyContributorList.Contains(a.ContributorId)).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
                     }
                 }
+            }
+            else if (etiologyId == 8)
+            {
+                if (promptCategoryId == 4)
+                {
+                    lastAssignedDigitalCommandBlockId = 60;
+                    numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 50 && a.List.Id < 61).Count();
+                    if (numberOfAssignedDigitalCommandBlocks > 0)
+                    {
+                        lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 50 && a.List.Id < 61).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                    }
+
+                }
+                else if (promptCategoryId == 5)
+                {
+                    lastAssignedDigitalCommandBlockId = 50;
+                    numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 40 && a.List.Id < 51).Count();
+                    if (numberOfAssignedDigitalCommandBlocks > 0)
+                    {
+                        lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 40 && a.List.Id < 51).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                    }
+                }
+                else if (promptCategoryId == 6) {
+
+                    lastAssignedDigitalCommandBlockId = 70;
+                    numberOfAssignedDigitalCommandBlocks = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 60 && a.List.Id < 71).Count();
+                    if (numberOfAssignedDigitalCommandBlocks > 0)
+                    {
+                        lastAssignedDigitalCommandBlockId = _recordingContext.AssignedDigitalCommandBlock.Where(a => a.List.Id > 60 && a.List.Id < 71).OrderBy(a => a.CreateTS).Select(a => a.List.Id).LastOrDefault();
+                    }
+                }
+            
             }
             else
             {
@@ -1173,9 +1292,10 @@ namespace SpeechAccessibility.Controllers
                     {
                         lastDigitalCommandBlock = 40;
                     }
-                    else {
+                    else
+                    {
                         lastDigitalCommandBlock = 30;
-                    }                
+                    }
                 }
                 else
                 {
@@ -1188,6 +1308,22 @@ namespace SpeechAccessibility.Controllers
                 {
                     lastDigitalCommandBlock = 20;
                 }
+            }
+            else if (etiologyId == 8)
+            {
+                if (promptCategoryId == 5)
+                {
+                    lastDigitalCommandBlock = 50;
+                }
+                else if (promptCategoryId == 4)
+                {
+                    lastDigitalCommandBlock = 60;
+                }
+                else if (promptCategoryId == 6)
+                {
+                    lastDigitalCommandBlock = 70;
+                }
+
             }
 
             //Cycle back to list one once we've used all of the lists
@@ -1213,15 +1349,31 @@ namespace SpeechAccessibility.Controllers
                         {
                             newCommandBlockId = 31;
                         }
-                        else {
+                        else
+                        {
                             newCommandBlockId = 21;
                         }
-                        
+
                     }
                 }
-                else if (etiologyId == 6 && promptCategoryId==5)
+                else if ((etiologyId == 6) && promptCategoryId == 5)
                 {
                     newCommandBlockId = 11;
+                }
+                else if (etiologyId == 8)
+                {
+                    if (promptCategoryId == 4)
+                    {
+                        newCommandBlockId = 51;
+                    }
+                    else if (promptCategoryId == 5)
+                    {
+                        newCommandBlockId = 41;
+                    }
+                    else if (promptCategoryId == 6)
+                    {
+                        newCommandBlockId = 61;
+                    }
                 }
             }
             else
@@ -1310,12 +1462,38 @@ namespace SpeechAccessibility.Controllers
             {
                 Guid contributorId = model.contributorId;
                 int promptId = model.prompt.Id;
-                Recording recording = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).AsEnumerable().LastOrDefault();
+                Recording recording = _recordingContext.Recording.Where(r => r.Id==recordingId).AsEnumerable().LastOrDefault();
+
+                if (recording == null)
+                {
+                    recording = _recordingContext.Recording.Where(r => r.ContributorId==contributorId).AsEnumerable().LastOrDefault();
+                }
                 int retryMax = Int32.Parse(_config["RetryMax"]);
 
-                //Once they go to the next prompt, set the retry count to the maximum value to prevent them from being able to rerecord the previous prompt
-                recording.RetryCount = retryMax;
-                _recordingContext.SaveChanges();
+                using (var transaction = _recordingContext.Database.BeginTransaction()) // or new TransactionScope()
+                {
+                    try
+                    {
+                        //Once they go to the next prompt, set the retry count to the maximum value to prevent them from being able to rerecord the previous prompt
+                        recording.RetryCount = retryMax;
+                        recording.UpdateTS = DateTime.Now;
+                        _recordingContext.SaveChanges();
+                        transaction.Commit();
+                    }
+                    catch (Exception ex) { 
+                        transaction.Rollback();
+                        string date = DateTime.Now.ToString("yyyy-MM-dd");
+                        string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
+
+                        Directory.CreateDirectory(Path.GetDirectoryName(fileLocation));
+                        using (StreamWriter writer = new StreamWriter(fileLocation, true))
+                        {
+                            string error = DateTime.Now.ToString() + ex;
+                            writer.WriteLine(error);
+                            writer.Close();
+                        }
+                    }
+                }
 
                 SendCompletionEmail(contributorId);
             }
@@ -1401,6 +1579,13 @@ namespace SpeechAccessibility.Controllers
             return View();
         }
 
+        [Authorize]
+        [HttpGet]
+        public IActionResult TestAudio()
+        {
+            return View();
+        }
+
         [HttpPost]
         public async Task<IActionResult> ContactAsync(ContactViewModel model)
         {
@@ -1470,14 +1655,16 @@ namespace SpeechAccessibility.Controllers
             string date = DateTime.Now.ToString("yyyy-MM-dd");
             string fileLocation = _config["ErrorLocation"] + date + "SpeechAccessibility.txt";
 
-            Directory.CreateDirectory(Path.GetDirectoryName(fileLocation));
-            using (StreamWriter writer = new StreamWriter(fileLocation, true))
+            if (exceptionHandlerFeature != null)
             {
-                string error = DateTime.Now.ToString() + Activity.Current?.Id + " " + exceptionHandlerFeature.Error.Message + " " + exceptionHandlerFeature.Error.StackTrace;
-                writer.WriteLine(error);
-                writer.Close();
+                Directory.CreateDirectory(Path.GetDirectoryName(fileLocation));
+                using (StreamWriter writer = new StreamWriter(fileLocation, true))
+                {
+                    string error = DateTime.Now.ToString() + Activity.Current?.Id + " " + exceptionHandlerFeature.Error.Message + " " + exceptionHandlerFeature.Error.StackTrace;
+                    writer.WriteLine(error);
+                    writer.Close();
+                }
             }
-
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }

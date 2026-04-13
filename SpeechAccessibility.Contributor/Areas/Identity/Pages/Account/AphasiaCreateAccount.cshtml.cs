@@ -282,7 +282,7 @@ namespace SpeechAccessibility.Areas.Identity.Pages.Account
         private void SendEnrollmentEmail(string emailAddress)
         {
 
-            string message = "<p>Thank you for your interest in the Speech Accessibility Project. A speech pathologist will review the information your provided and determine if you are eligible for our study. You will receive another email in about 7-10 days to let you know whether you can contribute speech recordings for this study.</p>" +
+            string message = "<p>Thank you for your interest in the Speech Accessibility Project. A speech pathologist will review the information you provided and determine if you are eligible for our study. You will receive another email in about 7-10 days to let you know whether you can contribute speech recordings for this study.</p>" +
                 "<p>Thank you for your time and we will be in touch soon!</p><p>The Speech Accessibility Project Team</p>";
 
 
