@@ -360,6 +360,10 @@ async function processRecording(my_url, myData, retryCount, categoryId, subCateg
             data: myData,
         }).fail(function () {
             showErrorMessage(retryCount, categoryId);
+            let button = $('#recordButton');
+            button.text('Record')
+            button.removeAttr('hidden')
+            saveDiv.style.display = "none";
 
         }).done(function () { return result; })
 
