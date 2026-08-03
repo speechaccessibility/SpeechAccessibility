@@ -804,8 +804,7 @@ namespace SpeechAccessibility.Controllers
 
             if (promptCategoryId !=5)
             {
-                proceduralPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 2 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(proceduralPromptMax).ToList();
-
+                proceduralPromptList = _recordingContext.Prompt.FromSqlRaw($"SELECT TOP ({proceduralPromptMax}) p.* FROM Prompt as p WHERE p.CategoryId = 4 AND p.SubCategoryId = 2 AND p.Active = 'Yes' AND p.Id IN (SELECT e.PromptId FROM PromptEtiology e WHERE e.EtiologyId = {etiologyId}) AND p.Id NOT IN (SELECT r.OriginalPromptId FROM Recording as r WHERE r.ContributorId = '{contributorId}')").OrderBy(r => Guid.NewGuid()).ToList();
             }
 
             if (etiologyId == 2)
@@ -834,8 +833,9 @@ namespace SpeechAccessibility.Controllers
                     int blockOfSingleWordId = 0;
                     blockOfSingleWordId = _recordingContext.BlockOfSingleWords.Where(b => b.List.Id == assignedSingleWordListId && b.Active == "Yes").Select(b => b.Id).Skip(assignedBlockCount - 1).First();
                     uaPromptList = _recordingContext.BlockOfSingleWordPrompts.Where(b => b.BlockOfSingleWordsId == blockOfSingleWordId).Select(b => b.Prompt).OrderBy(r => Guid.NewGuid()).Take(uaPromptMax).ToList();
-                    List<int> currentEtiologyFivekList = _recordingContext.Prompt.Where(p => p.Category.Id == 5 && p.SubCategory.Id == 24 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Select(p => p.Id).ToList();
 
+                    List<int> currentEtiologyFivekList = _recordingContext.Prompt.FromSqlRaw($"SELECT p.Id FROM Prompt p INNER JOIN PromptEtiology pe ON pe.PromptId = p.Id WHERE p.CategoryId = 5 AND p.SubCategoryId = 24 AND p.Active = 'Yes' AND pe.EtiologyId = {etiologyId}").OrderBy(r => Guid.NewGuid()).Select(p => p.Id).ToList();
+                    
                     List<int> assignedFiveKList = _recordingContext.BlockOfPrompts.Where(b => currentEtiologyFivekList.Contains(b.Prompt.Id)).Select(b => b.Prompt.Id).ToList();
 
                     fivekPromptList = _recordingContext.Prompt.Where(p => currentEtiologyFivekList.Contains(p.Id) && !assignedFiveKList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(fivekPromptMax).ToList();
@@ -850,16 +850,16 @@ namespace SpeechAccessibility.Controllers
             else if (etiologyId == 8 && promptCategoryId == 6)
             {
                 List<int> recordedPromptList = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).ToList();
-                List<int> currentEtiologyOpenEndedList = _recordingContext.Prompt.Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Select(p => p.Id).ToList();
-
+                List<int> currentEtiologyOpenEndedList = _recordingContext.Prompt.FromSqlRaw($"SELECT * FROM Prompt WHERE CategoryId = 4 AND SubCategoryId = 1 AND Active = 'Yes' AND Id IN (SELECT e.PromptId FROM PromptEtiology e WHERE e.EtiologyId = {etiologyId})").OrderBy(r=>Guid.NewGuid()).Select(p => p.Id).ToList();
                 openEndedPromptList = _recordingContext.Prompt.Where(p => currentEtiologyOpenEndedList.Contains(p.Id) && !recordedPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(openEndedPromptMax).ToList();
 
             }
             else
             {
-                novelSentenceList = _recordingContext.Prompt.Where(p => !_recordingContext.BlockOfPrompts.Select(b => b.Prompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 3 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(novelSentenceMax).ToList();
+                novelSentenceList = _recordingContext.Prompt.FromSqlRaw($"SELECT TOP ({novelSentenceMax}) p.* FROM Prompt as p WHERE p.CategoryId = 3 AND p.Active = 'Yes' AND p.Id IN (SELECT e.PromptId FROM PromptEtiology e WHERE e.EtiologyId = {etiologyId}) AND p.Id NOT IN (SELECT r.OriginalPromptId FROM Recording as r WHERE r.ContributorId = '{contributorId}')").OrderBy(r=>Guid.NewGuid()).ToList();
+
                 List<int> recordedPromptList = _recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).ToList();
-                List<int> currentEtiologyOpenEndedList = _recordingContext.Prompt.Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Select(p => p.Id).ToList();
+                List<int> currentEtiologyOpenEndedList = _recordingContext.Prompt.FromSqlRaw($"SELECT * FROM Prompt WHERE CategoryId = 4 AND SubCategoryId = 1 AND Active = 'Yes' AND Id IN (SELECT e.PromptId FROM PromptEtiology e WHERE e.EtiologyId = {etiologyId})").OrderBy(r => Guid.NewGuid()).Select(p => p.Id).ToList();
 
                 openEndedPromptList = _recordingContext.Prompt.Where(p => currentEtiologyOpenEndedList.Contains(p.Id) && !recordedPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(openEndedPromptMax).ToList();
                 //If we run out of unique novel sentences, then we will have to reuse some
@@ -1140,8 +1140,7 @@ namespace SpeechAccessibility.Controllers
                 }
             }
 
-        
-            List<Prompt> pairPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 17 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(numberOfPairPrompts).ToList();
+               List<Prompt> pairPromptList = _recordingContext.Prompt.FromSqlRaw($"SELECT TOP ({numberOfPairPrompts}) p.* FROM Prompt as p WHERE p.CategoryId = 4 AND p.SubCategoryId = 17 AND p.Active = 'Yes' AND p.Id IN (SELECT e.PromptId FROM PromptEtiology e WHERE e.EtiologyId = {etiologyId}) AND p.Id NOT IN (SELECT r.OriginalPromptId FROM Recording as r WHERE r.ContributorId = '{contributorId}')").OrderBy(r => Guid.NewGuid()).ToList();
 
             foreach (Prompt currentPrompt in pairPromptList)
             {
@@ -1153,8 +1152,8 @@ namespace SpeechAccessibility.Controllers
                     openEndedPromptList.Add(followupPrompt);
                 }
             }
-
-            List<Prompt> singleOpenEndedPromptList = _recordingContext.Prompt.Where(p => !_recordingContext.Recording.Where(r => r.ContributorId == contributorId).Select(r => r.OriginalPrompt.Id).Contains(p.Id)).Where(p => p.Category.Id == 4 && p.SubCategory.Id == 1 && p.Active == "Yes" && currentEtiologyPromptList.Contains(p.Id)).OrderBy(r => Guid.NewGuid()).Take(numberOfSinglePrompts).ToList();
+        
+            List<Prompt> singleOpenEndedPromptList = _recordingContext.Prompt.FromSqlRaw($"SELECT TOP ({numberOfSinglePrompts}) p.* FROM Prompt as p WHERE p.CategoryId = 4 AND p.SubCategoryId = 1 AND p.Active = 'Yes' AND p.Id IN (SELECT e.PromptId FROM PromptEtiology e WHERE e.EtiologyId = {etiologyId}) AND p.Id NOT IN (SELECT r.OriginalPromptId FROM Recording as r WHERE r.ContributorId = '{contributorId}')").OrderBy(r => Guid.NewGuid()).ToList();
 
 
             openEndedPromptList.AddRange(singleOpenEndedPromptList);
